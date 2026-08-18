@@ -7,15 +7,17 @@ Exponiert Vault-I/O und den Phasenraum als standardisierte MCP-Tools.
 
 from typing import List, Optional
 import datetime
+import argparse
 from mcp.server.fastmcp import FastMCP
 
+from core.config import settings
 from server.vault_io import VaultIO
 from server.graph_store import GraphStore
 
 # FastMCP Server-Instanz
 mcp = FastMCP("Exocortex-Daemon")
 
-# Substrat-Instanzen (State in Objekten gekapselt)
+# Substrat-Instanzen (nutzen transparent settings.vault_path etc.)
 vault_io = VaultIO()
 graph_store = GraphStore(vault_io=vault_io)
 
@@ -107,12 +109,17 @@ def exocortex_switch_topology(topology_name: str) -> str:
 
 
 if __name__ == "__main__":
-    import sys
-    
-    # Prüfen, ob als SSE (Netzwerk) oder Stdio (Pipe) gestartet werden soll
-    if "--stdio" in sys.argv:
+    parser = argparse.ArgumentParser(description="Exocortex FastMCP Server Daemon")
+    parser.add_argument("--stdio", action="store_true", help="Starte im Stdio-Modus (Pipe)")
+    parser.add_argument("--host", default=settings.mcp_host, help=f"Bind Host (Standard: {settings.mcp_host})")
+    parser.add_argument("--port", type=int, default=settings.mcp_port, help=f"Bind Port (Standard: {settings.mcp_port})")
+    args = parser.parse_args()
+
+    if args.stdio:
         print("[*] Starte Exocortex MCP Daemon im Stdio-Modus...")
         mcp.run(transport="stdio")
     else:
-        print("[*] Starte Exocortex MCP Daemon via SSE auf http://127.0.0.1:8000/sse ...")
+        print(f"[*] Starte Exocortex MCP Daemon via SSE auf http://{args.host}:{args.port}/sse ...")
+        mcp.settings.host = args.host
+        mcp.settings.port = args.port
         mcp.run(transport="sse")

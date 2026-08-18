@@ -6,13 +6,14 @@ ExecutionEngine: ReAct-Schleife, Tool-Dispatching und dynamische Kontext-Assembl
 from typing import Any, Callable, Dict, Generator, List, Optional
 from pathlib import Path
 import json
+import datetime
 import ollama
 
+from core.config import settings
+from core.prompts import PromptManager
 from server.graph_store import GraphStore
-from server.vault_io import VaultIO
 from .guards import prune_history_if_needed, slice_for_embedding
 from .session import SessionManager
-from core.prompts import PromptManager
 
 
 class ExecutionEngine:
@@ -20,16 +21,16 @@ class ExecutionEngine:
         self,
         graph_store: GraphStore,
         session_manager: SessionManager,
-        model_name: str = "gemma4:12b",
-        num_ctx: int = 65536,
-        ollama_host: str = "http://127.0.0.1:11434",
+        model_name: Optional[str] = None,
+        num_ctx: Optional[int] = None,
+        ollama_host: Optional[str] = None,
         config_dir: Optional[Path] = None,
     ):
         self.graph_store = graph_store
         self.session = session_manager
-        self.model_name = model_name
-        self.num_ctx = num_ctx
-        self.client = ollama.Client(host=ollama_host)
+        self.model_name = model_name or settings.chat_model
+        self.num_ctx = num_ctx or settings.context_window
+        self.client = ollama.Client(host=ollama_host or settings.ollama_host)
         self.config_dir = config_dir or (Path(__file__).parent.parent / "config")
         self.prompt_manager = PromptManager()
 
@@ -42,12 +43,6 @@ class ExecutionEngine:
             "exocortex_imprint_field": self._tool_imprint_field,
             "exocortex_temporal_anchor": self._tool_temporal_anchor,
         }
-
-    def _load_base_prompt(self) -> str:
-        prompt_file = self.config_dir / "system_base.md"
-        if prompt_file.exists():
-            return prompt_file.read_text(encoding="utf-8")
-        return "Du bist der Exocortex. Antworte präzise und wende den Analytic Razor an."
 
     def _build_tools_schema(self) -> List[Dict[str, Any]]:
         return [
@@ -171,7 +166,6 @@ class ExecutionEngine:
             return f"<error>Imprinting fehlgeschlagen: {e}</error>"
 
     def _tool_temporal_anchor(self, scope: str = "full") -> str:
-        import datetime
         now = datetime.datetime.now()
         iso = now.isoformat()
         human = now.strftime("%d.%m.%Y, %H:%M:%S")
@@ -224,7 +218,6 @@ class ExecutionEngine:
 
             # Tool Calls entdeckt?
             if tool_calls:
-                # Assistant Zwischenschritt in History spiegeln
                 messages_payload.append({"role": "assistant", "content": content or "", "tool_calls": tool_calls})
 
                 for call in tool_calls:
@@ -240,11 +233,8 @@ class ExecutionEngine:
                         tool_result = f"<error>Unbekanntes Tool '{fn_name}'</error>"
 
                     yield {"event": "tool_result", "result": tool_result}
-
-                    # Tool-Antwort in Payload einspeisen
                     messages_payload.append({"role": "tool", "content": tool_result})
             else:
-                # Reines finales Text-Ergebnis
                 final_response_text = content
                 yield {"event": "completed", "final_text": final_response_text}
                 self.session.add_assistant_message(final_response_text)

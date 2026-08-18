@@ -3,20 +3,28 @@ server/vault_io.py
 Isolierte, sandboxed I/O-Schicht für die Interaktion mit dem Obsidian-Vault.
 """
 
+import datetime
+import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import json
-import os
 
-VAULT_ROOT = Path(os.getenv("EXOCORTEX_VAULT_PATH", "/home/georg/Daten/Vaults/exocortex")).resolve()
+from core.config import settings
 
 
 class VaultIO:
     def __init__(self, vault_path: Optional[Path] = None):
-        self.vault_path = (vault_path or VAULT_ROOT).resolve()
-        self.graphs_dir = self.vault_path / "graphs"
-        self.sessions_dir = self.vault_path / "Sessions"
-        self.scratchpad_dir = self.vault_path / "Scratchpad"
+        self.vault_path = Path(vault_path or settings.vault_path).resolve()
+        
+        # Topologie-Verzeichnis (aus settings, mit sicherem Fallback auf 'graphs')
+        topo_name = settings.topologies_dir_name
+        if not (self.vault_path / topo_name).exists() and (self.vault_path / "graphs").exists():
+            self.graphs_dir = self.vault_path / "graphs"
+        else:
+            self.graphs_dir = self.vault_path / topo_name
+
+        self.topologies_dir = self.graphs_dir  # Einheitlicher Alias
+        self.sessions_dir = self.vault_path / settings.sessions_dir_name
+        self.scratchpad_dir = self.vault_path / settings.scratchpad_dir_name
         self._ensure_directories()
 
     def _ensure_directories(self) -> None:
@@ -38,12 +46,17 @@ class VaultIO:
             raise FileNotFoundError(f"Notiz '{note_name}' nicht im Vault gefunden: {path}")
         return path.read_text(encoding="utf-8")
 
-    def append_scratchpad(self, content: str, filename: str = "Active_Scratchpad.md") -> str:
-        """Hängt Text an eine Scratchpad-Notiz an."""
-        path = self._resolve_safe_path(filename, base_dir=self.scratchpad_dir)
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(f"\n\n{content.strip()}\n")
-        return str(path)
+    def append_scratchpad(self, content: str, filename: str = "Scratchpad.md") -> str:
+        # Garantiert stets die .md Endung im Obsidian Vault
+        if not filename.endswith(".md"):
+            filename = f"{filename}.md"
+            
+        target_path = self._resolve_safe_path(self.scratchpad_dir / filename)
+        ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"\n\n## [{ts}]\n{content.strip()}\n"
+        with open(target_path, "a", encoding="utf-8") as f:
+            f.write(entry)
+        return str(target_path)
 
     def read_graph_json(self, graph_name: str) -> Dict[str, Any]:
         """Lädt eine Graph-Topologie als JSON."""
