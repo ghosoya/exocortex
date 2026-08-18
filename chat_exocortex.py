@@ -23,12 +23,13 @@ except ImportError:
 
 import ollama
 
-# Lokale Substrat-Imports
+# Lokale Substrat- & Kognitions-Imports
 from server.vault_io import VaultIO
 from server.graph_store import GraphStore
 from core.session import SessionManager
 from core.engine import ExecutionEngine
 from core.guards import slice_for_embedding, prune_history_if_needed
+from core.prompts import PromptManager
 
 # MCP Client Imports für den Remote-Modus
 from mcp.client.session import ClientSession
@@ -56,7 +57,7 @@ class RemoteMCPEngine:
         self.model_name = model_name
         self.num_ctx = num_ctx
         self.client = ollama.Client()
-        self.system_prompt_base = "Du bist der Exocortex (v1.4.0 Remote). Wende den Analytic Razor an."
+        self.prompt_manager = PromptManager()
         self.tools_schema: List[Dict[str, Any]] = []
 
     async def initialize(self, mcp_session: ClientSession):
@@ -83,8 +84,8 @@ class RemoteMCPEngine:
 
         yield {"event": "field_context", "xml": field_xml}
 
-        # 2. System-Prompt zusammenbauen
-        full_system_prompt = f"{self.system_prompt_base}\n\n### Aktiver Phasenraum (Remote):\n{field_xml}"
+        # 2. System-Prompt via PromptManager zusammenbauen (Identisch zum lokalen Modus)
+        full_system_prompt = self.prompt_manager.build_system_prompt(field_xml)
 
         # 3. Session updaten
         self.session.add_user_message(user_input)
@@ -133,14 +134,14 @@ class RemoteMCPEngine:
 
 
 # ==============================================================================
-# UI & BANNER
+# UI, HILFE & PROMPT-COMMAND-HANDLER
 # ==============================================================================
 def print_banner(mode: str, target: str, model: str):
     print(f"{C_CYAN}{'=' * 70}{C_RESET}")
     print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.0 (Dual-Mode Runner){C_RESET}")
     print(f"[*] Modus: {C_GREEN}{mode.upper()}{C_RESET} | Ziel: {C_YELLOW}{target}{C_RESET} | Modell: {C_CYAN}{model}{C_RESET}")
     print(f"[*] Senden: [Enter] | Zeilenumbruch: [Alt+Enter] | Ende: 'exit'")
-    print(f"[*] Befehle: /save | /load | /context | /clear | /help" + (" | /graph [list|load|info]" if mode == "local" else " | /switch <Topologie>"))
+    print(f"[*] Befehle: /save | /load | /prompt | /context | /clear | /help" + (" | /graph" if mode == "local" else " | /switch"))
     print(f"{C_CYAN}{'=' * 70}{C_RESET}\n")
 
 
@@ -152,11 +153,55 @@ def print_help(mode: str):
         print("  /graph info          - Status und Knotenverteilung")
     else:
         print("  /switch <Name>       - Wechselt Topologie auf Remote-Daemon")
+    print("  /prompt [list]       - Zeigt verfügbare kognitive Profile an")
+    print("  /prompt show         - Gibt den vollständigen aktiven System-Prompt aus")
+    print("  /prompt set <name>   - Wechselt Profil (default, socratic, architect)")
+    print("  /prompt custom <txt> - Setzt Ad-hoc Prompt für die laufende Session")
+    print("  /prompt reset        - Setzt Prompt auf Standardprofil zurück")
     print("  /save [Name]         - Speichert Session (Markdown + JSON)")
     print("  /load <Name>         - Lädt gespeicherte Session")
     print("  /context             - Zeigt Token-Auslastung")
     print("  /clear               - Leert den Verlauf")
     print("  exit                 - Beendet die Session\n")
+
+
+def handle_prompt_command(user_input: str, pm: PromptManager):
+    """Zentraler Handler für alle /prompt Slash-Befehle."""
+    parts = user_input.strip().split(maxsplit=2)
+    subcmd = parts[1].lower() if len(parts) > 1 else "list"
+
+    if subcmd in ["list", ""]:
+        print(f"\n{C_BOLD}{C_CYAN}[PROMPTS] Kognitive Linsen / Profile:{C_RESET}")
+        for name in pm.list_profiles():
+            active_flag = f" {C_GREEN}(aktiv){C_RESET}" if (name == pm.active_profile and not pm.custom_override) else ""
+            print(f"  • {C_BOLD}{name}{C_RESET}{active_flag}")
+        if pm.custom_override:
+            print(f"  • {C_YELLOW}custom override (aktiv){C_RESET}")
+        print()
+
+    elif subcmd == "show":
+        current = pm.get_base_prompt()
+        print(f"\n{C_CYAN}{'=' * 60}\n[AKTIVER BASIS-SYSTEM-PROMPT ({pm.active_profile})]\n{'=' * 60}{C_RESET}")
+        print(current)
+        print(f"{C_CYAN}{'=' * 60}{C_RESET}\n")
+
+    elif subcmd == "set" and len(parts) > 2:
+        target = parts[2].strip()
+        if pm.set_profile(target):
+            print(f"{C_GREEN}[OK] Kognitives Profil gewechselt auf: '{target}'{C_RESET}\n")
+        else:
+            print(f"{C_RED}[ERROR] Unbekanntes Profil '{target}'. Verfügbar: {list(pm.list_profiles().keys())}{C_RESET}\n")
+
+    elif subcmd == "custom" and len(parts) > 2:
+        pm.set_custom(parts[2].strip())
+        print(f"{C_YELLOW}[OK] Custom Ad-hoc-Prompt für diese Session gesetzt.{C_RESET}\n")
+
+    elif subcmd == "reset":
+        pm.reset()
+        print(f"{C_GREEN}[OK] Prompt auf Standardprofil ('default') zurückgesetzt.{C_RESET}\n")
+
+    else:
+        print(f"{C_YELLOW}[INFO] Nutzung: /prompt [list | show | set <name> | custom <text> | reset]{C_RESET}\n")
 
 
 # ==============================================================================
@@ -189,6 +234,9 @@ def run_local():
                 break
             elif user_input == "/help":
                 print_help("local")
+                continue
+            elif user_input.startswith("/prompt"):
+                handle_prompt_command(user_input, engine.prompt_manager)
                 continue
             elif user_input == "/clear":
                 session.clear()
@@ -256,7 +304,6 @@ async def run_remote(sse_url: str):
 
                 while True:
                     try:
-                        # Asynchroner Prompt, damit der Event-Loop und SSE-Keepalives aktiv bleiben
                         if p_session:
                             user_input = (await p_session.prompt_async("\nGeorg [Remote] > ")).strip()
                         else:
@@ -270,6 +317,9 @@ async def run_remote(sse_url: str):
                             break
                         elif user_input == "/help":
                             print_help("remote")
+                            continue
+                        elif user_input.startswith("/prompt"):
+                            handle_prompt_command(user_input, remote_engine.prompt_manager)
                             continue
                         elif user_input.startswith("/switch") and len(user_input.split()) > 1:
                             topo = user_input.split()[1]

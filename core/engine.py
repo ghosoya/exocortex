@@ -12,6 +12,7 @@ from server.graph_store import GraphStore
 from server.vault_io import VaultIO
 from .guards import prune_history_if_needed, slice_for_embedding
 from .session import SessionManager
+from core.prompts import PromptManager
 
 
 class ExecutionEngine:
@@ -30,7 +31,7 @@ class ExecutionEngine:
         self.num_ctx = num_ctx
         self.client = ollama.Client(host=ollama_host)
         self.config_dir = config_dir or (Path(__file__).parent.parent / "config")
-        self.system_prompt_base = self._load_base_prompt()
+        self.prompt_manager = PromptManager()
 
         # Tool-Registry (Entkoppeltes Dispatching)
         self.tools_schema = self._build_tools_schema()
@@ -194,7 +195,7 @@ class ExecutionEngine:
         yield {"event": "field_context", "xml": field_xml}
 
         # 2. System-Prompt dynamisch zusammenbauen
-        full_system_prompt = f"{self.system_prompt_base}\n\n### Aktiver Phasenraum:\n{field_xml}"
+        full_system_prompt = self.prompt_manager.build_system_prompt(field_xml)
 
         # 3. Session mit neuer Nutzereingabe aktualisieren
         self.session.add_user_message(user_input)
