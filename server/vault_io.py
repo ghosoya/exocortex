@@ -39,19 +39,33 @@ class VaultIO:
         return target_path
 
     def read_note(self, note_name: str) -> str:
-        """Liest eine Markdown-Notiz aus dem Vault (mit oder ohne .md Endung)."""
-        clean_name = note_name if note_name.endswith(".md") else f"{note_name}.md"
-        path = self._resolve_safe_path(clean_name)
-        if not path.exists():
-            raise FileNotFoundError(f"Notiz '{note_name}' nicht im Vault gefunden: {path}")
-        return path.read_text(encoding="utf-8")
+        """Liest eine Notiz; prüft Vault-Root und fällt tolerant aufs Scratchpad zurück."""
+        if not note_name.endswith(".md"):
+            note_name = f"{note_name}.md"
 
-    def append_scratchpad(self, content: str, filename: str = "Scratchpad.md") -> str:
+        target_path = self._resolve_safe_path(self.vault_path / note_name)
+        
+        # Fallback: Wenn nicht im Root gefunden, suche im Scratchpad-Ordner
+        if not target_path.exists() and not note_name.startswith("Scratchpad/"):
+            fallback_path = self._resolve_safe_path(self.scratchpad_dir / note_name)
+            if fallback_path.exists():
+                target_path = fallback_path
+
+        if not target_path.exists():
+            raise FileNotFoundError(f"Notiz '{note_name}' nicht im Vault gefunden: {target_path}")
+
+        return target_path.read_text(encoding="utf-8")
+
+    def append_scratchpad(self, content: str, filename: str = "Active_Scratchpad.md") -> str:
         # Garantiert stets die .md Endung im Obsidian Vault
         if not filename.endswith(".md"):
             filename = f"{filename}.md"
             
         target_path = self._resolve_safe_path(self.scratchpad_dir / filename)
+        
+        # Sicherstellen, dass eventuelle Unterordner (z. B. Inbox/) existieren
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        
         ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         entry = f"\n\n## [{ts}]\n{content.strip()}\n"
         with open(target_path, "a", encoding="utf-8") as f:
