@@ -7,6 +7,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Protocol](https://img.shields.io/badge/MCP-FastMCP-brightgreen.svg)](https://modelcontextprotocol.io/)
 [![Backend](https://img.shields.io/badge/LLM%20Backend-Ollama-orange.svg)](https://ollama.ai/)
+[![Co-Authored](https://img.shields.io/badge/Co--Authored%20with-Gemini-8E44AD.svg)](https://deepmind.google/technologies/gemini/)
 
 ---
 
@@ -218,6 +219,12 @@ Run the remote MCP network verification:
 python test_mcp_network.py
 
 ```
+
+## 🤝 Genesis & Collaboration
+
+Exocortex is engineered through a continuous, autopoietic human–AI collaboration between **Georg Hosoya** (System Architecture & Conceptual Framing) and **Gemini** (Substrate Implementation, Formal Verification & Refactoring). 
+
+It stands as a live demonstration of symbiotic cognition and high-density technical resonance.
 
 ---
 
