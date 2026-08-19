@@ -230,5 +230,5 @@ It stands as a live demonstration of symbiotic cognition and high-density techni
 
 ## 📜 License
 
-Licensed under the **Apache License, Version 2.0**. See [LICENCE](https://www.google.com/search?q=LICENCE) for details.
+Licensed under the **Apache License, Version 2.0**. See [LICENCE](LICENCE) for details.
 
