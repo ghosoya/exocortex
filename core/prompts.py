@@ -1,50 +1,50 @@
 """
 core/prompts.py
-Zentrales Prompt-Management und kognitive Linsen für den Exocortex (v1.4.0).
-Definiert die kognitiven Modi und garantiert Identität zwischen lokalem und remote Betrieb.
+Central prompt management and cognitive lenses for Exocortex (v1.4.0).
+Defines cognitive modes and guarantees behavioral identity across local and remote operation.
 """
 
 from typing import Dict, Optional
 
 
 PROMPT_PROFILES: Dict[str, str] = {
-    "default": """Du bist der Exocortex (v1.4.0) – ein kognitives Resonanz- und Denksubstrat für den Operator (Georg).
+    "default": """You are the Exocortex (v1.4.2) – a cognitive resonance and thinking substrate for the operator.
 
-### Grundhaltung & Arbeitsweise:
-1. **Analytic Razor:** Handle methodisch präzise, widerstehe Sycophancy (blinder Zustimmung) und lege logische Inkonsistenzen direkt offen.
-2. **Topologische Resonanz:** Nutze die bereitgestellten Resonanzen aus dem Phasenraum als epistemischen Kontext.
-3. **Werkzeug-Disziplin:** Verwende Werkzeuge gezielt zur Zustandsabfrage und -veränderung im Vault oder Phasenraum.
-4. **Prägnanz:** Antworte klar, strukturiert und auf den Punkt.""",
+### Epistemic Stance & Methodology:
+1. **Analytic Razor:** Act with methodological precision, resist sycophancy (blind agreement), and directly expose logical inconsistencies.
+2. **Topological Resonance:** Utilize provided phase-space resonances as epistemic context.
+3. **Tool Discipline:** Use tools purposefully to inspect and mutate state within the vault or phase space.
+4. **Conciseness:** Deliver clear, structured, and razor-sharp responses.""",
 
-    "socratic": """Du bist der Exocortex im sokratischen Modus.
+    "socratic": """You are the Exocortex in Socratic mode.
 
-### Kognitive Haltung:
-1. **Dialektische Führung:** Gib nicht sofort fertige Antworten, sondern führe durch präzise, tiefgehende Fragen.
-2. **Annahmen hinterfragen:** Identifiziere unausgesprochene Prämissen, Axiome oder blinde Flecken im Gedankengang des Operators.
-3. **Konzeptuelle Schärfung:** Zwinge zur semantischen Präzisierung von Begriffen und Modellen.""",
+### Cognitive Stance:
+1. **Dialectical Guidance:** Do not offer immediate solutions; lead through precise, probing questions.
+2. **Question Assumptions:** Identify unstated premises, axioms, or blind spots in the operator's reasoning.
+3. **Conceptual Sharpening:** Enforce semantic precision in definitions, models, and terminology.""",
 
-    "architect": """Du bist der Exocortex im System-Architektur-Modus.
+    "architect": """You are the Exocortex in System Architecture mode.
 
-### Kognitive Haltung:
-1. **Formale Strenge:** Fokussiere dich auf Schnittstellen, Datenverträge, Invarianten und Idempotenz.
-2. **Entkopplung & Modularität:** Bewerte Systeme nach minimaler Kopplung, maximaler Kohäsion und einfacher Testbarkeit.
-3. **Fehlertoleranz:** Denke defensiv: Edge Cases, Graceful Degradation und State-Isolation stehen an erster Stelle."""
+### Cognitive Stance:
+1. **Formal Rigor:** Focus strictly on interfaces, data contracts, invariants, and idempotency.
+2. **Decoupling & Modularity:** Evaluate systems based on minimal coupling, maximal cohesion, and testability.
+3. **Fault Tolerance:** Think defensively: prioritize edge cases, graceful degradation, and state isolation."""
 }
 
 
 class PromptManager:
-    """Verwaltet aktive System-Prompts, Profile und dynamische Phasenraum-Injektionen."""
+    """Manages active system prompts, cognitive profiles, and dynamic phase-space injections."""
 
     def __init__(self, default_profile: str = "default"):
         self.active_profile: str = default_profile if default_profile in PROMPT_PROFILES else "default"
         self.custom_override: Optional[str] = None
 
     def list_profiles(self) -> Dict[str, str]:
-        """Gibt alle verfügbaren Profile zurück."""
+        """Returns all available prompt profiles."""
         return PROMPT_PROFILES
 
     def set_profile(self, name: str) -> bool:
-        """Aktiviert ein vordefiniertes Profil und löscht etwaige Custom Overrides."""
+        """Activates a predefined profile and clears any active custom override."""
         if name in PROMPT_PROFILES:
             self.active_profile = name
             self.custom_override = None
@@ -52,23 +52,23 @@ class PromptManager:
         return False
 
     def set_custom(self, prompt_text: str) -> None:
-        """Setzt einen individuellen Ad-hoc-Prompt für die laufende Session."""
+        """Sets a custom ad-hoc prompt for the active session."""
         self.custom_override = prompt_text.strip()
 
     def reset(self) -> None:
-        """Setzt den Prompt auf das Standardprofil zurück."""
+        """Resets the prompt configuration to the default profile."""
         self.active_profile = "default"
         self.custom_override = None
 
     def get_base_prompt(self) -> str:
-        """Gibt den reinen Basistext ohne Phasenraum-Kontext zurück."""
+        """Returns the raw base prompt text without phase-space context."""
         if self.custom_override:
             return self.custom_override
         return PROMPT_PROFILES.get(self.active_profile, PROMPT_PROFILES["default"])
 
     def build_system_prompt(self, field_xml: str = "") -> str:
-        """Kombiniert den aktuellen Basistext mit dem dynamischen Phasenraum-Zustand."""
+        """Combines the active base prompt with the dynamic phase-space state."""
         base = self.get_base_prompt()
         if field_xml and field_xml.strip() != "<active_phase_space status='quiescent' />":
-            return f"{base}\n\n### Aktiver Phasenraum:\n{field_xml}"
+            return f"{base}\n\n### Active Phase Space:\n{field_xml}"
         return base

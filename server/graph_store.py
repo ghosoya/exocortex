@@ -1,7 +1,7 @@
 """
 server/graph_store.py
-Topologisches Substrat: NetworkX State Management, Vektor-Resonanz, Imprinting
-und automatische Obsidian-Canvas-Projektion.
+Topological substrate: NetworkX state management, vector resonance, imprinting,
+and automatic Obsidian Canvas projection.
 """
 
 from typing import Any, Dict, List, Optional, Tuple
@@ -44,16 +44,16 @@ class GraphStore:
             res = self.client.embeddings(model=self.embedding_model, prompt=safe_text)
             return res.get("embedding", [])
         except Exception as e:
-            print(f"[!] GraphStore Embedding-Fehler: {e}")
+            print(f"[!] GraphStore embedding error: {e}")
             return []
 
     def export_canvas(self, canvas_filename: str = "Exocortex_Interactive.canvas") -> str:
-        """Projiziert den NetworkX-Graphen in eine strukturierte Obsidian .canvas Datei."""
+        """Projects the NetworkX graph into a structured Obsidian .canvas file."""
         type_config = {
-            "BoundaryConstraint": {"x": -900, "color": "1"},   # Rot
+            "BoundaryConstraint": {"x": -900, "color": "1"},   # Red
             "PotentialWell": {"x": -300, "color": "5"},        # Cyan
-            "TrajectoryOperator": {"x": 350, "color": "3"},    # Lila
-            "PhaseSpaceTrace": {"x": 950, "color": "4"},       # Grün
+            "TrajectoryOperator": {"x": 350, "color": "3"},    # Purple
+            "PhaseSpaceTrace": {"x": 950, "color": "4"},       # Green
         }
 
         y_counters: Dict[str, int] = {k: 0 for k in type_config}
@@ -76,8 +76,8 @@ class GraphStore:
             label = attrs.get("label", node_id)
             payload = attrs.get("payload", "").strip()
             
-            # Markdown-Inhalt für die Canvas-Karte
-            text_content = f"### `{node_id}` {label}\n**Typ:** `{n_type}`\n\n{payload}"
+            # Markdown content for Canvas card
+            text_content = f"### `{node_id}` {label}\n**Type:** `{n_type}`\n\n{payload}"
 
             canvas_nodes.append({
                 "id": node_id,
@@ -115,8 +115,13 @@ class GraphStore:
         return str(canvas_path)
 
     def load_graph(self, graph_name: str) -> Dict[str, Any]:
-        """Lädt eine Topologie aus dem Vault und aktualisiert den Canvas."""
+        """Loads a topology from the vault and synchronizes the Canvas."""
         data = self.vault_io.read_graph_json(graph_name)
+        
+        # Backward compatibility: automatically normalize legacy 'links' to 'edges'
+        if "links" in data and "edges" not in data:
+            data["edges"] = data.pop("links")
+            
         self.graph = nx.node_link_graph(data, directed=True, multigraph=False)
         self.active_graph_name = graph_name
 
@@ -131,13 +136,13 @@ class GraphStore:
         if dirty:
             self.save_graph(graph_name)
         else:
-            # Canvas auch beim Laden synchronisieren
+            # Synchronize canvas on load as well
             self.export_canvas()
 
         return self.get_graph_stats()
 
     def save_graph(self, graph_name: Optional[str] = None) -> str:
-        """Serialisiert den Graph-Zustand ins JSON-Schema und synchronisiert den Canvas."""
+        """Serializes graph state into JSON schema and synchronizes the Canvas."""
         target_name = graph_name or self.active_graph_name
         self.graph.graph["updated_at"] = datetime.datetime.now().isoformat()
         self.graph.graph["name"] = target_name
@@ -147,7 +152,7 @@ class GraphStore:
         path = self.vault_io.write_graph_json(target_name, data)
         self.active_graph_name = target_name
 
-        # Automatische Canvas-Projektion
+        # Automatic Canvas projection
         self.export_canvas()
         return path
 
@@ -233,7 +238,7 @@ class GraphStore:
             for target in tensor_links:
                 if self.graph.has_node(target):
                     self.graph.add_edge(new_id, target, relation="tensor_link", weight=1.0)
-                    wired_connections.append(f"{target} (explizit)")
+                    wired_connections.append(f"{target} (explicit)")
 
         for existing_id, attrs in self.graph.nodes(data=True):
             if existing_id == new_id:
@@ -243,7 +248,7 @@ class GraphStore:
                 self.graph.add_edge(new_id, existing_id, relation="semantic_resonance", weight=round(sim, 2))
                 wired_connections.append(f"{existing_id} (sim: {sim:.2f})")
 
-        # Persistiert NetworkX-JSON UND aktualisiert Obsidian-Canvas
+        # Persists NetworkX JSON AND updates Obsidian Canvas
         self.save_graph(self.active_graph_name)
 
         return {

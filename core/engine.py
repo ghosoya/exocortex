@@ -1,6 +1,6 @@
 """
 core/engine.py
-ExecutionEngine: ReAct-Schleife, Tool-Dispatching und dynamische Kontext-Assemblierung.
+ExecutionEngine: ReAct loop, tool dispatching, and dynamic context assembly.
 """
 
 from typing import Any, Callable, Dict, Generator, List, Optional
@@ -34,7 +34,7 @@ class ExecutionEngine:
         self.config_dir = config_dir or (Path(__file__).parent.parent / "config")
         self.prompt_manager = PromptManager()
 
-        # Tool-Registry (Entkoppeltes Dispatching)
+        # Tool registry (decoupled dispatching)
         self.tools_schema = self._build_tools_schema()
         self.tool_handlers: Dict[str, Callable[..., Any]] = {
             "read_vault_note": self._tool_read_vault_note,
@@ -50,11 +50,14 @@ class ExecutionEngine:
                 "type": "function",
                 "function": {
                     "name": "read_vault_note",
-                    "description": "Liest eine Markdown-Notiz aus dem Obsidian-Vault ein.",
+                    "description": "Reads a Markdown note from the Obsidian vault.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "note_name": {"type": "string", "description": "Relativer Pfad oder Name (z.B. 'Sessions/systemic.md')"}
+                            "note_name": {
+                                "type": "string",
+                                "description": "Relative path or filename (e.g., 'Sessions/systemic.md')",
+                            }
                         },
                         "required": ["note_name"],
                     },
@@ -64,12 +67,15 @@ class ExecutionEngine:
                 "type": "function",
                 "function": {
                     "name": "append_scratchpad",
-                    "description": "Hängt Text an eine Scratchpad-Notiz im Vault an.",
+                    "description": "Appends text content to a scratchpad note in the vault.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "content": {"type": "string", "description": "Textinhalt."},
-                            "filename": {"type": "string", "description": "Dateiname (Default: Active_Scratchpad.md)"}
+                            "content": {"type": "string", "description": "Text content to append."},
+                            "filename": {
+                                "type": "string",
+                                "description": "Target filename (default: Active_Scratchpad.md)",
+                            },
                         },
                         "required": ["content"],
                     },
@@ -79,12 +85,12 @@ class ExecutionEngine:
                 "type": "function",
                 "function": {
                     "name": "exocortex_gauge_field",
-                    "description": "Misst Resonanzknoten im Phasenraum für ein bestimmtes Thema.",
+                    "description": "Gauges resonant nodes within the active phase space for a given query.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "query_vector": {"type": "string", "description": "Semantischer Suchbegriff."},
-                            "top_k": {"type": "integer", "description": "Maximale Anzahl Knoten (Default: 3)"}
+                            "query_vector": {"type": "string", "description": "Semantic query string."},
+                            "top_k": {"type": "integer", "description": "Maximum number of nodes (default: 3)"},
                         },
                         "required": ["query_vector"],
                     },
@@ -94,7 +100,7 @@ class ExecutionEngine:
                 "type": "function",
                 "function": {
                     "name": "exocortex_imprint_field",
-                    "description": "Erzeugt einen neuen Knoten in der Topologie und verknüpft ihn.",
+                    "description": "Creates and wires a new node into the active phase space topology.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -102,12 +108,12 @@ class ExecutionEngine:
                                 "type": "string",
                                 "enum": ["BoundaryConstraint", "TrajectoryOperator", "PotentialWell", "PhaseSpaceTrace"],
                             },
-                            "label": {"type": "string", "description": "Kompakter Bezeichner."},
-                            "content_payload": {"type": "string", "description": "Axiom, Regel oder Synthese."},
+                            "label": {"type": "string", "description": "Compact identifier or label."},
+                            "content_payload": {"type": "string", "description": "Axiom, constraint, or synthesis."},
                             "tensor_links": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "Liste von Ziel-Knoten-IDs (z.B. ['BC_001', 'PW_002'])"
+                                "description": "List of target node IDs (e.g., ['BC_001', 'PW_002'])",
                             },
                         },
                         "required": ["node_type", "label", "content_payload"],
@@ -118,7 +124,7 @@ class ExecutionEngine:
                 "type": "function",
                 "function": {
                     "name": "exocortex_temporal_anchor",
-                    "description": "Gibt die aktuelle Systemzeit und Kalenderwoche zurück.",
+                    "description": "Returns the current system timestamp, ISO 8601 string, and calendar week.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -129,20 +135,20 @@ class ExecutionEngine:
             },
         ]
 
-    # --- Tool Implementierungen ---
+    # --- Tool Implementations ---
     def _tool_read_vault_note(self, note_name: str) -> str:
         try:
             content = self.graph_store.vault_io.read_note(note_name)
             return f"<vault_note path='{note_name}'>\n{content}\n</vault_note>"
         except Exception as e:
-            return f"<error>Fehler beim Lesen von '{note_name}': {e}</error>"
+            return f"<error>Error reading note '{note_name}': {e}</error>"
 
     def _tool_append_scratchpad(self, content: str, filename: str = "Active_Scratchpad.md") -> str:
         try:
             path = self.graph_store.vault_io.append_scratchpad(content, filename)
             return f"<scratchpad status='appended' path='{path}' />"
         except Exception as e:
-            return f"<error>Fehler beim Schreiben ins Scratchpad: {e}</error>"
+            return f"<error>Error writing to scratchpad: {e}</error>"
 
     def _tool_gauge_field(self, query_vector: str, top_k: int = 3) -> str:
         res = self.graph_store.get_resonant_nodes(query_vector, top_k=top_k)
@@ -157,25 +163,25 @@ class ExecutionEngine:
     def _tool_imprint_field(self, node_type: str, label: str, content_payload: str, tensor_links: Optional[List[str]] = None) -> str:
         try:
             res = self.graph_store.imprint_node(node_type, label, content_payload, tensor_links)
-            conns = ", ".join(res["wired_connections"]) if res["wired_connections"] else "Keine"
+            conns = ", ".join(res["wired_connections"]) if res["wired_connections"] else "None"
             return (
                 f"Field state materialized: Node {res['node_id']} ('{label}') wired into '{res['topology']}'. "
-                f"| Verdrahtet mit: {conns}"
+                f"| Wired to: {conns}"
             )
         except Exception as e:
-            return f"<error>Imprinting fehlgeschlagen: {e}</error>"
+            return f"<error>Imprinting failed: {e}</error>"
 
     def _tool_temporal_anchor(self, scope: str = "full") -> str:
         now = datetime.datetime.now()
         iso = now.isoformat()
         human = now.strftime("%d.%m.%Y, %H:%M:%S")
         kw = now.isocalendar()[1]
-        return f"<temporal_anchor>\n  <human_readable>{human}</human_readable>\n  <iso8601>{iso}</iso8601>\n  <calendar_context>KW {kw}, Jahr {now.year}</calendar_context>\n</temporal_anchor>"
+        return f"<temporal_anchor>\n  <human_readable>{human}</human_readable>\n  <iso8601>{iso}</iso8601>\n  <calendar_context>Week {kw}, Year {now.year}</calendar_context>\n</temporal_anchor>"
 
     # --- ReAct Execution Loop ---
     def execute_turn(self, user_input: str, max_turns: int = 5) -> Generator[Dict[str, Any], None, None]:
         """
-        Führt einen vollen kognitiven Zug inklusive ReAct-Tool-Loop aus.
+        Executes a full cognitive turn including the ReAct tool loop.
         Yielded Events:
           - {'event': 'field_context', 'xml': str}
           - {'event': 'tool_call', 'name': str, 'args': dict}
@@ -183,19 +189,19 @@ class ExecutionEngine:
           - {'event': 'response_chunk', 'text': str}
           - {'event': 'completed', 'final_text': str}
         """
-        # 1. Vektor-Resonanz via Embedding Guard berechnen
+        # 1. Compute vector resonance via embedding guard
         safe_query = slice_for_embedding(user_input)
         field_xml = self.graph_store.assemble_field_context(safe_query)
         yield {"event": "field_context", "xml": field_xml}
 
-        # 2. System-Prompt dynamisch zusammenbauen
+        # 2. Dynamically assemble system prompt
         full_system_prompt = self.prompt_manager.build_system_prompt(field_xml)
 
-        # 3. Session mit neuer Nutzereingabe aktualisieren
+        # 3. Update session with new user input
         self.session.add_user_message(user_input)
         self.session.active_graph = self.graph_store.active_graph_name
 
-        # 4. Verlauf für Ollama vorbereiten
+        # 4. Prepare message history for Ollama
         history = prune_history_if_needed(self.session.messages)
         messages_payload = [{"role": "system", "content": full_system_prompt}] + history
 
@@ -216,7 +222,7 @@ class ExecutionEngine:
             content = msg.get("content", "")
             tool_calls = msg.get("tool_calls", [])
 
-            # Tool Calls entdeckt?
+            # Tool calls detected?
             if tool_calls:
                 messages_payload.append({"role": "assistant", "content": content or "", "tool_calls": tool_calls})
 
@@ -230,7 +236,7 @@ class ExecutionEngine:
                     if handler:
                         tool_result = str(handler(**fn_args))
                     else:
-                        tool_result = f"<error>Unbekanntes Tool '{fn_name}'</error>"
+                        tool_result = f"<error>Unknown tool '{fn_name}'</error>"
 
                     yield {"event": "tool_result", "result": tool_result}
                     messages_payload.append({"role": "tool", "content": tool_result})

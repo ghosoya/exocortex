@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-chat_exocortex.py (v1.4.0)
-Universeller Terminal-Runner mit Dual-Mode-Unterstützung:
-  1. Embedded Mode (Lokal via direkte Klasseninstanzen)
-  2. Remote Mode   (Netzwerk via FastMCP / SSE Client)
+chat_exocortex.py (v1.4.2)
+Universal terminal runner with dual-mode support:
+  1. Embedded Mode (Local via direct class instances)
+  2. Remote Mode   (Network via FastMCP / SSE client)
 """
 
 import traceback
@@ -14,7 +14,7 @@ import argparse
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional
 
-# Fallback für prompt_toolkit
+# Fallback for prompt_toolkit
 try:
     from prompt_toolkit import PromptSession
     from prompt_toolkit.key_binding import KeyBindings
@@ -24,22 +24,22 @@ except ImportError:
 
 import ollama
 
-# Konfiguration & Kognition
+# Configuration & Cognition
 from core.config import settings
 from core.prompts import PromptManager
 from core.session import SessionManager
 from core.engine import ExecutionEngine
 from core.guards import slice_for_embedding, prune_history_if_needed
 
-# Lokale Substrate
+# Local Substrates
 from server.vault_io import VaultIO
 from server.graph_store import GraphStore
 
-# MCP Client Imports für den Remote-Modus
+# MCP Client Imports for Remote Mode
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 
-# ANSI Farbcodes
+# ANSI Color Codes
 C_CYAN = "\033[1;36m"
 C_YELLOW = "\033[1;33m"
 C_GREEN = "\033[1;32m"
@@ -50,54 +50,54 @@ C_RESET = "\033[0m"
 
 
 # ==============================================================================
-# PROMPT COMMAND HANDLER (FÜR BEIDE MODI)
+# PROMPT COMMAND HANDLER (FOR BOTH MODES)
 # ==============================================================================
 def handle_prompt_command(user_input: str, prompt_manager: PromptManager):
-    """Zentraler Handler für /prompt Subkommandos."""
+    """Central handler for /prompt subcommands."""
     parts = user_input.split()
     sub = parts[1].lower() if len(parts) > 1 else "list"
 
     if sub == "list":
         profiles = prompt_manager.list_profiles()
         active = prompt_manager.active_profile
-        print(f"\n{C_CYAN}[PROMPTS]{C_RESET} Kognitive Linsen / Profile:")
+        print(f"\n{C_CYAN}[PROMPTS]{C_RESET} Cognitive Lenses / Profiles:")
         for p in profiles:
-            mark = f" {C_GREEN}(aktiv){C_RESET}" if p == active else ""
+            mark = f" {C_GREEN}(active){C_RESET}" if p == active else ""
             print(f"  • {p}{mark}")
         print()
     elif sub == "set" and len(parts) > 2:
         target = parts[2]
         if prompt_manager.set_profile(target):
-            print(f"{C_GREEN}[OK] Kognitives Profil gewechselt auf: '{target}'{C_RESET}\n")
+            print(f"{C_GREEN}[OK] Cognitive profile switched to: '{target}'{C_RESET}\n")
         else:
-            print(f"{C_RED}[ERROR] Profil '{target}' nicht gefunden.{C_RESET}\n")
+            print(f"{C_RED}[ERROR] Profile '{target}' not found.{C_RESET}\n")
     elif sub == "show":
         print(f"\n{C_CYAN}{'=' * 60}{C_RESET}")
-        print(f"{C_BOLD}[AKTIVER BASIS-SYSTEM-PROMPT ({prompt_manager.active_profile})]{C_RESET}")
+        print(f"{C_BOLD}[ACTIVE BASE SYSTEM PROMPT ({prompt_manager.active_profile})]{C_RESET}")
         print(f"{C_CYAN}{'=' * 60}{C_RESET}")
         print(prompt_manager.get_base_prompt())
         print(f"{C_CYAN}{'=' * 60}{C_RESET}\n")
     elif sub == "reset":
         prompt_manager.reset()
-        print(f"{C_GREEN}[OK] Prompt auf Standardprofil ('default') zurückgesetzt.{C_RESET}\n")
+        print(f"{C_GREEN}[OK] Prompt reset to default profile ('default').{C_RESET}\n")
     else:
-        print(f"{C_YELLOW}[INFO] Verwendung: /prompt [list | set <profil> | show | reset]{C_RESET}\n")
+        print(f"{C_YELLOW}[INFO] Usage: /prompt [list | set <profile> | show | reset]{C_RESET}\n")
 
 
 def list_available_sessions(vault_io: VaultIO) -> List[str]:
-    """Liest alle gespeicherten Sessions aus dem Sessions-Ordner des Vaults."""
+    """Reads all persisted sessions from the vault's Sessions directory."""
     sessions_dir = vault_io.vault_path / "Sessions"
     if not sessions_dir.exists():
         return []
-    # JSON-Dateien ohne Endung sammeln
+    # Collect JSON files without extension
     return sorted([f.stem for f in sessions_dir.glob("*.json")])
 
 
 # ==============================================================================
-# REMOTE MCP ADAPTER (FÜR --remote)
+# REMOTE MCP ADAPTER (FOR --remote)
 # ==============================================================================
 class RemoteMCPEngine:
-    """Orchestriert Kognition über einen entfernten FastMCP-Daemon via SSE."""
+    """Orchestrates cognition via a remote FastMCP daemon over SSE."""
 
     def __init__(
         self,
@@ -129,7 +129,7 @@ class RemoteMCPEngine:
             })
 
     async def execute_turn(self, user_input: str, mcp_session: ClientSession, max_turns: int = 5):
-        # 1. Resonanz über Remote Daemon messen
+        # 1. Gauge resonance via remote daemon
         safe_query = slice_for_embedding(user_input)
         try:
             gauge_res = await mcp_session.call_tool("exocortex_gauge_field", arguments={"query_vector": safe_query, "top_k": 4})
@@ -139,11 +139,11 @@ class RemoteMCPEngine:
 
         yield {"event": "field_context", "xml": field_xml}
 
-        # 2. System-Prompt dynamisch aus PromptManager beziehen
+        # 2. Dynamically retrieve system prompt from PromptManager
         base_prompt = self.prompt_manager.get_base_prompt()
-        full_system_prompt = f"{base_prompt}\n\n### Aktiver Phasenraum (Remote):\n{field_xml}"
+        full_system_prompt = f"{base_prompt}\n\n### Active Phase Space (Remote):\n{field_xml}"
 
-        # 3. Session updaten
+        # 3. Update session
         self.session.add_user_message(user_input)
         history = prune_history_if_needed(self.session.messages)
         messages_payload = [{"role": "system", "content": full_system_prompt}] + history
@@ -152,7 +152,7 @@ class RemoteMCPEngine:
         while turn_count < max_turns:
             turn_count += 1
 
-            # Non-blocking Chat-Aufruf via Thread
+            # Non-blocking chat call via thread
             response = await asyncio.to_thread(
                 self.client.chat,
                 model=self.model_name,
@@ -174,12 +174,12 @@ class RemoteMCPEngine:
 
                     yield {"event": "tool_call", "name": fn_name, "args": fn_args}
 
-                    # Remote Tool Execution über FastMCP
+                    # Remote tool execution via FastMCP
                     try:
                         res = await mcp_session.call_tool(fn_name, arguments=fn_args)
                         tool_result = res.content[0].text if res.content else ""
                     except Exception as e:
-                        tool_result = f"<error>Remote Tool Fehler: {e}</error>"
+                        tool_result = f"<error>Remote tool error: {e}</error>"
 
                     yield {"event": "tool_result", "result": tool_result}
                     messages_payload.append({"role": "tool", "content": tool_result})
@@ -194,31 +194,31 @@ class RemoteMCPEngine:
 # ==============================================================================
 def print_banner(mode: str, target: str, model: str):
     print(f"{C_CYAN}{'=' * 70}{C_RESET}")
-    print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.0 (Dual-Mode Runner){C_RESET}")
-    print(f"[*] Modus: {C_GREEN}{mode.upper()}{C_RESET} | Ziel: {C_YELLOW}{target}{C_RESET} | Modell: {C_CYAN}{model}{C_RESET}")
-    print(f"[*] Senden: [Enter] | Zeilenumbruch: [Alt+Enter] | Ende: 'exit'")
-    print(f"[*] Befehle: /save | /load | /prompt | /context | /clear | /help" + (" | /graph" if mode == "local" else " | /switch <Topologie>"))
+    print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.2 (Dual-Mode Runner){C_RESET}")
+    print(f"[*] Mode: {C_GREEN}{mode.upper()}{C_RESET} | Target: {C_YELLOW}{target}{C_RESET} | Model: {C_CYAN}{model}{C_RESET}")
+    print(f"[*] Send: [Enter] | Line break: [Alt+Enter] | Quit: 'exit'")
+    print(f"[*] Commands: /save | /load | /prompt | /context | /clear | /help" + (" | /graph" if mode == "local" else " | /switch <Topology>"))
     print(f"{C_CYAN}{'=' * 70}{C_RESET}\n")
 
 
 def print_help(mode: str):
-    print(f"\n{C_BOLD}[INFO] Befehlsübersicht ({mode.upper()}-Modus):{C_RESET}")
-    print("  /prompt [list|set|show|reset] - Kognitive Profile verwalten")
+    print(f"\n{C_BOLD}[INFO] Command Overview ({mode.upper()} Mode):{C_RESET}")
+    print("  /prompt [list|set|show|reset] - Manage cognitive profiles")
     if mode == "local":
-        print("  /graph list                   - Zeigt alle Topologien im Vault")
-        print("  /graph load <Name>            - Wechselt die aktive Topologie")
-        print("  /graph info                   - Status und Knotenverteilung")
+        print("  /graph list                   - List all topologies in vault")
+        print("  /graph load <Name>            - Switch active topology")
+        print("  /graph info                   - Status and node distribution")
     else:
-        print("  /switch <Name>                - Wechselt Topologie auf Remote-Daemon")
-    print("  /save [Name]                  - Speichert Session (Markdown + JSON)")
-    print("  /load [Name]                  - Lädt oder listet gespeicherte Sessions")
-    print("  /context                      - Zeigt Token-Auslastung")
-    print("  /clear                        - Leert den Verlauf")
-    print("  exit                          - Beendet die Session\n")
+        print("  /switch <Name>                - Switch topology on remote daemon")
+    print("  /save [Name]                  - Save session (Markdown + JSON)")
+    print("  /load [Name]                  - Load or list saved sessions")
+    print("  /context                      - Display token usage")
+    print("  /clear                        - Clear message history")
+    print("  exit                          - Terminate session\n")
 
 
 # ==============================================================================
-# RUNNER MODI
+# RUNNER MODES
 # ==============================================================================
 def run_local():
     vault_io = VaultIO()
@@ -239,13 +239,13 @@ def run_local():
 
     while True:
         try:
-            user_input = p_session.prompt("\nGeorg > ").strip() if p_session else input("\nGeorg > ").strip()
+            user_input = p_session.prompt("\nOperator > ").strip() if p_session else input("\nOperator > ").strip()
             if not user_input:
                 continue
 
-            # 1. Befehle abfangen
+            # 1. Command interception
             if user_input.lower() in ["exit", "quit"]:
-                print(f"\n{C_GRAY}[*] Exocortex beendet.{C_RESET}")
+                print(f"\n{C_GRAY}[*] Exocortex session terminated.{C_RESET}")
                 break
             elif user_input == "/help":
                 print_help("local")
@@ -255,16 +255,16 @@ def run_local():
                 continue
             elif user_input == "/clear":
                 session.clear()
-                print(f"{C_GREEN}[OK] Verlauf geleert.{C_RESET}\n")
+                print(f"{C_GREEN}[OK] Message history cleared.{C_RESET}\n")
                 continue
             elif user_input == "/context":
                 usage = session.get_token_usage()
-                print(f"{C_CYAN}[CONTEXT]{C_RESET} {usage['estimated_tokens']} Tokens über {usage['message_count']} Nachrichten.\n")
+                print(f"{C_CYAN}[CONTEXT]{C_RESET} {usage['estimated_tokens']} tokens across {usage['message_count']} messages.\n")
                 continue
             elif user_input.startswith("/save"):
                 name = user_input.split()[1] if len(user_input.split()) > 1 else None
                 paths = session.save_session(name)
-                print(f"{C_GREEN}[OK] Gespeichert in Vault:\n  ↳ {paths['markdown']}\n  ↳ {paths['json']}{C_RESET}\n")
+                print(f"{C_GREEN}[OK] Saved to vault:\n  ↳ {paths['markdown']}\n  ↳ {paths['json']}{C_RESET}\n")
                 continue
             elif user_input.startswith("/load"):
                 parts = user_input.split()
@@ -272,31 +272,31 @@ def run_local():
                     name = parts[1]
                     try:
                         session.load_session(name)
-                        print(f"{C_GREEN}[OK] Session '{name}' geladen ({len(session.messages)} Nachrichten).{C_RESET}\n")
+                        print(f"{C_GREEN}[OK] Session '{name}' loaded ({len(session.messages)} messages).{C_RESET}\n")
                     except Exception as e:
-                        print(f"{C_RED}[ERROR] Fehler beim Laden der Session: {e}{C_RESET}\n")
+                        print(f"{C_RED}[ERROR] Failed to load session: {e}{C_RESET}\n")
                 else:
                     saved = list_available_sessions(vault_io)
                     if saved:
-                        print(f"{C_CYAN}[SESSIONS]{C_RESET} Verfügbare Sessions: " + ", ".join(f"'{s}'" for s in saved) + "\n")
+                        print(f"{C_CYAN}[SESSIONS]{C_RESET} Available sessions: " + ", ".join(f"'{s}'" for s in saved) + "\n")
                     else:
-                        print(f"{C_YELLOW}[INFO] Keine gespeicherten Sessions im Vault gefunden.{C_RESET}\n")
+                        print(f"{C_YELLOW}[INFO] No saved sessions found in vault.{C_RESET}\n")
                 continue
             elif user_input.startswith("/graph"):
                 parts = user_input.split()
                 sub = parts[1].lower() if len(parts) > 1 else "info"
                 if sub == "list":
-                    print(f"{C_CYAN}[TOPOLOGIEN]{C_RESET} " + ", ".join(f"'{g}'" for g in vault_io.list_graphs()) + "\n")
+                    print(f"{C_CYAN}[TOPOLOGIES]{C_RESET} " + ", ".join(f"'{g}'" for g in vault_io.list_graphs()) + "\n")
                 elif sub == "load" and len(parts) > 2:
                     st = graph_store.load_graph(parts[2])
                     session.active_graph = st["name"]
-                    print(f"{C_GREEN}[OK] Topologie gewechselt: '{st['name']}' ({st['node_count']} Knoten){C_RESET}\n")
+                    print(f"{C_GREEN}[OK] Topology switched: '{st['name']}' ({st['node_count']} nodes){C_RESET}\n")
                 elif sub == "info":
                     st = graph_store.get_graph_stats()
-                    print(f"{C_CYAN}[GRAPH]{C_RESET} '{st['name']}' | {st['node_count']} Knoten | {st['edge_count']} Kanten\n")
+                    print(f"{C_CYAN}[GRAPH]{C_RESET} '{st['name']}' | {st['node_count']} nodes | {st['edge_count']} edges\n")
                 continue
 
-            # 2. ReAct-Turn ausführen
+            # 2. Execute ReAct turn
             for event in engine.execute_turn(user_input):
                 ev = event.get("event")
                 if ev == "tool_call":
@@ -319,7 +319,7 @@ async def run_remote(sse_url: str):
     prompt_mgr = PromptManager()
     remote_engine = RemoteMCPEngine(sse_url, session, prompt_manager=prompt_mgr)
 
-    print(f"[*] Verbinde mit Remote Daemon auf {sse_url}...")
+    print(f"[*] Connecting to remote daemon at {sse_url}...")
     try:
         async with sse_client(sse_url) as (read_stream, write_stream):
             async with ClientSession(read_stream, write_stream) as mcp_session:
@@ -339,16 +339,16 @@ async def run_remote(sse_url: str):
                 while True:
                     try:
                         if p_session:
-                            user_input = (await p_session.prompt_async("\nGeorg [Remote] > ")).strip()
+                            user_input = (await p_session.prompt_async("\nOperator [Remote] > ")).strip()
                         else:
-                            user_input = (await asyncio.to_thread(input, "\nGeorg [Remote] > ")).strip()
+                            user_input = (await asyncio.to_thread(input, "\nOperator [Remote] > ")).strip()
 
                         if not user_input:
                             continue
 
-                        # 1. Befehle abfangen
+                        # 1. Command interception
                         if user_input.lower() in ["exit", "quit"]:
-                            print(f"\n{C_GRAY}[*] Remote-Verbindung getrennt. Exocortex beendet.{C_RESET}")
+                            print(f"\n{C_GRAY}[*] Remote connection closed. Exocortex terminated.{C_RESET}")
                             break
                         elif user_input == "/help":
                             print_help("remote")
@@ -358,16 +358,16 @@ async def run_remote(sse_url: str):
                             continue
                         elif user_input == "/clear":
                             session.clear()
-                            print(f"{C_GREEN}[OK] Verlauf geleert.{C_RESET}\n")
+                            print(f"{C_GREEN}[OK] Message history cleared.{C_RESET}\n")
                             continue
                         elif user_input == "/context":
                             usage = session.get_token_usage()
-                            print(f"{C_CYAN}[CONTEXT]{C_RESET} {usage['estimated_tokens']} Tokens über {usage['message_count']} Nachrichten.\n")
+                            print(f"{C_CYAN}[CONTEXT]{C_RESET} {usage['estimated_tokens']} tokens across {usage['message_count']} messages.\n")
                             continue
                         elif user_input.startswith("/save"):
                             name = user_input.split()[1] if len(user_input.split()) > 1 else None
                             paths = session.save_session(name)
-                            print(f"{C_GREEN}[OK] Gespeichert in Vault:\n  ↳ {paths['markdown']}\n  ↳ {paths['json']}{C_RESET}\n")
+                            print(f"{C_GREEN}[OK] Saved to vault:\n  ↳ {paths['markdown']}\n  ↳ {paths['json']}{C_RESET}\n")
                             continue
                         elif user_input.startswith("/load"):
                             parts = user_input.split()
@@ -375,15 +375,15 @@ async def run_remote(sse_url: str):
                                 name = parts[1]
                                 try:
                                     session.load_session(name)
-                                    print(f"{C_GREEN}[OK] Session '{name}' geladen ({len(session.messages)} Nachrichten).{C_RESET}\n")
+                                    print(f"{C_GREEN}[OK] Session '{name}' loaded ({len(session.messages)} messages).{C_RESET}\n")
                                 except Exception as e:
-                                    print(f"{C_RED}[ERROR] Fehler beim Laden der Session: {e}{C_RESET}\n")
+                                    print(f"{C_RED}[ERROR] Failed to load session: {e}{C_RESET}\n")
                             else:
                                 saved = list_available_sessions(vault_io)
                                 if saved:
-                                    print(f"{C_CYAN}[SESSIONS]{C_RESET} Verfügbare Sessions: " + ", ".join(f"'{s}'" for s in saved) + "\n")
+                                    print(f"{C_CYAN}[SESSIONS]{C_RESET} Available sessions: " + ", ".join(f"'{s}'" for s in saved) + "\n")
                                 else:
-                                    print(f"{C_YELLOW}[INFO] Keine gespeicherten Sessions im Vault gefunden.{C_RESET}\n")
+                                    print(f"{C_YELLOW}[INFO] No saved sessions found in vault.{C_RESET}\n")
                             continue
                         elif user_input.startswith(("/switch", "/graph")) and len(user_input.split()) > 1:
                             parts = user_input.split()
@@ -392,10 +392,10 @@ async def run_remote(sse_url: str):
                                 res = await mcp_session.call_tool("exocortex_switch_topology", arguments={"topology_name": topo})
                                 print(f"{C_GREEN}[OK] {res.content[0].text}{C_RESET}\n")
                             except Exception as e:
-                                print(f"{C_RED}[ERROR] Topologie-Wechsel fehlgeschlagen: {e}{C_RESET}\n")
+                                print(f"{C_RED}[ERROR] Topology switch failed: {e}{C_RESET}\n")
                             continue
 
-                        # 2. Remote Turn über asynchronen Generator
+                        # 2. Execute remote turn
                         async for event in remote_engine.execute_turn(user_input, mcp_session):
                             ev = event.get("event")
                             if ev == "tool_call":
@@ -411,18 +411,18 @@ async def run_remote(sse_url: str):
                     except EOFError:
                         break
     except Exception as e:
-        print(f"{C_RED}[!] Fehler im Remote-Turn:{C_RESET}")
+        print(f"{C_RED}[!] Error in remote turn:{C_RESET}")
         traceback.print_exc()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Exocortex Terminal Runner (v1.4.0)")
+    parser = argparse.ArgumentParser(description="Exocortex Terminal Runner (v1.4.2)")
     parser.add_argument(
         "--remote",
         nargs="?",
         const=f"http://{settings.mcp_host}:{settings.mcp_port}/sse",
         default=None,
-        help=f"Verbindet mit Remote-MCP-Daemon (Standard: http://{settings.mcp_host}:{settings.mcp_port}/sse)",
+        help=f"Connect to remote MCP daemon (default: http://{settings.mcp_host}:{settings.mcp_port}/sse)",
     )
     args = parser.parse_args()
 

@@ -1,6 +1,6 @@
 """
 core/session.py
-Kapselung des Session-Zustands, Verlaufshistorie und Vault-Persistenz.
+Encapsulation of session state, message history, and vault persistence.
 """
 
 from typing import Any, Dict, List, Optional
@@ -44,15 +44,15 @@ class SessionManager:
         }
 
     def save_session(self, target_name: Optional[str] = None) -> Dict[str, str]:
-        """Speichert die Session synchron als Markdown-Notiz und JSON-State."""
+        """Synchronously persists the session as a Markdown note and JSON state."""
         name = target_name or self.session_name
         self.session_name = name
-        timestamp_human = datetime.datetime.now().strftime("%d.%m.%Y, %H:%M:%S")
+        timestamp_human = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # 1. Markdown Export für Obsidian
+        # 1. Markdown export for Obsidian
         md_lines = [
             f"# 🧠 Exocortex Session: {name}",
-            f"**Datum:** {timestamp_human} | **Graph:** `{self.active_graph}` | **Nachrichten:** `{len(self.messages)}`\n",
+            f"**Date:** {timestamp_human} | **Graph:** `{self.active_graph}` | **Messages:** `{len(self.messages)}`\n",
             "---\n",
         ]
 
@@ -60,7 +60,7 @@ class SessionManager:
             role = msg.get("role")
             content = msg.get("content", "")
             if role == "user":
-                md_lines.append(f"### 👤 Georg\n\n{content}\n\n---")
+                md_lines.append(f"### 👤 Operator\n\n{content}\n\n---")
             elif role == "assistant" and content:
                 md_lines.append(f"### ⚡ Exocortex\n\n{content}\n\n---")
 
@@ -68,7 +68,7 @@ class SessionManager:
         with open(md_path, "w", encoding="utf-8") as f:
             f.write("\n".join(md_lines))
 
-        # 2. JSON State Export (für vollständige Rekonstruktion)
+        # 2. JSON state export (for full session reconstruction)
         state_data = {
             "session_name": name,
             "saved_at": datetime.datetime.now().isoformat(),
@@ -82,10 +82,10 @@ class SessionManager:
         return {"markdown": str(md_path), "json": str(json_path)}
 
     def load_session(self, name: str) -> Dict[str, Any]:
-        """Lädt den vollständigen Zustand einer Session aus dem JSON-State."""
+        """Loads the complete session state from a JSON state file."""
         json_path = self.vault_io.sessions_dir / f"{name}.json"
         if not json_path.exists():
-            raise FileNotFoundError(f"Keine Session-Datei '{name}.json' in {self.vault_io.sessions_dir} gefunden.")
+            raise FileNotFoundError(f"No session file '{name}.json' found in {self.vault_io.sessions_dir}.")
 
         with open(json_path, "r", encoding="utf-8") as f:
             data = json.load(f)

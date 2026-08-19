@@ -1,6 +1,6 @@
 """
 server/vault_io.py
-Isolierte, sandboxed I/O-Schicht für die Interaktion mit dem Obsidian-Vault.
+Isolated, sandboxed I/O layer for interacting with the Obsidian vault.
 """
 
 import datetime
@@ -15,14 +15,14 @@ class VaultIO:
     def __init__(self, vault_path: Optional[Path] = None):
         self.vault_path = Path(vault_path or settings.vault_path).resolve()
         
-        # Topologie-Verzeichnis (aus settings, mit sicherem Fallback auf 'graphs')
+        # Topology directory (from settings, with safe fallback to 'graphs')
         topo_name = settings.topologies_dir_name
         if not (self.vault_path / topo_name).exists() and (self.vault_path / "graphs").exists():
             self.graphs_dir = self.vault_path / "graphs"
         else:
             self.graphs_dir = self.vault_path / topo_name
 
-        self.topologies_dir = self.graphs_dir  # Einheitlicher Alias
+        self.topologies_dir = self.graphs_dir  # Uniform alias
         self.sessions_dir = self.vault_path / settings.sessions_dir_name
         self.scratchpad_dir = self.vault_path / settings.scratchpad_dir_name
         self._ensure_directories()
@@ -35,35 +35,35 @@ class VaultIO:
         target_base = base_dir or self.vault_path
         target_path = (target_base / relative_path).resolve()
         if not str(target_path).startswith(str(self.vault_path)):
-            raise PermissionError(f"Sicherheitsverletzung: Pfad '{relative_path}' liegt außerhalb des Vaults.")
+            raise PermissionError(f"Security violation: Path '{relative_path}' is outside the vault.")
         return target_path
 
     def read_note(self, note_name: str) -> str:
-        """Liest eine Notiz; prüft Vault-Root und fällt tolerant aufs Scratchpad zurück."""
+        """Reads a note; checks vault root and gracefully falls back to scratchpad."""
         if not note_name.endswith(".md"):
             note_name = f"{note_name}.md"
 
         target_path = self._resolve_safe_path(self.vault_path / note_name)
         
-        # Fallback: Wenn nicht im Root gefunden, suche im Scratchpad-Ordner
+        # Fallback: If not found in root, look in scratchpad directory
         if not target_path.exists() and not note_name.startswith("Scratchpad/"):
             fallback_path = self._resolve_safe_path(self.scratchpad_dir / note_name)
             if fallback_path.exists():
                 target_path = fallback_path
 
         if not target_path.exists():
-            raise FileNotFoundError(f"Notiz '{note_name}' nicht im Vault gefunden: {target_path}")
+            raise FileNotFoundError(f"Note '{note_name}' not found in vault: {target_path}")
 
         return target_path.read_text(encoding="utf-8")
 
     def append_scratchpad(self, content: str, filename: str = "Active_Scratchpad.md") -> str:
-        # Garantiert stets die .md Endung im Obsidian Vault
+        # Guarantees .md extension within the Obsidian vault
         if not filename.endswith(".md"):
             filename = f"{filename}.md"
             
         target_path = self._resolve_safe_path(self.scratchpad_dir / filename)
         
-        # Sicherstellen, dass eventuelle Unterordner (z. B. Inbox/) existieren
+        # Ensure potential subdirectories (e.g., Inbox/) exist
         target_path.parent.mkdir(parents=True, exist_ok=True)
         
         ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -73,16 +73,16 @@ class VaultIO:
         return str(target_path)
 
     def read_graph_json(self, graph_name: str) -> Dict[str, Any]:
-        """Lädt eine Graph-Topologie als JSON."""
+        """Loads a graph topology as JSON."""
         clean_name = graph_name if graph_name.endswith(".json") else f"{graph_name}.json"
         path = self._resolve_safe_path(clean_name, base_dir=self.graphs_dir)
         if not path.exists():
-            raise FileNotFoundError(f"Topologie '{graph_name}' nicht gefunden unter {path}")
+            raise FileNotFoundError(f"Topology '{graph_name}' not found at {path}")
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
     def write_graph_json(self, graph_name: str, data: Dict[str, Any]) -> str:
-        """Speichert eine Graph-Topologie als JSON."""
+        """Serializes a graph topology as JSON."""
         clean_name = graph_name if graph_name.endswith(".json") else f"{graph_name}.json"
         path = self._resolve_safe_path(clean_name, base_dir=self.graphs_dir)
         with open(path, "w", encoding="utf-8") as f:
@@ -90,5 +90,5 @@ class VaultIO:
         return str(path)
 
     def list_graphs(self) -> List[str]:
-        """Listet alle verfügbaren Topologie-Dateien auf."""
+        """Lists all available topology files."""
         return sorted([f.stem for f in self.graphs_dir.glob("*.json")])

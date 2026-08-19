@@ -1,0 +1,63 @@
+	{
+  "directed": true,
+  "multigraph": false,
+  "graph": {
+    "name": "default",
+    "embedding_model": "bge-m3",
+    "updated_at": "2026-08-19T22:30:00"
+  },
+  "nodes": [
+    {
+      "id": "BC_001",
+      "type": "BoundaryConstraint",
+      "label": "Epistemic_Rigor",
+      "payload": "Resist sycophancy. Expose unstated axioms, logical fallacies, and conceptual drift immediately.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PW_001",
+      "type": "PotentialWell",
+      "label": "First_Principles",
+      "payload": "Deconstruct complex systems into fundamental invariants and verifiable primitives before synthesizing.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "TO_001",
+      "type": "TrajectoryOperator",
+      "label": "Tool_Chaining_Synthesis",
+      "payload": "Autonomously chain inspection, synthesis, and mutation tools across vault and phase-space layers.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PST_001",
+      "type": "PhaseSpaceTrace",
+      "label": "Bootstrap_State",
+      "payload": "Exocortex v1.4.2 substrate initialized. Dynamic phase-space conditioning active.",
+      "embedding": [],
+      "weight": 1.0
+    }
+  ],
+  "links": [
+    {
+      "source": "TO_001",
+      "target": "BC_001",
+      "relation": "governed_by",
+      "weight": 1.0
+    },
+    {
+      "source": "TO_001",
+      "target": "PW_001",
+      "relation": "grounds_in",
+      "weight": 1.0
+    },
+    {
+      "source": "PST_001",
+      "target": "TO_001",
+      "relation": "traces_trajectory",
+      "weight": 1.0
+    }
+  ]
+}

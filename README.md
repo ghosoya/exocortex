@@ -1,139 +1,227 @@
-  # Exocortex (v1.4.0)
+# 🧠 Exocortex (v1.4.2)
 
-> A modular cognitive layer and deterministic substrate connecting Large Language Models with topological knowledge graphs, Obsidian vaults, and cognitive lenses.
+> **Topological Cognitive Substrate & Autopoietic Thinking Partner**
+> An open-source, local-first cognition engine featuring dynamic phase-space memory, Model Context Protocol (MCP) integration, and bi-directional Obsidian vault synchronization.
 
-Exocortex augments local and remote LLMs (via Ollama or FastMCP) with stateful context topologies, fault-tolerant Markdown/Vault I/O, and specialized cognitive profiles designed to mitigate context-drift and sycophancy.
-
----
-
-## Key Features
-
-* **Dual-Mode Runner (`chat_exocortex.py`):** Unified interactive CLI supporting direct in-process execution as well as decoupled network operation via FastMCP / Server-Sent Events (SSE).
-* **Cognitive Lenses (`PromptManager`):** Dynamic runtime switching of thinking modes (`default`, `socratic`, `architect`) without disrupting the conversation state.
-* **Topological Knowledge Graphs (`GraphStore`):** Phase-space analysis and dynamic topological context switching (`/graph load <topology>`).
-* **Vault & Scratchpad Integrity (`VaultIO`):** Resilient note reading, append-only scratchpad logging with automatic directory creation (`mkdir -p`), and intelligent path resolution.
-* **Cross-Mode Session Hydration:** Seamless transition between local and remote environments with full conversation and token state preservation (`/save`, `/load`).
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENCE)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Protocol](https://img.shields.io/badge/MCP-FastMCP-brightgreen.svg)](https://modelcontextprotocol.io/)
+[![Backend](https://img.shields.io/badge/LLM%20Backend-Ollama-orange.svg)](https://ollama.ai/)
 
 ---
 
-## Architecture Overview
+## ⚡ Core Architecture
+
+The Exocortex is designed as a persistent, high-density reasoning substrate for the operator. It decouples high-level reasoning from state mutation and integrates topological memory into the LLM context loop.
+
+```text
+                  ┌─────────────────────────────────────┐
+                  │          Operator / CLI             │
+                  │        (chat_exocortex.py)          │
+                  └──────────────────┬──────────────────┘
+                                     │
+           ┌─────────────────────────┴─────────────────────────┐
+           ▼                                                   ▼
+   [ Embedded Mode ]                                   [ Remote Mode ]
+ Direct in-process loop                              FastMCP Client (SSE)
+           │                                                   │
+           └─────────────────────────┬─────────────────────────┘
+                                     ▼
+                      ┌──────────────────────────────┐
+                      │    ExecutionEngine (ReAct)   │
+                      │  - Context-Aware Assembly    │
+                      │  - History Pruning & Guards  │
+                      └──────────────┬───────────────┘
+                                     │
+     ┌───────────────────────────────┼───────────────────────────────┐
+     ▼                               ▼                               ▼
+┌──────────────┐             ┌──────────────┐                ┌──────────────┐
+│ PromptEngine │             │  GraphStore  │                │   VaultIO    │
+│ - default    │             │ - NetworkX   │                │ - Obsidian   │
+│ - socratic   │             │ - bge-m3 vec │                │   Scratchpad │
+│ - architect  │             │ - .canvas    │                │ - Sessions   │
+└──────────────┘             └──────────────┘                └──────────────┘
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    chat_exocortex.py                        │
-│                 (Unified Terminal Client)                   │
-└───────────────┬─────────────────────────────┬───────────────┘
-                │ (Local Mode)                │ (Remote Mode: --remote)
-                ▼                             ▼
-┌──────────────────────────────┐  ┌─────────────────────────────┐
-│     core.engine              │  │ server.exocortex_mcp_server │
-│  (ExecutionEngine / Local)   │  │   (FastMCP / SSE Daemon)    │
-└───────────────┬──────────────┘  └───────────┬─────────────────┘
-                │                             │
-                └──────────────┬──────────────┘
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│                       Substrate Layer                       │
-│  • core.config (Pydantic Configuration)                     │
-│  • core.prompts (Cognitive Profile Manager)                 │
-│  • server.graph_store (Network Topology Engine)             │
-│  • server.vault_io (Obsidian Vault & Scratchpad I/O)        │
-└─────────────────────────────────────────────────────────────┘
+
+### Key Pillars
+
+1. **Topological Phase Space (NetworkX + Vector Resonance):**
+Long-term memory is represented as a directed semantic graph with typed nodes (`BoundaryConstraint`, `PotentialWell`, `TrajectoryOperator`, `PhaseSpaceTrace`). Relevant nodes are retrieved via vector cosine similarity (`bge-m3`) and injected dynamically as system context.
+2. **Real-Time Obsidian Canvas Projection:**
+Every graph mutation or topology switch automatically writes an interactive, color-coded `.canvas` file directly into your Obsidian vault.
+3. **Dual-Mode Runner:**
+* **Local Mode:** Self-contained in-memory execution loop without network overhead.
+* **Remote Mode:** Client-server setup via FastMCP over SSE, enabling external agent architectures and remote tool calls.
+
+
+4. **Cognitive Lenses:**
+Runtime-switchable cognitive modes (`default`, `socratic`, `architect`) to adapt the epistemological stance on the fly.
+5. **Defensive Guards:**
+Automatic token budgeting, code-block stripping for embeddings, and sliding-window turn pruning to avoid context overflow (HTTP 500 mitigation).
+
+---
+
+## 📁 Repository Structure
+
+```text
+exocortex/
+├── config/
+│   └── system_base.md          # Global cognitive base instructions
+├── core/
+│   ├── config.py               # Typed settings & environment loader
+│   ├── engine.py               # ReAct loop and decoupled tool dispatching
+│   ├── guards.py               # Context pruning & embedding guards
+│   ├── prompts.py              # Cognitive lenses & prompt manager
+│   └── session.py              # Session state, token tracking & persistence
+├── server/
+│   ├── exocortex_mcp_server.py # FastMCP SSE / stdio daemon
+│   ├── graph_store.py          # NetworkX topology & Canvas generator
+│   └── vault_io.py             # Sandboxed filesystem & vault I/O
+├── topologies/
+│   └── default.json            # Canonical starter topology (template)
+├── chat_exocortex.py           # Unified interactive CLI runner
+├── test_exocortex.py           # Modular unit & integration test suite
+├── test_mcp_network.py         # Network MCP integration test
+├── .env.example                # Environment configuration template
+├── LICENCE                     # Apache 2.0 License
+└── README.md
+
 ```
 
 ---
 
-## MCP Tool Reference (Model Context Protocol)
+## 🚀 Quickstart
 
-The Exocortex FastMCP daemon exposes standard JSON-RPC tools accessible by any MCP-compliant client (Exocortex CLI, Claude Desktop, Cursor, etc.).
+### 1. Prerequisites
 
-| Tool Name | Parameters | Purpose | Output Format |
-| :--- | :--- | :--- | :--- |
-| `exocortex_temporal_anchor` | `scope` *(str, default: "system")* | Establishes chronological anchoring (ISO-8601, calendar week, system time) to prevent temporal drift. | `<temporal_anchor>` XML block |
-| `exocortex_gauge_field` | — | Inspects the currently active graph topology, resonance nodes, and edge connections. | `<gauge_field>` XML representation |
-| `append_scratchpad` | `content` *(str)*,<br>`filename` *(str, default: "Active_Scratchpad.md")* | Appends entries with timestamp headers (`## [YYYY-MM-DD HH:MM:SS]`) to the vault's scratchpad directory. Automatically ensures directory creation. | `<scratchpad status='appended' path='...' />` |
-| `read_vault_note` | `note_name` *(str)* | Reads Markdown files from the Obsidian vault root with automatic fallback to the `Scratchpad/` subfolder. | `<vault_note path='...'>...</vault_note>` |
-| `switch_topology` | `topology_name` *(str)* | Dynamically changes the active knowledge graph loaded in memory. | `<topology_switched name='...' node_count='...' />` |
-| `list_topologies` | — | Discovers all available graph topologies stored in the vault. | `<topologies list='...' />` |
-
----
-
-## Installation & Setup
-
-1. **Clone the repository:**
+* **Python 3.10+**
+* **Ollama** installed and running locally:
 ```bash
-   git clone [https://github.com/your-username/exocortex.git](https://github.com/your-username/exocortex.git)
-   cd exocortex
+ollama pull gemma4:12b
+ollama pull bge-m3
+
 ```
 
-2. **Create and activate a virtual environment:**
-    
-    ```bash
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-    ```
-    
-2. **Configure environment variables:**
-    
-    ```bash
-    cp .env.example .env
-    ```
-    
-    Edit `.env` according to your local environment:
-    
-    ```Ini, TOML
-    EXOCORTEX_VAULT_PATH="/home/user/Vaults/exocortex"
-    EXOCORTEX_CHAT_MODEL="gemma4:12b"
-    EXOCORTEX_CONTEXT_WINDOW=8192
-    EXOCORTEX_OLLAMA_HOST="[http://127.0.0.1:11434](http://127.0.0.1:11434)"
-    EXOCORTEX_REMOTE_URL="[http://127.0.0.1:8000/sse](http://127.0.0.1:8000/sse)"
-    ```
-    
 
-## Usage Modes
+* *(Optional)* **Obsidian** for visual graph exploration via Canvas.
 
-### 1. Local Mode (Embedded / In-Process)
+### 2. Installation
 
-Runs the cognitive engine locally with direct, in-process access to the Obsidian vault and topological graphs:
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/ghosoya/exocortex.git
+cd exocortex
+
+python3 -m venv .venv
+source .venv/bin/activate
+pip install ollama networkx mcp python-dotenv prompt_toolkit
+
+```
+
+### 3. Configuration
+
+Copy `.env.example` to `.env` and set your vault path:
+
+```bash
+cp .env.example .env
+
+```
+
+Edit `.env`:
+
+```ini
+EXOCORTEX_VAULT_PATH=~/Vaults/exocortex
+EXOCORTEX_SCRATCHPAD_DIR=Scratchpad
+EXOCORTEX_SESSIONS_DIR=Sessions
+EXOCORTEX_TOPOLOGIES_DIR=Topologies
+
+EXOCORTEX_OLLAMA_HOST=http://127.0.0.1:11434
+EXOCORTEX_CHAT_MODEL=gemma4:12b
+EXOCORTEX_EMBEDDING_MODEL=bge-m3
+EXOCORTEX_NUM_CTX=65536
+
+```
+
+### 4. Setup Starter Topology
+
+The `topologies/` directory in the repository provides base templates. Initialize your vault's `Topologies/` directory with the default topology:
+
+```bash
+mkdir -p ~/Vaults/exocortex/Topologies
+cp topologies/default.json ~/Vaults/exocortex/Topologies/default.json
+
+```
+
+---
+
+## 💻 Usage
+
+### Local Interactive CLI
+
+Launch the embedded runner:
 
 ```bash
 python chat_exocortex.py
+
 ```
 
-### 2. Remote Mode (Decoupled FastMCP over SSE)
+### Remote MCP Server Daemon
 
-Run the server daemon as a background service and connect via the dual-mode client:
+Start the FastMCP daemon in SSE mode:
 
+```bash
+python server/exocortex_mcp_server.py --host 127.0.0.1 --port 8000
 
-- **Start the FastMCP Server (Terminal 1):**
-    
-    ```bash
-    python server/exocortex_mcp_server.py
-    ```
-    
-- **Connect the Client (Terminal 2):**
-    
-    ```bash
-    python chat_exocortex.py --remote
-    ```
+```
 
+Connect via CLI runner:
 
-## Interactive Slash-Commands
+```bash
+python chat_exocortex.py --remote
 
-The CLI runner provides runtime control commands:
+```
 
-|**Command**|**Arguments**|**Function**|
-|---|---|---|
-|`/prompt`|`list` \| `show` \| `set <profile>`|Inspects or switches cognitive profiles (`default`, `socratic`, `architect`).|
-|`/graph`|`list` \| `info` \| `load <name>`|Manages and inspects knowledge graph topologies.|
-|`/save`|`<session_name>`|Persists the active session as `.md` and `.json` in the Vault.|
-|`/load`|`[session_name]`|Lists available sessions or restores an existing session.|
-|`/context`|—|Displays current token consumption and message count.|
-|`/clear`|—|Resets conversation history while maintaining active lenses and topology.|
-|`/help`|—|Displays the interactive command reference.|
+---
 
-## Epistemic Integrity
+## 🛠️ CLI Slash Commands
 
-Exocortex is intentionally designed to counter sycophantic model alignment and context-drift. By enforcing deterministic tool responses, explicit temporal anchoring, and structured cognitive lenses, it maintains an intellectually honest space for complex systems design and critical reflection.
+| Command | Description |
+| --- | --- |
+| `/prompt list` | Lists all available cognitive lenses (`default`, `socratic`, `architect`). |
+| `/prompt set <lens>` | Activates a specific cognitive lens. |
+| `/prompt show` | Displays the active base system prompt. |
+| `/graph list` | Lists all topologies present in the vault. |
+| `/graph load <name>` | Switches active topology and synchronizes Canvas. |
+| `/graph info` | Displays active node distribution and edge counts. |
+| `/save [name]` | Persists session simultaneously as Markdown note and JSON state. |
+| `/load [name]` | Restores or lists saved sessions. |
+| `/context` | Shows estimated token utilization and turn count. |
+| `/clear` | Clears conversation history. |
+| `exit` | Closes the session. |
+
+---
+
+## 🧪 Testing
+
+Run the automated unit test suite:
+
+```bash
+python test_exocortex.py
+
+```
+
+Run the remote MCP network verification:
+
+```bash
+python test_mcp_network.py
+
+```
+
+---
+
+## 📜 License
+
+Licensed under the **Apache License, Version 2.0**. See [LICENCE](https://www.google.com/search?q=LICENCE) for details.
 

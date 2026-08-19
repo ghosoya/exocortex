@@ -1,6 +1,6 @@
 """
 core/guards.py
-Defensive Schranken: Token-Budgeting, History-Pruning und Embedding-Slicing.
+Defensive guards: token budgeting, history pruning, and embedding slicing.
 """
 
 from typing import Any, Dict, List
@@ -9,28 +9,28 @@ import re
 
 def slice_for_embedding(text: str, max_chars: int = 1500) -> str:
     """
-    Entfernt Code-Blöcke und schneidet Text ab, damit das Embedding-Modell
-    (z. B. bge-m3) niemals das Kontext-Limit überschreitet (Fix für HTTP 500).
+    Strips code blocks and truncates text so the embedding model
+    (e.g., bge-m3) never exceeds its context limit (prevents HTTP 500 errors).
     """
-    # Große Code-Blöcke durch Platzhalter ersetzen, da Embeddings die Absicht brauchen
+    # Replace large code blocks with placeholder, as embeddings prioritize intent
     cleaned = re.sub(r"```[\s\S]*?```", "[Code Block]", text)
-    # Zeilenumbrüche und Whitespace normalisieren
+    # Normalize line breaks and whitespace
     cleaned = " ".join(cleaned.split())
     return cleaned[:max_chars].strip()
 
 
 def estimate_tokens(text: str) -> int:
-    """Pragmatische Heuristik für Token-Schätzung (ca. 3.5 Zeichen pro Token)."""
+    """Pragmatic heuristic for token estimation (approx. 3.5 characters per token)."""
     return max(1, int(len(text) / 3.5))
 
 
 def calculate_history_tokens(messages: List[Dict[str, Any]]) -> int:
-    """Berechnet die geschätzte Tokenanzahl eines Chatverlaufs."""
+    """Calculates the estimated token count of a message history."""
     total = 0
     for msg in messages:
         content = msg.get("content", "")
         total += estimate_tokens(content)
-        # Tool-Calls und Tool-Responses mit einberechnen
+        # Account for tool calls and tool responses
         if "tool_calls" in msg:
             total += estimate_tokens(str(msg["tool_calls"]))
     return total
@@ -39,21 +39,21 @@ def calculate_history_tokens(messages: List[Dict[str, Any]]) -> int:
 def prune_history_if_needed(
     messages: List[Dict[str, Any]],
     max_tokens: int = 48000,
-    keep_recent_turns: int = 6
+    keep_recent_turns: int = 6,
 ) -> List[Dict[str, Any]]:
     """
-    Prunt ältere Nachrichten im Arbeitsspeicher, wenn das Token-Budget
-    überschritten wird. Behält System-Prompt und die letzten N Züge intakt.
+    Prunes older in-memory messages when the token budget is exceeded.
+    Keeps the system prompt and the most recent N turns intact.
     """
     current_tokens = calculate_history_tokens(messages)
     if current_tokens <= max_tokens or len(messages) <= (keep_recent_turns * 2 + 1):
         return messages
 
-    # System-Nachricht(en) am Anfang isolieren
+    # Isolate initial system message(s)
     system_msgs = [m for m in messages if m.get("role") == "system"]
     conversation_msgs = [m for m in messages if m.get("role") != "system"]
 
-    # Nur die jüngsten N Züge behalten
+    # Retain only the most recent N turns
     pruned_conv = conversation_msgs[-(keep_recent_turns * 2):]
 
     return system_msgs + pruned_conv

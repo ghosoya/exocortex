@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-test_exocortex.py (v1.4.0)
-Automatisierte Modul- und Integrationstests für Exocortex.
-Testet VaultIO, Guards, SessionManager, GraphStore und ExecutionEngine isoliert.
+test_exocortex.py (v1.4.2)
+Automated unit and integration tests for Exocortex.
+Tests VaultIO, Guards, SessionManager, GraphStore, and ExecutionEngine in isolation.
 """
 
 import os
@@ -20,7 +20,7 @@ from core.engine import ExecutionEngine
 
 
 class TestVaultIO(unittest.TestCase):
-    """Testet Dateisystem-Isolation und Path-Traversal-Schutz."""
+    """Tests filesystem isolation and path traversal prevention."""
 
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -40,11 +40,11 @@ class TestVaultIO(unittest.TestCase):
             self.vault_io._resolve_safe_path("../../etc/passwd")
 
     def test_scratchpad_append_and_read(self):
-        self.vault_io.append_scratchpad("Gedanke A", filename="test.md")
-        self.vault_io.append_scratchpad("Gedanke B", filename="test.md")
+        self.vault_io.append_scratchpad("Thought A", filename="test.md")
+        self.vault_io.append_scratchpad("Thought B", filename="test.md")
         content = self.vault_io.read_note("Scratchpad/test.md")
-        self.assertIn("Gedanke A", content)
-        self.assertIn("Gedanke B", content)
+        self.assertIn("Thought A", content)
+        self.assertIn("Thought B", content)
 
     def test_graph_json_io(self):
         sample_data = {"nodes": [{"id": "BC_001"}], "links": []}
@@ -54,39 +54,39 @@ class TestVaultIO(unittest.TestCase):
 
 
 class TestGuards(unittest.TestCase):
-    """Testet defensive Schranken gegen Context-Overflows und Token-Budgetierung."""
+    """Tests defensive guards against context overflows and token budgeting."""
 
     def test_slice_for_embedding_removes_code_and_truncates(self):
         long_code = "```python\n" + ("x = 1\n" * 500) + "```"
-        text = f"Analysiere diese Architektur: {long_code} und fasse zusammen."
+        text = f"Analyze this architecture: {long_code} and summarize."
         sliced = slice_for_embedding(text, max_chars=100)
         self.assertNotIn("x = 1", sliced)
         self.assertIn("[Code Block]", sliced)
         self.assertLessEqual(len(sliced), 100)
 
     def test_estimate_tokens(self):
-        text = "Kurzer Text für Token-Schätzung."
+        text = "Short text for token estimation."
         tokens = estimate_tokens(text)
         self.assertGreaterEqual(tokens, 1)
 
     def test_prune_history_if_needed(self):
-        messages = [{"role": "system", "content": "Basis-System-Prompt"}]
-        # 10 Turns hinzufügen
+        messages = [{"role": "system", "content": "Base system prompt"}]
+        # Add 10 turns
         for i in range(10):
-            messages.append({"role": "user", "content": f"Frage {i}" * 50})
-            messages.append({"role": "assistant", "content": f"Antwort {i}" * 50})
+            messages.append({"role": "user", "content": f"Question {i}" * 50})
+            messages.append({"role": "assistant", "content": f"Answer {i}" * 50})
 
-        # Prunen auf max 2 Turns
+        # Prune to max 2 turns
         pruned = prune_history_if_needed(messages, max_tokens=100, keep_recent_turns=2)
-        # System-Prompt muss erhalten bleiben
+        # System prompt must remain intact
         self.assertEqual(pruned[0]["role"], "system")
-        # System + (2 Turns * 2 = 4) = 5 Nachrichten
+        # System + (2 turns * 2 = 4) = 5 messages
         self.assertEqual(len(pruned), 5)
         self.assertEqual(pruned[-1]["role"], "assistant")
 
 
 class TestSessionManager(unittest.TestCase):
-    """Testet Session-Zustand, Token-Zählung und synchrone Persistenz."""
+    """Tests session state, token accounting, and synchronous persistence."""
 
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -97,15 +97,15 @@ class TestSessionManager(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_message_flow_and_token_usage(self):
-        self.session.add_user_message("Hallo Exocortex")
-        self.session.add_assistant_message("Bereit für Resonanz.")
+        self.session.add_user_message("Hello Exocortex")
+        self.session.add_assistant_message("Ready for resonance.")
         usage = self.session.get_token_usage()
         self.assertEqual(usage["message_count"], 2)
         self.assertGreater(usage["estimated_tokens"], 0)
 
     def test_save_and_load_session(self):
-        self.session.add_user_message("Architektur-Audit")
-        self.session.add_assistant_message("Kopplung isoliert.")
+        self.session.add_user_message("Architecture audit")
+        self.session.add_assistant_message("Coupling isolated.")
         paths = self.session.save_session("audit_session")
 
         self.assertTrue(Path(paths["markdown"]).exists())
@@ -114,24 +114,24 @@ class TestSessionManager(unittest.TestCase):
         new_session = SessionManager(vault_io=self.vault_io)
         data = new_session.load_session("audit_session")
         self.assertEqual(len(new_session.messages), 2)
-        self.assertEqual(new_session.messages[0]["content"], "Architektur-Audit")
+        self.assertEqual(new_session.messages[0]["content"], "Architecture audit")
 
 
 class TestGraphStore(unittest.TestCase):
-    """Testet Graph-Zustand, Imprinting, Resonanz und Canvas-Projektion."""
+    """Tests graph state, imprinting, resonance, and Canvas projection."""
 
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.vault_path = Path(self.temp_dir.name)
         self.vault_io = VaultIO(vault_path=self.vault_path)
         
-        # Initialen Test-Graphen anlegen
+        # Create initial test graph
         initial_graph = {
             "directed": True,
             "multigraph": False,
             "graph": {"name": "default"},
             "nodes": [
-                {"id": "BC_001", "type": "BoundaryConstraint", "label": "Single_Responsibility", "payload": "Modularer Schnitt.", "embedding": [0.1, 0.2, 0.3]}
+                {"id": "BC_001", "type": "BoundaryConstraint", "label": "Single_Responsibility", "payload": "Modular separation.", "embedding": [0.1, 0.2, 0.3]}
             ],
             "edges": []
         }
@@ -142,7 +142,7 @@ class TestGraphStore(unittest.TestCase):
 
     @patch("ollama.Client")
     def test_imprint_node_and_canvas_sync(self, mock_ollama):
-        # Mocking für Ollama Embeddings
+        # Mock Ollama embeddings
         mock_client = MagicMock()
         mock_client.embeddings.return_value = {"embedding": [0.1, 0.2, 0.3]}
         mock_ollama.return_value = mock_client
@@ -151,7 +151,7 @@ class TestGraphStore(unittest.TestCase):
         res = store.imprint_node(
             node_type="TrajectoryOperator",
             label="Decoupled_Daemon",
-            content_payload="Trennung von Kognition und Substrat.",
+            content_payload="Separation of cognition and substrate.",
             tensor_links=["BC_001"]
         )
 
@@ -159,7 +159,7 @@ class TestGraphStore(unittest.TestCase):
         stats = store.get_graph_stats()
         self.assertEqual(stats["node_count"], 2)
 
-        # Prüfen, ob der Canvas generiert wurde
+        # Verify Canvas generation
         canvas_file = self.vault_path / "Exocortex_Interactive.canvas"
         self.assertTrue(canvas_file.exists())
         with open(canvas_file, "r", encoding="utf-8") as f:
@@ -176,7 +176,7 @@ class TestGraphStore(unittest.TestCase):
 
 
 class TestExecutionEngineIntegration(unittest.TestCase):
-    """Testet Tool-Schema, Prompt-Zusammenstellung und Dispatching."""
+    """Tests tool schema, prompt assembly, and dispatching."""
 
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -205,13 +205,13 @@ class TestExecutionEngineIntegration(unittest.TestCase):
         session = SessionManager(vault_io=self.vault_io)
         engine = ExecutionEngine(graph_store=store, session_manager=session)
 
-        # 1. Schema-Vollständigkeit
+        # 1. Schema completeness
         tool_names = [t["function"]["name"] for t in engine.tools_schema]
         self.assertIn("read_vault_note", tool_names)
         self.assertIn("exocortex_imprint_field", tool_names)
         self.assertIn("exocortex_temporal_anchor", tool_names)
 
-        # 2. Tool Dispatching Test
+        # 2. Tool dispatching test
         anchor_result = engine.tool_handlers["exocortex_temporal_anchor"](scope="iso")
         self.assertIn("<temporal_anchor>", anchor_result)
 

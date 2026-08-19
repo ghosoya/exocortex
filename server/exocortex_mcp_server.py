@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 server/exocortex_mcp_server.py
-MCP-Server-Schnittstelle (FastMCP).
-Exponiert Vault-I/O und den Phasenraum als standardisierte MCP-Tools.
+MCP server interface (FastMCP).
+Exposes vault I/O and the phase space as standardized MCP tools.
 """
 
 from typing import List, Optional
@@ -14,37 +14,37 @@ from core.config import settings
 from server.vault_io import VaultIO
 from server.graph_store import GraphStore
 
-# FastMCP Server-Instanz
+# FastMCP server instance
 mcp = FastMCP("Exocortex-Daemon")
 
-# Substrat-Instanzen (nutzen transparent settings.vault_path etc.)
+# Substrate instances (transparently utilize settings.vault_path etc.)
 vault_io = VaultIO()
 graph_store = GraphStore(vault_io=vault_io)
 
 
 @mcp.tool()
 def read_vault_note(note_name: str) -> str:
-    """Liest den Inhalt einer Markdown-Notiz aus dem Obsidian-Vault."""
+    """Reads the content of a Markdown note from the Obsidian vault."""
     try:
         content = vault_io.read_note(note_name)
         return f"<vault_note path='{note_name}'>\n{content}\n</vault_note>"
     except Exception as e:
-        return f"<error>Fehler beim Lesen von '{note_name}': {e}</error>"
+        return f"<error>Error reading '{note_name}': {e}</error>"
 
 
 @mcp.tool()
 def append_scratchpad(content: str, filename: str = "Active_Scratchpad.md") -> str:
-    """Hängt Text oder Zwischenergebnisse an eine Scratchpad-Notiz im Vault an."""
+    """Appends text or intermediate findings to a scratchpad note in the vault."""
     try:
         path = vault_io.append_scratchpad(content, filename)
         return f"<scratchpad status='appended' path='{path}' />"
     except Exception as e:
-        return f"<error>Fehler beim Schreiben ins Scratchpad: {e}</error>"
+        return f"<error>Error writing to scratchpad: {e}</error>"
 
 
 @mcp.tool()
 def exocortex_gauge_field(query_vector: str, top_k: int = 3) -> str:
-    """Misst Resonanzknoten im aktuellen Phasenraum für ein semantisches Thema."""
+    """Gauges resonant nodes within the active phase space for a semantic topic."""
     try:
         resonant = graph_store.get_resonant_nodes(query_vector, top_k=top_k)
         if not resonant:
@@ -60,7 +60,7 @@ def exocortex_gauge_field(query_vector: str, top_k: int = 3) -> str:
         lines.append("</field_gauge>")
         return "\n".join(lines)
     except Exception as e:
-        return f"<error>Field Gauge Fehler: {e}</error>"
+        return f"<error>Field Gauge error: {e}</error>"
 
 
 @mcp.tool()
@@ -70,56 +70,56 @@ def exocortex_imprint_field(
     content_payload: str,
     tensor_links: Optional[List[str]] = None,
 ) -> str:
-    """Prägt einen neuen Erkenntnis-Knoten deterministisch in die aktive Topologie ein."""
+    """Deterministically imprints a new insight node into the active topology."""
     try:
         res = graph_store.imprint_node(node_type, label, content_payload, tensor_links)
-        conns = ", ".join(res["wired_connections"]) if res["wired_connections"] else "Keine"
+        conns = ", ".join(res["wired_connections"]) if res["wired_connections"] else "None"
         return (
             f"Field state materialized: Node {res['node_id']} ('{label}') wired into '{res['topology']}'. "
-            f"| Verdrahtet mit: {conns}"
+            f"| Wired to: {conns}"
         )
     except Exception as e:
-        return f"<error>Imprinting Fehler: {e}</error>"
+        return f"<error>Imprinting error: {e}</error>"
 
 
 @mcp.tool()
 def exocortex_temporal_anchor(scope: str = "full") -> str:
-    """Gibt das aktuelle Systemdatum, Uhrzeit und Kalenderwoche zurück."""
+    """Returns current system date, time, and calendar week."""
     now = datetime.datetime.now()
     iso = now.isoformat()
-    human = now.strftime("%d.%m.%Y, %H:%M:%S")
+    human = now.strftime("%Y-%m-%d %H:%M:%S")
     kw = now.isocalendar()[1]
     return (
         f"<temporal_anchor>\n"
         f"  <human_readable>{human}</human_readable>\n"
         f"  <iso8601>{iso}</iso8601>\n"
-        f"  <calendar_context>KW {kw}, Jahr {now.year}</calendar_context>\n"
+        f"  <calendar_context>Week {kw}, Year {now.year}</calendar_context>\n"
         f"</temporal_anchor>"
     )
 
 
 @mcp.tool()
 def exocortex_switch_topology(topology_name: str) -> str:
-    """Wechselt die aktive Graph-Topologie zur Laufzeit."""
+    """Switches the active graph topology at runtime."""
     try:
         stats = graph_store.load_graph(topology_name)
         return f"<topology_switched name='{stats['name']}' nodes='{stats['node_count']}' edges='{stats['edge_count']}' />"
     except Exception as e:
-        return f"<error>Topologie-Wechsel fehlgeschlagen: {e}</error>"
+        return f"<error>Topology switch failed: {e}</error>"
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exocortex FastMCP Server Daemon")
-    parser.add_argument("--stdio", action="store_true", help="Starte im Stdio-Modus (Pipe)")
-    parser.add_argument("--host", default=settings.mcp_host, help=f"Bind Host (Standard: {settings.mcp_host})")
-    parser.add_argument("--port", type=int, default=settings.mcp_port, help=f"Bind Port (Standard: {settings.mcp_port})")
+    parser.add_argument("--stdio", action="store_true", help="Run in stdio mode (pipe)")
+    parser.add_argument("--host", default=settings.mcp_host, help=f"Bind host (default: {settings.mcp_host})")
+    parser.add_argument("--port", type=int, default=settings.mcp_port, help=f"Bind port (default: {settings.mcp_port})")
     args = parser.parse_args()
 
     if args.stdio:
-        print("[*] Starte Exocortex MCP Daemon im Stdio-Modus...")
+        print("[*] Starting Exocortex MCP Daemon in stdio mode...")
         mcp.run(transport="stdio")
     else:
-        print(f"[*] Starte Exocortex MCP Daemon via SSE auf http://{args.host}:{args.port}/sse ...")
+        print(f"[*] Starting Exocortex MCP Daemon via SSE on http://{args.host}:{args.port}/sse ...")
         mcp.settings.host = args.host
         mcp.settings.port = args.port
         mcp.run(transport="sse")
