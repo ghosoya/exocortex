@@ -50,21 +50,24 @@ The Exocortex is designed as a persistent, high-density reasoning substrate for 
 1. **Topological Phase Space (NetworkX + Vector Resonance):**
 Long-term memory is represented as a directed semantic graph with typed nodes (`BoundaryConstraint`, `PotentialWell`, `TrajectoryOperator`, `PhaseSpaceTrace`). Relevant nodes are retrieved via vector cosine similarity (`bge-m3`) and injected dynamically as system context.
 
-2. **Epistemic Phase Space (Node Taxonomy)**
+2. **Real-Time Obsidian Canvas Projection:**
+Every graph mutation or topology switch automatically writes an interactive, color-coded `.canvas` file directly into your Obsidian vault.
+
+
+3. **Epistemic Phase Space (Node Taxonomy)**
 * **`BoundaryConstraint` (Red):** Inviolable epistemic invariants (Anti-Sycophancy, Side-Effect Isolation, Epistemic Sovereignty).
 * **`PotentialWell` (Cyan):** Gravitational attractor states defining the conceptual grounding (First Principles, Domain Contexts, Four-Layer Architecture).
 * **`TrajectoryOperator` (Purple):** Directional operators driving transformation, refactoring, and complexity reduction.
 * **`PhaseSpaceTrace` (Green):** Transient operational traces representing current execution states, hypotheses, and life cycles.
 
-3. **Synaptic Plasticity & Mutation Actions**
+4. **Synaptic Plasticity & Mutation Actions**
 The model or operator can actively reshape the phase space during runtime:
 * `STRENGTHEN` / `DECAY`: Relative weight modulation ($\Delta w$).
 * `SET_WEIGHT`: Absolute weight calibration ($[0.05, 3.0]$).
 * `UPDATE`: Payload rewriting with automatic re-embedding via `bge-m3`.
 * `PRUNE`: Topological deletion of obsolete hypothesis traces and redundant vectors.
 
-4. **Real-Time Obsidian Canvas Projection:**
-Every graph mutation or topology switch automatically writes an interactive, color-coded `.canvas` file directly into your Obsidian vault.
+
 5. **Dual-Mode Runner:**
 * **Local Mode:** Self-contained in-memory execution loop without network overhead.
 * **Remote Mode:** Client-server setup via FastMCP over SSE, enabling external agent architectures and remote tool calls.
