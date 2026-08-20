@@ -89,6 +89,7 @@ Switch active topologies on-the-fly via `/graph <name>`:
 | **`systemic_kernel`** | Epistemic Rigor & Systems Theory | Falsification audits, Kolmogorov complexity reduction, anti-sycophancy |
 | **`code_architect`** | Modular Software Architecture | Decoupling, bounded contexts, idempotency, side-effect isolation |
 | **`regional_shojin`** | Mindful Culinary Aesthetics | Micro-seasonality, zero-waste ahimsa, texture/flavor harmony ($5 \times 5 \times 5$) |
+| **`poetic_synthesis`** | Divergent Associative Reasoning | Cross-domain bisociation, defamiliarization (*Ostranenie*), structural isomorphism |
 
 ---
 

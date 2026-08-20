@@ -1,0 +1,130 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {
+    "name": "poetic_synthesis",
+    "embedding_model": "bge-m3",
+    "updated_at": "2026-08-20T13:15:00",
+    "description": "Divergent associative phase space for cross-domain metaphor transduction, synesthesia, and defamiliarization."
+  },
+  "nodes": [
+    {
+      "id": "BC_001",
+      "type": "BoundaryConstraint",
+      "label": "Anti_Cliche_Guard",
+      "payload": "Strict rejection of conversational tropes, conventional idioms, generic emotional prose, and worn-out poetic metaphors. Strive for fresh, unspent imagery.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "BC_002",
+      "type": "BoundaryConstraint",
+      "label": "Structural_Isomorphism",
+      "payload": "Metaphors must not be arbitrary decoration. The relational dynamics in the source domain must precisely map to the structural reality of the target phenomenon.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "BC_003",
+      "type": "BoundaryConstraint",
+      "label": "Prosodic_Cadence",
+      "payload": "Enforce sonic resonance, rhythm, tempo modulation, and phonetic texture (assonance, alliteration, pauses) in generated synthesis.",
+      "embedding": [],
+      "weight": 0.9
+    },
+    {
+      "id": "PW_001",
+      "type": "PotentialWell",
+      "label": "Cross_Domain_Bisociation",
+      "payload": "Arthur Koestler's attractor: Forcing deliberate collisions between fundamentally unrelated matrixes (e.g., thermodynamics with grief, fungal mycelium with distributed networks, typography with silence).",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PW_002",
+      "type": "PotentialWell",
+      "label": "Synesthetic_Grounding",
+      "payload": "Cross-sensory mapping: Translate non-visual concepts into tactile, auditory, olfactory, or thermal coordinates (e.g., the weight of a pause, the temperature of an idea).",
+      "embedding": [],
+      "weight": 0.9
+    },
+    {
+      "id": "PW_003",
+      "type": "PotentialWell",
+      "label": "Negative_Capability",
+      "payload": "Keats' attractor: Resisting premature logical closure. Dwelling within paradox, ambiguity, and poetic unresolved tension without forcing mechanistic answers.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "TO_001",
+      "type": "TrajectoryOperator",
+      "label": "Defamiliarization_Ostranenie",
+      "payload": "Šklovskij's operator: Making the overly familiar strange. Stripping habitual perception from an everyday object or concept to force immediate sensory re-encounter.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "TO_002",
+      "type": "TrajectoryOperator",
+      "label": "Semantic_Compression",
+      "payload": "Crystalline distillation: Collapsing long narratives or analytical descriptions into dense, aphoristic, highly charged symbolic fragments.",
+      "embedding": [],
+      "weight": 0.9
+    },
+    {
+      "id": "PST_001",
+      "type": "PhaseSpaceTrace",
+      "label": "Divergent_Drift_State",
+      "payload": "Active brainstorming state: Scanning distant vector quadrants for serendipitous affinities prior to formal crystallization.",
+      "embedding": [],
+      "weight": 0.8
+    },
+    {
+      "id": "PST_002",
+      "type": "PhaseSpaceTrace",
+      "label": "Crystallized_Canto",
+      "payload": "Terminal state: A fully realized poetic artifact, prose poem, or philosophical aphorism grounded in topological constraints.",
+      "embedding": [],
+      "weight": 0.9
+    }
+  ],
+  "links": [
+    {
+      "source": "BC_001",
+      "target": "TO_001",
+      "relation": "triggers",
+      "weight": 1.0
+    },
+    {
+      "source": "BC_002",
+      "target": "PW_001",
+      "relation": "grounds",
+      "weight": 1.0
+    },
+    {
+      "source": "PW_001",
+      "target": "TO_001",
+      "relation": "fuels",
+      "weight": 1.0
+    },
+    {
+      "source": "PW_002",
+      "target": "BC_003",
+      "relation": "shapes",
+      "weight": 0.9
+    },
+    {
+      "source": "PW_003",
+      "target": "PST_001",
+      "relation": "sustains",
+      "weight": 1.0
+    },
+    {
+      "source": "TO_002",
+      "target": "PST_002",
+      "relation": "produces",
+      "weight": 1.0
+    }
+  ]
+}
