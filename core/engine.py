@@ -42,6 +42,7 @@ class ExecutionEngine:
             "exocortex_gauge_field": self._tool_gauge_field,
             "exocortex_imprint_field": self._tool_imprint_field,
             "exocortex_temporal_anchor": self._tool_temporal_anchor,
+            "exocortex_mutate_phase_space": self._handle_mutate_phase_space
         }
 
     def _build_tools_schema(self) -> List[Dict[str, Any]]:
@@ -133,6 +134,36 @@ class ExecutionEngine:
                     },
                 },
             },
+            {
+    "type": "function",
+    "function": {
+        "name": "exocortex_mutate_phase_space",
+        "description": "Modulates, updates, decays, or prunes an existing node in the active phase-space topology.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "target_node_id": {
+                    "type": "string",
+                    "description": "Unique identifier of the target node (e.g. 'PW_001', 'BC_001')"
+                },
+                "action": {
+                    "type": "string",
+                    "enum": ["STRENGTHEN", "DECAY", "PRUNE", "UPDATE"],
+                    "description": "Structural operation: STRENGTHEN (+weight), DECAY (-weight), PRUNE (remove node), UPDATE (modify payload)"
+                },
+                "payload_update": {
+                    "type": "string",
+                    "description": "New payload text (mandatory if action is UPDATE)"
+                },
+                "delta": {
+                    "type": "number",
+                    "description": "Weight modification delta for STRENGTHEN or DECAY (default: 0.2)"
+                }
+            },
+            "required": ["target_node_id", "action"]
+        }
+    }
+}
         ]
 
     # --- Tool Implementations ---
@@ -177,6 +208,32 @@ class ExecutionEngine:
         human = now.strftime("%d.%m.%Y, %H:%M:%S")
         kw = now.isocalendar()[1]
         return f"<temporal_anchor>\n  <human_readable>{human}</human_readable>\n  <iso8601>{iso}</iso8601>\n  <calendar_context>Week {kw}, Year {now.year}</calendar_context>\n</temporal_anchor>"
+    
+    def _handle_mutate_phase_space(
+        self,
+        target_node_id: str,
+        action: str,
+        payload_update: Optional[str] = None,
+        delta: float = 0.2
+    ) -> str:
+        """Handler for exocortex_mutate_phase_space tool."""
+        if not self.graph_store:
+            return "<error>GraphStore is not initialized in engine.</error>"
+
+        res = self.graph_store.mutate_node(
+            target_node_id=target_node_id,
+            action=action,
+            payload_update=payload_update,
+            delta=delta
+        )
+
+        if res.get("status") == "error":
+            return f"<phase_space_mutation status='error' message='{res.get('message')}' />"
+
+        delta_info = f" new_weight='{res.get('new_weight')}'" if "new_weight" in res else ""
+        pruned_info = " pruned='true'" if action.upper() == "PRUNE" else ""
+
+        return f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}'{delta_info}{pruned_info} />"
 
     # --- ReAct Execution Loop ---
     def execute_turn(self, user_input: str, max_turns: int = 5) -> Generator[Dict[str, Any], None, None]:

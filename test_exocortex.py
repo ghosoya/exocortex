@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 from server.vault_io import VaultIO
 from server.graph_store import GraphStore, cosine_similarity
-from core.guards import slice_for_embedding, estimate_tokens, prune_history_if_needed, calculate_history_tokens
+from core.guards import slice_for_embedding, estimate_tokens, prune_history_if_needed
 from core.session import SessionManager
 from core.engine import ExecutionEngine
 
@@ -116,9 +116,8 @@ class TestSessionManager(unittest.TestCase):
         self.assertEqual(len(new_session.messages), 2)
         self.assertEqual(new_session.messages[0]["content"], "Architecture audit")
 
-
 class TestGraphStore(unittest.TestCase):
-    """Tests graph state, imprinting, resonance, and Canvas projection."""
+    """Tests graph state, imprinting, resonance, mutations, and Canvas projection."""
 
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -131,7 +130,14 @@ class TestGraphStore(unittest.TestCase):
             "multigraph": False,
             "graph": {"name": "default"},
             "nodes": [
-                {"id": "BC_001", "type": "BoundaryConstraint", "label": "Single_Responsibility", "payload": "Modular separation.", "embedding": [0.1, 0.2, 0.3]}
+                {
+                    "id": "BC_001", 
+                    "type": "BoundaryConstraint", 
+                    "label": "Single_Responsibility", 
+                    "payload": "Modular separation.", 
+                    "embedding": [0.1, 0.2, 0.3],
+                    "weight": 1.0
+                }
             ],
             "edges": []
         }
@@ -167,6 +173,54 @@ class TestGraphStore(unittest.TestCase):
             self.assertEqual(len(canvas_data["nodes"]), 2)
             self.assertGreaterEqual(len(canvas_data["edges"]), 1)
 
+    @patch("ollama.Client")
+    def test_mutate_node_actions(self, mock_ollama):
+        """Tests STRENGTHEN, DECAY, UPDATE, PRUNE logic and constraints."""
+        mock_client = MagicMock()
+        # Embedding for UPDATE action
+        mock_client.embeddings.return_value = {"embedding": [0.9, 0.9, 0.9]}
+        mock_ollama.return_value = mock_client
+
+        store = GraphStore(vault_io=self.vault_io)
+        target_id = "BC_001"
+
+        # 1. Test STRENGTHEN (capped at 3.0)
+        res_s = store.mutate_node(target_id, action="STRENGTHEN", delta=0.5)
+        self.assertEqual(res_s["status"], "success")
+        self.assertEqual(res_s["new_weight"], 1.5)
+        self.assertEqual(store.graph.nodes[target_id]["weight"], 1.5)
+
+        store.mutate_node(target_id, action="STRENGTHEN", delta=2.0) # Should cap
+        self.assertEqual(store.graph.nodes[target_id]["weight"], 3.0)
+
+        # 2. Test DECAY (floor at 0.05)
+        res_d = store.mutate_node(target_id, action="DECAY", delta=2.0)
+        self.assertEqual(res_d["status"], "success")
+        self.assertEqual(res_d["new_weight"], 1.0) # 3.0 - 2.0
+
+        store.mutate_node(target_id, action="DECAY", delta=0.99) # Should hit floor
+        self.assertEqual(store.graph.nodes[target_id]["weight"], 0.05)
+
+        # 3. Test UPDATE (requires payload, updates embedding)
+        res_u = store.mutate_node(target_id, action="UPDATE", payload_update="Updated Axiom.")
+        self.assertEqual(res_u["status"], "success")
+        self.assertEqual(store.graph.nodes[target_id]["payload"], "Updated Axiom.")
+        self.assertEqual(store.graph.nodes[target_id]["embedding"], [0.9, 0.9, 0.9])
+
+        # Test UPDATE error case
+        res_u_err = store.mutate_node(target_id, action="UPDATE", payload_update="")
+        self.assertEqual(res_u_err["status"], "error")
+
+        # 4. Test PRUNE
+        res_p = store.mutate_node(target_id, action="PRUNE")
+        self.assertEqual(res_p["status"], "success")
+        self.assertFalse(store.graph.has_node(target_id))
+        self.assertEqual(store.get_graph_stats()["node_count"], 0)
+
+        # 5. Test Non-existent Node
+        res_err = store.mutate_node("VOID_001", action="DECAY")
+        self.assertEqual(res_err["status"], "error")
+
     def test_cosine_similarity(self):
         v1 = [1.0, 0.0, 0.0]
         v2 = [1.0, 0.0, 0.0]
@@ -187,7 +241,9 @@ class TestExecutionEngineIntegration(unittest.TestCase):
             "directed": True,
             "multigraph": False,
             "graph": {"name": "default"},
-            "nodes": [],
+            "nodes": [
+                 {"id": "BC_001", "type": "BoundaryConstraint", "label": "Test", "payload": "...", "embedding": [0.1], "weight": 1.0}
+            ],
             "edges": []
         }
         self.vault_io.write_graph_json("default", initial_graph)
@@ -210,10 +266,21 @@ class TestExecutionEngineIntegration(unittest.TestCase):
         self.assertIn("read_vault_note", tool_names)
         self.assertIn("exocortex_imprint_field", tool_names)
         self.assertIn("exocortex_temporal_anchor", tool_names)
+        self.assertIn("exocortex_mutate_phase_space", tool_names)
 
-        # 2. Tool dispatching test
+        # 2. Legacy Tool dispatching test
         anchor_result = engine.tool_handlers["exocortex_temporal_anchor"](scope="iso")
         self.assertIn("<temporal_anchor>", anchor_result)
+
+        # 3. Mutation Tool dispatching test (STRENGTHEN)
+        mutate_result = engine.tool_handlers["exocortex_mutate_phase_space"](
+            target_node_id="BC_001", 
+            action="STRENGTHEN",
+            delta=0.2
+        )
+        self.assertIn("<phase_space_mutation status='success'", mutate_result)
+        self.assertIn("action='STRENGTHEN'", mutate_result)
+        self.assertIn("new_weight='1.2'", mutate_result) # 1.0 + 0.2
 
 
 if __name__ == "__main__":

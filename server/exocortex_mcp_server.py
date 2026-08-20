@@ -106,6 +106,24 @@ def exocortex_switch_topology(topology_name: str) -> str:
         return f"<topology_switched name='{stats['name']}' nodes='{stats['node_count']}' edges='{stats['edge_count']}' />"
     except Exception as e:
         return f"<error>Topology switch failed: {e}</error>"
+        
+@mcp.tool()
+def exocortex_mutate_phase_space(
+    target_node_id: str,
+    action: str,
+    payload_update: Optional[str] = None,
+    delta: float = 0.2
+) -> str:
+    """Modulates, updates, decays, or prunes an existing node in the active phase space."""
+    res = graph_store.mutate_node(
+        target_node_id=target_node_id,
+        action=action,
+        payload_update=payload_update,
+        delta=delta
+    )
+    if res.get("status") == "error":
+        return f"<phase_space_mutation status='error' message='{res.get('message')}' />"
+    return f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}' />"
 
 
 if __name__ == "__main__":

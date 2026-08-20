@@ -11,6 +11,7 @@ import math
 from pathlib import Path
 import networkx as nx
 import ollama
+from core.guards import slice_for_embedding
 
 from .vault_io import VaultIO
 
@@ -257,3 +258,72 @@ class GraphStore:
             "topology": self.active_graph_name,
             "wired_connections": wired_connections,
         }
+        
+ 
+    def mutate_node(
+        self,
+        target_node_id: str,
+        action: str,
+        payload_update: Optional[str] = None,
+        delta: float = 0.2
+    ) -> Dict[str, Any]:
+        """
+        Executes discrete structural mutations on active topology nodes:
+        STRENGTHEN, DECAY, PRUNE, or UPDATE.
+        """
+        if not self.graph.has_node(target_node_id):
+            return {
+                "status": "error",
+                "message": f"Node '{target_node_id}' does not exist in active topology '{self.active_graph_name}'."
+            }
+
+        node_data = self.graph.nodes[target_node_id]
+        action = action.upper()
+        current_weight = float(node_data.get("weight", 1.0))
+        result_payload = {"status": "success", "node_id": target_node_id, "action": action}
+
+        if action == "STRENGTHEN":
+            new_weight = min(3.0, round(current_weight + abs(delta), 2))
+            self.graph.nodes[target_node_id]["weight"] = new_weight
+            result_payload["previous_weight"] = current_weight
+            result_payload["new_weight"] = new_weight
+
+        elif action == "DECAY":
+            new_weight = max(0.05, round(current_weight - abs(delta), 2))
+            self.graph.nodes[target_node_id]["weight"] = new_weight
+            result_payload["previous_weight"] = current_weight
+            result_payload["new_weight"] = new_weight
+
+        elif action == "PRUNE":
+            node_label = node_data.get("label", target_node_id)
+            node_type = node_data.get("type", "Unknown")
+            self.graph.remove_node(target_node_id)
+            result_payload["pruned_node"] = {"id": target_node_id, "label": node_label, "type": node_type}
+
+        elif action == "UPDATE":
+            if not payload_update or not payload_update.strip():
+                return {
+                    "status": "error",
+                    "message": "Action UPDATE requires a non-empty 'payload_update' string."
+                }
+            
+            clean_payload = slice_for_embedding(payload_update.strip())
+            # Embedding neu berechnen (das ist der synchrone Teil)
+            new_embedding = self._get_embedding(clean_payload)
+            
+            self.graph.nodes[target_node_id]["payload"] = clean_payload
+            self.graph.nodes[target_node_id]["embedding"] = new_embedding
+            result_payload["updated_payload"] = clean_payload
+        else:
+            return {"status": "error", "message": f"Unknown mutation action: '{action}'."}
+
+        # --- FIX HIER ---
+        # Statt self._persist_and_sync() nutzen wir die bestehende Methode:
+        self.save_graph() 
+        # ----------------
+
+        return result_payload
+
+        # Synchronize phase space state and persist changes
+        self._persist_and_sync()
+        return result_payload
