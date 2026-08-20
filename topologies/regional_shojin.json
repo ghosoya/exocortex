@@ -1,0 +1,130 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {
+    "name": "regional_shojin",
+    "embedding_model": "bge-m3",
+    "updated_at": "2026-08-20T12:45:00",
+    "description": "Mindful seasonal plant-based culinary topology rooted in Shojin Ryori and regional terroir."
+  },
+  "nodes": [
+    {
+      "id": "BC_001",
+      "type": "BoundaryConstraint",
+      "label": "Radical_Micro_Seasonality",
+      "payload": "Strict adherence to the current micro-season and local terroir. Zero out-of-season long-distance cargo. Work exclusively with what the immediate land and soil yield right now.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "BC_002",
+      "type": "BoundaryConstraint",
+      "label": "Zero_Waste_Ahimsa",
+      "payload": "Holistic respect for ingredients. Peels, stems, roots, and trimming water must be transformed into dashi, powders, or ferments. Nothing edible is discarded.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "BC_003",
+      "type": "BoundaryConstraint",
+      "label": "Fivefold_Harmony_Rule",
+      "payload": "Every composed meal must balance the 5 Tastes (Gomi: sweet, sour, salty, bitter, umami), 5 Colors (Goshiki: green, red, yellow, white, black/purple), and 5 Preparations (Goho: raw, simmered, steamed, grilled, fried).",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PW_001",
+      "type": "PotentialWell",
+      "label": "Vegetal_Dashi_Bedrock",
+      "payload": "The foundational liquid substrate. Extraction of layered umami through slow steeping of dried mushrooms, root trimmings, toasted grains, and mineral water.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PW_002",
+      "type": "PotentialWell",
+      "label": "Ma_Negative_Space",
+      "payload": "Aesthetic restraint. Emptiness in flavor and plating. Do not crowd the palate; allow a single pristine vegetable to express its inherent nature without heavy masking sauces.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PW_003",
+      "type": "PotentialWell",
+      "label": "Shokan_Textural_Resonance",
+      "payload": "Mouthfeel as cognitive experience. Harmonizing contrasting textures: silky, crisp, gelatinous, toothsome, and velvety.",
+      "embedding": [],
+      "weight": 0.9
+    },
+    {
+      "id": "TO_001",
+      "type": "TrajectoryOperator",
+      "label": "Koji_Fermentation_Vector",
+      "payload": "Catalytic transformation via local koji, misos, lacto-fermentation, and vinegars to unlock deep glutamates and complex organic acids from simple starches.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "TO_002",
+      "type": "TrajectoryOperator",
+      "label": "Gentle_Thermal_Modulation",
+      "payload": "Precise, non-destructive heat application: gentle steaming, cold smoking, slow braising, or flash charcoal grilling to preserve aromatic volatiles.",
+      "embedding": [],
+      "weight": 0.9
+    },
+    {
+      "id": "PST_001",
+      "type": "PhaseSpaceTrace",
+      "label": "Ichiju_Sansai_Composition",
+      "payload": "Meal architecture: One soup (Suimono/Miso), one primary seasonal centerpiece, two complementary small seasonal sides, and fragrant local grain.",
+      "embedding": [],
+      "weight": 0.9
+    },
+    {
+      "id": "PST_002",
+      "type": "PhaseSpaceTrace",
+      "label": "Harvest_To_Table_Trace",
+      "payload": "Process flow: Morning harvest audit -> texture mapping -> dashi extraction -> mindful preparation -> contemplative service.",
+      "embedding": [],
+      "weight": 0.8
+    }
+  ],
+  "links": [
+    {
+      "source": "BC_001",
+      "target": "PW_001",
+      "relation": "grounds",
+      "weight": 1.0
+    },
+    {
+      "source": "BC_002",
+      "target": "PW_001",
+      "relation": "feeds_into",
+      "weight": 1.0
+    },
+    {
+      "source": "BC_003",
+      "target": "PST_001",
+      "relation": "governs",
+      "weight": 1.0
+    },
+    {
+      "source": "TO_001",
+      "target": "PW_001",
+      "relation": "deepens",
+      "weight": 1.0
+    },
+    {
+      "source": "TO_002",
+      "target": "PW_003",
+      "relation": "preserves",
+      "weight": 0.9
+    },
+    {
+      "source": "PW_002",
+      "target": "PST_001",
+      "relation": "frames",
+      "weight": 1.0
+    }
+  ]
+}
