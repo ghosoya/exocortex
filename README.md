@@ -3,7 +3,7 @@
 > **Topological Cognitive Substrate & Autopoietic Thinking Partner**
 > An open-source, local-first cognition engine featuring dynamic phase-space memory, Model Context Protocol (MCP) integration, and bi-directional Obsidian vault synchronization.
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENCE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Protocol](https://img.shields.io/badge/MCP-FastMCP-brightgreen.svg)](https://modelcontextprotocol.io/)
 [![Backend](https://img.shields.io/badge/LLM%20Backend-Ollama-orange.svg)](https://ollama.ai/)
@@ -112,13 +112,15 @@ exocortex/
 │   └── vault_io.py             # Sandboxed filesystem & vault I/O
 ├── topologies/
 │   └── code_architect.json     # Modular software architecture
+│   ├── poetic_synthesis.json   # Divergent Associative Reasoning
 │   ├── default.json            # Canonical starter topology (template)
+│   ├── regional_shojin.json    # Mindful Culinary Aesthetics
 │   └── systemic_kernel.json    # Epistemic rigor & systems theory
 ├── chat_exocortex.py           # Unified interactive CLI runner
 ├── test_exocortex.py           # Modular unit & integration test suite
 ├── test_mcp_network.py         # Network MCP integration test
 ├── .env.example                # Environment configuration template
-├── LICENCE                     # Apache 2.0 License
+├── LICENSE                     # Apache 2.0 License
 └── README.md
 
 ```
@@ -270,5 +272,5 @@ professional, legal, or medical advice.
 
 ## 📜 License
 
-Licensed under the **Apache License, Version 2.0**. See [LICENCE](LICENCE) for details.
+Licensed under the **Apache License, Version 2.0**. See [LICENSE](LICENSE) for details.
 
