@@ -183,11 +183,11 @@ class GraphStore:
     
     def switch_graph(self, graph_name: str) -> Dict[str, Any]:
         """Loads a different graph by name, ensures embeddings exist, and updates canvas."""
-        # Dateiendung handhaben falls mit übergeben
+        # Handle file extension if provided
         clean_name = graph_name.replace(".json", "")
         self.load_graph(clean_name)
         
-        # Fehlende Embeddings on-the-fly berechnen falls nötig
+        # Compute missing embeddings on-the-fly if needed
         updated = False
         for node_id, attrs in self.graph.nodes(data=True):
             emb = attrs.get("embedding", [])
@@ -342,7 +342,7 @@ class GraphStore:
                 }
             
             clean_payload = slice_for_embedding(payload_update.strip())
-            # Embedding neu berechnen (das ist der synchrone Teil)
+            # Recompute embedding (synchronous execution)
             new_embedding = self._get_embedding(clean_payload)
             
             self.graph.nodes[target_node_id]["payload"] = clean_payload
@@ -350,7 +350,7 @@ class GraphStore:
             result_payload["updated_payload"] = clean_payload
         
         elif action == "SET_WEIGHT":
-            # Setzt das Gewicht direkt auf den übergebenen delta-Wert (begrenzt auf [0.05, 3.0])
+            # Set weight directly to the provided delta value (clamped to [0.05, 3.0])
             new_weight = max(0.05, min(3.0, round(float(delta), 2)))
             self.graph.nodes[target_node_id]["weight"] = new_weight
             result_payload["previous_weight"] = current_weight
@@ -358,13 +358,5 @@ class GraphStore:
         else:
             return {"status": "error", "message": f"Unknown mutation action: '{action}'."}
 
-        # --- FIX HIER ---
-        # Statt self._persist_and_sync() nutzen wir die bestehende Methode:
         self.save_graph() 
-        # ----------------
-
-        return result_payload
-
-        # Synchronize phase space state and persist changes
-        self._persist_and_sync()
         return result_payload
