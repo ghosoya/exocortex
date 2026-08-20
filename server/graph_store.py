@@ -49,11 +49,11 @@ class GraphStore:
             return []
 
     def export_canvas(self, canvas_filename: str = "Exocortex_Interactive.canvas") -> str:
-        """Projects the NetworkX graph into a structured Obsidian .canvas file."""
+        """Projects the NetworkX graph into a structured Obsidian .canvas file with weights and vector telemetry."""
         type_config = {
-            "BoundaryConstraint": {"x": -900, "color": "1"},   # Red
-            "PotentialWell": {"x": -300, "color": "5"},        # Cyan
-            "TrajectoryOperator": {"x": 350, "color": "3"},    # Purple
+            "BoundaryConstraint": {"x": -950, "color": "1"},   # Red
+            "PotentialWell": {"x": -320, "color": "5"},        # Cyan
+            "TrajectoryOperator": {"x": 320, "color": "3"},    # Purple
             "PhaseSpaceTrace": {"x": 950, "color": "4"},       # Green
         }
 
@@ -61,14 +61,14 @@ class GraphStore:
         canvas_nodes = []
         canvas_edges = []
 
-        card_width = 340
-        card_height = 200
-        y_gap = 60
+        card_width = 360
+        card_height = 220
+        y_gap = 50
 
         for node_id, attrs in self.graph.nodes(data=True):
             n_type = attrs.get("type", "PotentialWell")
             cfg = type_config.get(n_type, {"x": 0, "color": "0"})
-            
+
             col_x = cfg["x"]
             idx = y_counters.get(n_type, 0)
             node_y = idx * (card_height + y_gap) - 400
@@ -76,9 +76,20 @@ class GraphStore:
 
             label = attrs.get("label", node_id)
             payload = attrs.get("payload", "").strip()
-            
-            # Markdown content for Canvas card
-            text_content = f"### `{node_id}` {label}\n**Type:** `{n_type}`\n\n{payload}"
+            weight = float(attrs.get("weight", 1.0))
+
+            # Vektor-Telemetrie prüfen
+            embedding = attrs.get("embedding", [])
+            has_embedding = bool(isinstance(embedding, list) and len(embedding) > 0)
+            vec_badge = f"vec: ✓ ({len(embedding)}d)" if has_embedding else "vec: ✗"
+
+            # Markdown-Karteninhalt mit Telemetrie-Zeile
+            text_content = (
+                f"### `{node_id}` {label}\n"
+                f"`w: {weight:.2f}` · `{vec_badge}`\n"
+                f"---\n"
+                f"{payload}"
+            )
 
             canvas_nodes.append({
                 "id": node_id,
@@ -314,6 +325,13 @@ class GraphStore:
             self.graph.nodes[target_node_id]["payload"] = clean_payload
             self.graph.nodes[target_node_id]["embedding"] = new_embedding
             result_payload["updated_payload"] = clean_payload
+        
+        elif action == "SET_WEIGHT":
+            # Setzt das Gewicht direkt auf den übergebenen delta-Wert (begrenzt auf [0.05, 3.0])
+            new_weight = max(0.05, min(3.0, round(float(delta), 2)))
+            self.graph.nodes[target_node_id]["weight"] = new_weight
+            result_payload["previous_weight"] = current_weight
+            result_payload["new_weight"] = new_weight
         else:
             return {"status": "error", "message": f"Unknown mutation action: '{action}'."}
 

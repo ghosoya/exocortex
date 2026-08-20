@@ -42,7 +42,7 @@ class ExecutionEngine:
             "exocortex_gauge_field": self._tool_gauge_field,
             "exocortex_imprint_field": self._tool_imprint_field,
             "exocortex_temporal_anchor": self._tool_temporal_anchor,
-            "exocortex_mutate_phase_space": self._handle_mutate_phase_space
+            "exocortex_mutate_phase_space": self._handle_mutate_phase_space,
         }
 
     def _build_tools_schema(self) -> List[Dict[str, Any]]:
@@ -148,8 +148,8 @@ class ExecutionEngine:
                 },
                 "action": {
                     "type": "string",
-                    "enum": ["STRENGTHEN", "DECAY", "PRUNE", "UPDATE"],
-                    "description": "Structural operation: STRENGTHEN (+weight), DECAY (-weight), PRUNE (remove node), UPDATE (modify payload)"
+                    "enum": ["STRENGTHEN", "DECAY", "SET_WEIGHT", "PRUNE", "UPDATE"],
+                    "description": "Structural operation: STRENGTHEN (+delta), DECAY (-delta), SET_WEIGHT (set absolute weight via delta), PRUNE (remove node), UPDATE (modify payload)"
                 },
                 "payload_update": {
                     "type": "string",

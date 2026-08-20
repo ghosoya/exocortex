@@ -114,7 +114,7 @@ def exocortex_mutate_phase_space(
     payload_update: Optional[str] = None,
     delta: float = 0.2
 ) -> str:
-    """Modulates, updates, decays, or prunes an existing node in the active phase space."""
+    """Modulates, updates, decays, sets weight, or prunes an existing node in the active phase space (actions: STRENGTHEN, DECAY, SET_WEIGHT, PRUNE, UPDATE)."""
     res = graph_store.mutate_node(
         target_node_id=target_node_id,
         action=action,

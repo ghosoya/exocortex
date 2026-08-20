@@ -201,7 +201,13 @@ class TestGraphStore(unittest.TestCase):
         store.mutate_node(target_id, action="DECAY", delta=0.99) # Should hit floor
         self.assertEqual(store.graph.nodes[target_id]["weight"], 0.05)
 
-        # 3. Test UPDATE (requires payload, updates embedding)
+        # 3. Test SET_WEIGHT (direct calibration)
+        res_set = store.mutate_node(target_id, action="SET_WEIGHT", delta=1.2)
+        self.assertEqual(res_set["status"], "success")
+        self.assertEqual(res_set["new_weight"], 1.2)
+        self.assertEqual(store.graph.nodes[target_id]["weight"], 1.2)
+        
+        # 4. Test UPDATE (requires payload, updates embedding)
         res_u = store.mutate_node(target_id, action="UPDATE", payload_update="Updated Axiom.")
         self.assertEqual(res_u["status"], "success")
         self.assertEqual(store.graph.nodes[target_id]["payload"], "Updated Axiom.")
@@ -211,13 +217,13 @@ class TestGraphStore(unittest.TestCase):
         res_u_err = store.mutate_node(target_id, action="UPDATE", payload_update="")
         self.assertEqual(res_u_err["status"], "error")
 
-        # 4. Test PRUNE
+        # 5. Test PRUNE
         res_p = store.mutate_node(target_id, action="PRUNE")
         self.assertEqual(res_p["status"], "success")
         self.assertFalse(store.graph.has_node(target_id))
         self.assertEqual(store.get_graph_stats()["node_count"], 0)
-
-        # 5. Test Non-existent Node
+        
+        # 6. Test Non-existent Node
         res_err = store.mutate_node("VOID_001", action="DECAY")
         self.assertEqual(res_err["status"], "error")
 
