@@ -74,6 +74,7 @@ The model or operator can actively reshape the phase space during runtime:
 
 6. **Cognitive Lenses:**
 Runtime-switchable cognitive modes (`default`, `socratic`, `architect`) to adapt the epistemological stance on the fly.
+
 7. **Defensive Guards:**
 Automatic token budgeting, code-block stripping for embeddings, and sliding-window turn pruning to avoid context overflow (HTTP 500 mitigation).
 
@@ -258,6 +259,14 @@ Exocortex is engineered through a continuous, autopoietic human–AI collaborati
 It stands as a live demonstration of symbiotic cognition and high-density technical resonance.
 
 ---
+
+## 🔬 Disclaimer
+
+Exocortex is experimental software provided for research and personal 
+knowledge exploration on an "AS IS" basis. It performs direct file system I/O 
+within the configured Obsidian vault. Always maintain independent backups of 
+your notes and data. LLM-generated responses should not be treated as 
+professional, legal, or medical advice.
 
 ## 📜 License
 
