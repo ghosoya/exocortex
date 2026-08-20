@@ -44,7 +44,15 @@ class ExecutionEngine:
             "exocortex_temporal_anchor": self._tool_temporal_anchor,
             "exocortex_mutate_phase_space": self._handle_mutate_phase_space,
         }
-
+    
+    def switch_graph(self, graph_name: str) -> Dict[str, Any]:
+        """Switches the active phase space topology."""
+        return self.graph_store.switch_graph(graph_name)
+    
+    def get_graph_stats(self) -> Dict[str, Any]:
+        """Returns stats of the currently active graph topology."""
+        return self.graph_store.get_graph_stats()
+    
     def _build_tools_schema(self) -> List[Dict[str, Any]]:
         return [
             {
@@ -234,7 +242,7 @@ class ExecutionEngine:
         pruned_info = " pruned='true'" if action.upper() == "PRUNE" else ""
 
         return f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}'{delta_info}{pruned_info} />"
-
+        
     # --- ReAct Execution Loop ---
     def execute_turn(self, user_input: str, max_turns: int = 5) -> Generator[Dict[str, Any], None, None]:
         """

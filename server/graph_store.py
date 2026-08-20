@@ -180,7 +180,30 @@ class GraphStore:
             "edge_count": self.graph.number_of_edges(),
             "types": type_counts,
         }
-
+    
+    def switch_graph(self, graph_name: str) -> Dict[str, Any]:
+        """Loads a different graph by name, ensures embeddings exist, and updates canvas."""
+        # Dateiendung handhaben falls mit übergeben
+        clean_name = graph_name.replace(".json", "")
+        self.load_graph(clean_name)
+        
+        # Fehlende Embeddings on-the-fly berechnen falls nötig
+        updated = False
+        for node_id, attrs in self.graph.nodes(data=True):
+            emb = attrs.get("embedding", [])
+            if not emb or len(emb) == 0:
+                payload = attrs.get("payload", "")
+                if payload:
+                    attrs["embedding"] = self._get_embedding(payload)
+                    updated = True
+        
+        if updated:
+            self.save_graph(clean_name)
+        else:
+            self.export_canvas()
+            
+        return self.get_graph_stats()
+        
     def get_resonant_nodes(self, query: str, top_k: int = 4, threshold: float = 0.45) -> List[Tuple[str, Dict[str, Any], float]]:
         query_vec = self._get_embedding(query)
         if not query_vec:

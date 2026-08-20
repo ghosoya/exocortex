@@ -282,18 +282,19 @@ def run_local():
                     else:
                         print(f"{C_YELLOW}[INFO] No saved sessions found in vault.{C_RESET}\n")
                 continue
-            elif user_input.startswith("/graph"):
-                parts = user_input.split()
-                sub = parts[1].lower() if len(parts) > 1 else "info"
-                if sub == "list":
-                    print(f"{C_CYAN}[TOPOLOGIES]{C_RESET} " + ", ".join(f"'{g}'" for g in vault_io.list_graphs()) + "\n")
-                elif sub == "load" and len(parts) > 2:
-                    st = graph_store.load_graph(parts[2])
-                    session.active_graph = st["name"]
-                    print(f"{C_GREEN}[OK] Topology switched: '{st['name']}' ({st['node_count']} nodes){C_RESET}\n")
-                elif sub == "info":
-                    st = graph_store.get_graph_stats()
-                    print(f"{C_CYAN}[GRAPH]{C_RESET} '{st['name']}' | {st['node_count']} nodes | {st['edge_count']} edges\n")
+            elif user_input.startswith("/graph") or user_input.startswith("/switch"):
+                parts = user_input.strip().split(maxsplit=1)
+                if len(parts) > 1:
+                    target_graph = parts[1].strip()
+                    try:
+                        stats = engine.switch_graph(target_graph)
+                        print(f"\n[*] Switched to graph '{stats['name']}' ({stats['node_count']} nodes, {stats['edge_count']} edges)")
+                        print(f"[*] Canvas synced to 'Exocortex_Interactive.canvas'\n")
+                    except Exception as e:
+                        print(f"\n[!] Failed to switch graph: {e}\n")
+                else:
+                    stats = engine.get_graph_stats()
+                    print(f"\n[GRAPH] '{stats['name']}' | {stats['node_count']} nodes | {stats['edge_count']} edges\n")
                 continue
 
             # 2. Execute ReAct turn
@@ -385,15 +386,20 @@ async def run_remote(sse_url: str):
                                 else:
                                     print(f"{C_YELLOW}[INFO] No saved sessions found in vault.{C_RESET}\n")
                             continue
-                        elif user_input.startswith(("/switch", "/graph")) and len(user_input.split()) > 1:
-                            parts = user_input.split()
-                            topo = parts[2] if parts[0] == "/graph" and len(parts) > 2 else parts[1]
-                            try:
-                                res = await mcp_session.call_tool("exocortex_switch_topology", arguments={"topology_name": topo})
-                                print(f"{C_GREEN}[OK] {res.content[0].text}{C_RESET}\n")
-                            except Exception as e:
-                                print(f"{C_RED}[ERROR] Topology switch failed: {e}{C_RESET}\n")
-                            continue
+                        elif user_input.startswith("/graph") or user_input.startswith("/switch"):
+                            parts = user_input.strip().split(maxsplit=1)
+                            if len(parts) > 1:
+                                target_graph = parts[1].strip()
+                                try:
+                                    stats = engine.switch_graph(target_graph)
+                                    print(f"\n[*] Switched to graph '{stats['name']}' ({stats['node_count']} nodes, {stats['edge_count']} edges)")
+                                    print(f"[*] Canvas synced to 'Exocortex_Interactive.canvas'\n")
+                                except Exception as e:
+                                    print(f"\n[!] Failed to switch graph: {e}\n")
+                            else:
+                                stats = engine.get_graph_stats()
+                                print(f"\n[GRAPH] '{stats['name']}' | {stats['node_count']} nodes | {stats['edge_count']} edges\n")
+                            continue    
 
                         # 2. Execute remote turn
                         async for event in remote_engine.execute_turn(user_input, mcp_session):

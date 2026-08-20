@@ -1,0 +1,198 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {
+    "name": "code_architect",
+    "embedding_model": "bge-m3",
+    "updated_at": "2026-08-20T09:35:00",
+    "description": "Specialized topology for modular, decoupled, and deterministic software architecture."
+  },
+  "nodes": [
+    {
+      "id": "PW_001",
+      "type": "PotentialWell",
+      "label": "State_Invariance",
+      "payload": "Minimize global mutable state. Enforce immutability and locally scoped state boundaries.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PW_002",
+      "type": "PotentialWell",
+      "label": "Domain_Contexts",
+      "payload": "Bounded Contexts: Clean isolation of domain logic to prevent monolithic architecture degradation ('Big Ball of Mud').",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PW_003",
+      "type": "PotentialWell",
+      "label": "Communication_Topology",
+      "payload": "Asynchronous messaging and event-driven patterns for high decoupling between system components.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "BC_001",
+      "type": "BoundaryConstraint",
+      "label": "Single_Responsibility",
+      "payload": "Each unit (function, class, module) must have exactly one reason to change.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "BC_002",
+      "type": "BoundaryConstraint",
+      "label": "Orthogonality_Guard",
+      "payload": "Modifications within unit A must produce zero unintended side effects across unit B.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "BC_003",
+      "type": "BoundaryConstraint",
+      "label": "Idempotency_Requirement",
+      "payload": "Operations must be safely repeatable without state corruption or unintended duplicate mutations.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "BC_004",
+      "type": "BoundaryConstraint",
+      "label": "Side_Effect_Isolation",
+      "payload": "Strict separation between deterministic pure computations and effectful boundaries (I/O, state mutations).",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "TO_001",
+      "type": "TrajectoryOperator",
+      "label": "Dependency_Inversion",
+      "payload": "Depend upon abstractions rather than concretions. Inject dependencies explicitly.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "TO_002",
+      "type": "TrajectoryOperator",
+      "label": "Error_Propagation_Strategy",
+      "payload": "Explicit error handling over unhandled exceptions. Circuit breakers and deterministic recovery fallbacks.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "TO_003",
+      "type": "TrajectoryOperator",
+      "label": "Decoupling_Refactor",
+      "payload": "Interface extraction and clean boundary enforcement to minimize cross-module coupling density.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "TO_004",
+      "type": "TrajectoryOperator",
+      "label": "Complexity_Reduction",
+      "payload": "Prioritize composition over inheritance to minimize cognitive load and deep hierarchy antipatterns.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PST_001",
+      "type": "PhaseSpaceTrace",
+      "label": "Request_Lifecycle",
+      "payload": "Pipeline flow: Validation -> Transformation -> Persistence -> Response.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PST_002",
+      "type": "PhaseSpaceTrace",
+      "label": "State_Transition_Graph",
+      "payload": "Deterministic state validation governed by explicit finite state machine transitions.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PST_003",
+      "type": "PhaseSpaceTrace",
+      "label": "Failure_Recovery_Path",
+      "payload": "Deterministic retry policies, error isolation boundaries, and graceful degradation paths.",
+      "embedding": [],
+      "weight": 1.0
+    }
+  ],
+  "links": [
+    {
+      "source": "BC_001",
+      "target": "PW_002",
+      "relation": "constrains",
+      "weight": 1.0
+    },
+    {
+      "source": "BC_002",
+      "target": "PW_001",
+      "relation": "guards",
+      "weight": 1.0
+    },
+    {
+      "source": "BC_003",
+      "target": "PW_003",
+      "relation": "enforces",
+      "weight": 1.0
+    },
+    {
+      "source": "BC_004",
+      "target": "PW_001",
+      "relation": "isolates",
+      "weight": 1.0
+    },
+    {
+      "source": "TO_001",
+      "target": "PW_003",
+      "relation": "inverts",
+      "weight": 1.0
+    },
+    {
+      "source": "TO_002",
+      "target": "BC_003",
+      "relation": "propagates",
+      "weight": 1.0
+    },
+    {
+      "source": "TO_003",
+      "target": "BC_002",
+      "relation": "decouples",
+      "weight": 1.0
+    },
+    {
+      "source": "TO_004",
+      "target": "BC_001",
+      "relation": "simplifies",
+      "weight": 1.0
+    },
+    {
+      "source": "PST_001",
+      "target": "BC_004",
+      "relation": "traces",
+      "weight": 1.0
+    },
+    {
+      "source": "PST_001",
+      "target": "PW_002",
+      "relation": "grounds",
+      "weight": 1.0
+    },
+    {
+      "source": "PST_002",
+      "target": "PW_001",
+      "relation": "models",
+      "weight": 1.0
+    },
+    {
+      "source": "PST_003",
+      "target": "TO_002",
+      "relation": "recovers",
+      "weight": 1.0
+    }
+  ]
+}

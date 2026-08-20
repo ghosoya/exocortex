@@ -49,17 +49,42 @@ The Exocortex is designed as a persistent, high-density reasoning substrate for 
 
 1. **Topological Phase Space (NetworkX + Vector Resonance):**
 Long-term memory is represented as a directed semantic graph with typed nodes (`BoundaryConstraint`, `PotentialWell`, `TrajectoryOperator`, `PhaseSpaceTrace`). Relevant nodes are retrieved via vector cosine similarity (`bge-m3`) and injected dynamically as system context.
-2. **Real-Time Obsidian Canvas Projection:**
+
+2. **Epistemic Phase Space (Node Taxonomy)**
+* **`BoundaryConstraint` (Red):** Inviolable epistemic invariants (Anti-Sycophancy, Side-Effect Isolation, Epistemic Sovereignty).
+* **`PotentialWell` (Cyan):** Gravitational attractor states defining the conceptual grounding (First Principles, Domain Contexts, Four-Layer Architecture).
+* **`TrajectoryOperator` (Purple):** Directional operators driving transformation, refactoring, and complexity reduction.
+* **`PhaseSpaceTrace` (Green):** Transient operational traces representing current execution states, hypotheses, and life cycles.
+
+3. **Synaptic Plasticity & Mutation Actions**
+The model or operator can actively reshape the phase space during runtime:
+* `STRENGTHEN` / `DECAY`: Relative weight modulation ($\Delta w$).
+* `SET_WEIGHT`: Absolute weight calibration ($[0.05, 3.0]$).
+* `UPDATE`: Payload rewriting with automatic re-embedding via `bge-m3`.
+* `PRUNE`: Topological deletion of obsolete hypothesis traces and redundant vectors.
+
+4. **Real-Time Obsidian Canvas Projection:**
 Every graph mutation or topology switch automatically writes an interactive, color-coded `.canvas` file directly into your Obsidian vault.
-3. **Dual-Mode Runner:**
+5. **Dual-Mode Runner:**
 * **Local Mode:** Self-contained in-memory execution loop without network overhead.
 * **Remote Mode:** Client-server setup via FastMCP over SSE, enabling external agent architectures and remote tool calls.
 
-
-4. **Cognitive Lenses:**
+6. **Cognitive Lenses:**
 Runtime-switchable cognitive modes (`default`, `socratic`, `architect`) to adapt the epistemological stance on the fly.
-5. **Defensive Guards:**
+7. **Defensive Guards:**
 Automatic token budgeting, code-block stripping for embeddings, and sliding-window turn pruning to avoid context overflow (HTTP 500 mitigation).
+
+---
+
+## ⚡ Topologies (Hot-Swappable Kognitionsräume)
+
+Switch active topologies on-the-fly via `/graph <name>`:
+
+| Topology | Focus | Target Dynamics |
+| :--- | :--- | :--- |
+| **`default`** | Minimal Epistemic Setup | Fast start, baseline reasoning, initial attractor calibration |
+| **`systemic_kernel`** | Epistemic Rigor & Systems Theory | Falsification audits, Kolmogorov complexity reduction, anti-sycophancy |
+| **`code_architect`** | Modular Software Architecture | Decoupling, bounded contexts, idempotency, side-effect isolation |
 
 ---
 
@@ -80,7 +105,9 @@ exocortex/
 │   ├── graph_store.py          # NetworkX topology & Canvas generator
 │   └── vault_io.py             # Sandboxed filesystem & vault I/O
 ├── topologies/
-│   └── default.json            # Canonical starter topology (template)
+│   └── code_architect.json     # Modular software architecture
+│   ├── default.json            # Canonical starter topology (template)
+│   └── systemic_kernel.json    # Epistemic rigor & systems theory
 ├── chat_exocortex.py           # Unified interactive CLI runner
 ├── test_exocortex.py           # Modular unit & integration test suite
 ├── test_mcp_network.py         # Network MCP integration test
@@ -193,9 +220,8 @@ python chat_exocortex.py --remote
 | `/prompt list` | Lists all available cognitive lenses (`default`, `socratic`, `architect`). |
 | `/prompt set <lens>` | Activates a specific cognitive lens. |
 | `/prompt show` | Displays the active base system prompt. |
-| `/graph list` | Lists all topologies present in the vault. |
-| `/graph load <name>` | Switches active topology and synchronizes Canvas. |
-| `/graph info` | Displays active node distribution and edge counts. |
+| `/graph` | Displays active topology name, node distribution, and edge counts. |
+| `/graph <name>` | Switches active topology and synchronizes Canvas. |
 | `/save [name]` | Persists session simultaneously as Markdown note and JSON state. |
 | `/load [name]` | Restores or lists saved sessions. |
 | `/context` | Shows estimated token utilization and turn count. |
