@@ -60,7 +60,7 @@ ollama run gemma4:12b "<PROMPT>"
 
 ### Baseline Output Excerpt:
 
-> *"1. Thermodynamics of Economic Activity: In non-equilibrium thermodynamics, any macroscopic system that processes information must generate entropy ($\Delta S > 0$)... To create an organized state, entropy must be exported to the surroundings...* <br>
+> *"1. Thermodynamics of Economic Activity: In non-equilibrium thermodynamics, any macroscopic system that processes information must generate entropy ($\Delta S \gt 0$)... To create an organized state, entropy must be exported to the surroundings...* <br>
 > *2. Exergy Destruction vs. Energy Efficiency: Renewable energy transitions shift the thermodynamic 'cost' from carbon-intensive fuels to mineral-intensive infrastructures...* <br>
 > *3. Material Throughput: The move from 'heavy industry' to 'light information services' merely shifts the point at which entropy is produced; it does not eliminate it."* 
 
