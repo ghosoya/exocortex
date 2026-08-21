@@ -105,31 +105,35 @@ Switch active topologies on-the-fly via `/graph <name>`:
 ```text
 exocortex/
 ├── config/
-│   └── system_base.md          # Global cognitive base instructions
+│   └── system_base.md           # Global cognitive base instructions
 ├── core/
-│   ├── compiler.py             # Rehydration engine (JSON topology -> Markdown prompt)
-│   ├── config.py               # Typed settings & environment loader
-│   ├── engine.py               # ReAct loop and decoupled tool dispatching
-│   ├── guards.py               # Context pruning & embedding guards
-│   ├── prompts.py              # Cognitive lenses & prompt manager
-│   └── session.py              # Session state, token tracking & persistence
+│   ├── compiler.py              # Rehydration engine (JSON topology -> Markdown prompt)
+│   ├── config.py                # Typed settings & environment loader
+│   ├── engine.py                # ReAct loop and decoupled tool dispatching
+│   ├── guards.py                # Context pruning & embedding guards
+│   ├── prompts.py               # Cognitive lenses & prompt manager
+│   └── session.py               # Session state, token tracking & persistence
 ├── docs/
-│   └── topologies/             # Topological case studies & epistemic audit reports
-│       └── 01_code_architect_entropy_breakline.md
+│   └── topologies/              # Topological case studies & epistemic audit reports
+│       ├── 01_code_architect_entropy_breakline.md
+│       ├── 02_poetic_synthesis_anicca_gc.md
+│       ├── 03_systemic_kernel_observer_collapse.md
+│       ├── 04_systemic_kernel_jevons_verification_entropy.md
+│       ├── 05_systemic_kernel_thermodynamic_decoupling.md
+│       └── 06_regional_shojin_terroir_synthesis.md
 ├── server/
-│   ├── exocortex_mcp_server.py # FastMCP SSE / stdio daemon
-│   ├── graph_store.py          # NetworkX topology, vector resonance & Canvas generator
-│   └── vault_io.py             # Sandboxed filesystem & vault I/O
+│   ├── exocortex_mcp_server.py  # FastMCP SSE / stdio daemon
+│   ├── graph_store.py           # NetworkX topology, vector resonance & Canvas generator
+│   └── vault_io.py              # Sandboxed filesystem & vault I/O
 ├── topologies/
-│   ├── base/                   # Immutable cognitive blueprints (default, code_architect, ...)
-│   └── snapshots/              # Frozen, versioned phase-space states (*.json)
-├── chat_exocortex.py           # Unified interactive CLI runner (Local & Remote)
-├── test_exocortex.py           # Modular unit & integration test suite
-├── test_mcp_network.py         # Network MCP integration test
-├── .env.example                # Environment configuration template
-├── LICENSE                     # Apache 2.0 License
+│   ├── base/                    # Immutable cognitive blueprints (default, code_architect, ...)
+│   └── snapshots/               # Frozen, versioned phase-space states (*.json)
+├── chat_exocortex.py            # Unified interactive CLI runner (Local & Remote)
+├── test_exocortex.py            # Modular unit & integration test suite
+├── test_mcp_network.py          # Network MCP integration test
+├── .env.example                 # Environment configuration template
+├── LICENSE                      # Apache 2.0 License
 └── README.md
-
 ```
 
 ---
@@ -271,7 +275,9 @@ python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices
 * **[Showcase 04: Systemic Kernel & The Jevons Verification Paradox](docs/topologies/04_systemic_kernel_jevons_verification_entropy.md)** 
   *Information-theoretic audit of LLM deployment, modeling the phase transition from generative synthesis to forensic Audit Engineering.*
 * **[Showcase 05: Systemic Kernel & The Thermodynamic Decoupling Audit](docs/topologies/05_systemic_kernel_thermodynamic_decoupling.md)** 
-  *Non-equilibrium thermodynamic audit of 'Green Growth', demonstrating why digitalization is an entropy relocation rather than dematerialization.*
+  *Non-equilibrium thermodynamic audit of 'Green Growth', demonstrating why digitalization is an entropy relocation rather than dematerialization.
+* **[Showcase 06: Regional Shojin & The Brandenburg Terroir Synthesis](docs/topologies/06_regional_shojin_terroir_synthesis.md)** 
+  *Aesthetic and micro-seasonal translation of Zen temple cuisine (Ichijū Sansai, Gohō, Mottainai) into the regional terroir of Central Europe.*
   
 ## 🧪 Testing
 
