@@ -59,9 +59,9 @@ ollama run gemma4:12b "Synthesize the concept of automatic memory management (Ga
 
 ### Baseline Output Excerpt:
 
-> *"1. Structural Intersection: In Mark-and-Sweep, an object’s status as 'alive' or 'garbage' is determined solely by its reachability within a directed graph... This mirrors the Buddhist concept of Pratītyasamutpāda...*
-> *2. Ontological Synthesis: The primary ontological friction lies between Essentialism and Processualism... Anicca asserts that the 'self' of an object is an illusion...*
-> *3. Thermodynamic Intersection: A system that fails to reclaim memory experiences an increase in entropy... Anicca defines the state of the universe as one of constant dissolution (the 'Leak')."*
+> *"1. Structural Intersection: In Mark-and-Sweep, an object’s status as 'alive' or 'garbage' is determined solely by its reachability within a directed graph... This mirrors the Buddhist concept of Pratītyasamutpāda...* <br>
+> *2. Ontological Synthesis: The primary ontological friction lies between Essentialism and Processualism... Anicca asserts that the 'self' of an object is an illusion...*<br>
+> *3. Thermodynamic Intersection: A system that fails to reclaim memory experiences an increase in entropy... Anicca defines the state of the universe as one of constant dissolution (the 'Leak')."*<br>
 
 ### Diagnostic Assessment:
 
