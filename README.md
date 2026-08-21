@@ -268,9 +268,11 @@ python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices
   *A/B benchmark against Vanilla Gemma 4 12B demonstrating anti-cliché invariants, structural isomorphism, and process-oriented ontological synthesis.*
 * **[Showcase 03: Systemic Kernel & The Observer-Collapse Audit](docs/topologies/03_systemic_kernel_observer_collapse.md)** 
   *A/B benchmark on Second-Order Cybernetics and Goodhart's Law, deconstructing RLHF alignment theater into formal boundary constraints.*
-* **[Showcase 04: Systemic Kernel & The Jevons Verification Paradox](docs/topologies/04_systemic_kernel_jevons_verification_entropy.md)**
+* **[Showcase 04: Systemic Kernel & The Jevons Verification Paradox](docs/topologies/04_systemic_kernel_jevons_verification_entropy.md)** 
   *Information-theoretic audit of LLM deployment, modeling the phase transition from generative synthesis to forensic Audit Engineering.*
-
+* **[Showcase 05: Systemic Kernel & The Thermodynamic Decoupling Audit](docs/topologies/05_systemic_kernel_thermodynamic_decoupling.md)** 
+  *Non-equilibrium thermodynamic audit of 'Green Growth', demonstrating why digitalization is an entropy relocation rather than dematerialization.*
+  
 ## 🧪 Testing
 
 Run the automated unit test suite:
