@@ -208,9 +208,11 @@ def print_help(mode: str):
         print("  /graph list                   - List all topologies in vault")
         print("  /graph load <Name>            - Switch active topology")
         print("  /graph info                   - Status and node distribution")
+        print("  /freeze [Tag]                 - Freeze topology state (JSON snapshot + Canvas)")
     else:
         print("  /switch <Name>                - Switch topology on remote daemon")
-    print("  /save [Name]                  - Save session (Markdown + JSON)")
+        print("  /freeze [Tag]                 - Freeze topology state on remote daemon")
+    print("  /save [Name]                  - Save session transcript (Markdown + JSON)")
     print("  /load [Name]                  - Load or list saved sessions")
     print("  /context                      - Display token usage")
     print("  /clear                        - Clear message history")
@@ -295,6 +297,18 @@ def run_local():
                 else:
                     stats = engine.get_graph_stats()
                     print(f"\n[GRAPH] '{stats['name']}' | {stats['node_count']} nodes | {stats['edge_count']} edges\n")
+                continue
+            elif user_input.startswith("/freeze"):
+                parts = user_input.strip().split(maxsplit=1)
+                tag = parts[1].strip() if len(parts) > 1 else None
+                try:
+                    res = graph_store.freeze_snapshot(tag)
+                    print(f"\n{C_GREEN}[OK] Phase-space topology frozen:{C_RESET}")
+                    print(f"  ↳ Snapshot: {res['snapshot_name']}")
+                    print(f"  ↳ JSON:     {res['json_path']}")
+                    print(f"  ↳ Canvas:   {res['canvas_path']}\n")
+                except Exception as e:
+                    print(f"\n{C_RED}[!] Failed to freeze snapshot: {e}{C_RESET}\n")
                 continue
 
             # 2. Execute ReAct turn
@@ -391,16 +405,44 @@ async def run_remote(sse_url: str):
                             if len(parts) > 1:
                                 target_graph = parts[1].strip()
                                 try:
-                                    stats = engine.switch_graph(target_graph)
-                                    print(f"\n[*] Switched to graph '{stats['name']}' ({stats['node_count']} nodes, {stats['edge_count']} edges)")
-                                    print(f"[*] Canvas synced to 'Exocortex_Interactive.canvas'\n")
+                                    # Remote-Aufruf an das MCP-Tool auf dem Server
+                                    res = await mcp_session.call_tool(
+                                        "exocortex_switch_topology",
+                                        arguments={"topology_name": target_graph}
+                                    )
+                                    raw_text = res.content[0].text if res.content else "{}"
+                                    print(f"\n[*] Remote Topology: {raw_text}")
+                                    print(f"[*] Server-Canvas synced to 'Exocortex_Interactive.canvas'\n")
                                 except Exception as e:
-                                    print(f"\n[!] Failed to switch graph: {e}\n")
+                                    print(f"\n[!] Failed to switch graph on remote daemon: {e}\n")
                             else:
-                                stats = engine.get_graph_stats()
-                                print(f"\n[GRAPH] '{stats['name']}' | {stats['node_count']} nodes | {stats['edge_count']} edges\n")
-                            continue    
+                                print(f"\n[!] Please specify a topology name: /switch <name>\n")
+                            continue
+                        elif user_input.startswith("/freeze"):
+                            parts = user_input.strip().split(maxsplit=1)
+                            tag = parts[1].strip() if len(parts) > 1 else None
+                            try:
+                                call_args = {"tag": tag} if tag else {}
+                                result = await mcp_session.call_tool("exocortex_freeze_snapshot", arguments=call_args)
+                                raw_payload = result.content[0].text if result.content else ""
 
+                                # Robuster Parser: Prüfen, ob JSON oder XML/Text zurückkommt
+                                try:
+                                    payload = json.loads(raw_payload)
+                                    if payload.get("status") == "success":
+                                        print(f"\n{C_GREEN}[OK] Remote phase-space topology frozen:{C_RESET}")
+                                        print(f"  ↳ Snapshot: {payload.get('snapshot_name')}")
+                                        print(f"  ↳ JSON:     {payload.get('json_path')}")
+                                        print(f"  ↳ Canvas:   {payload.get('canvas_path')}\n")
+                                    else:
+                                        print(f"\n{C_RED}[!] Remote freeze failed: {payload.get('message')}{C_RESET}\n")
+                                except (json.JSONDecodeError, TypeError):
+                                    # Direkte Ausgabe, falls der Server XML/Text liefert
+                                    print(f"\n{C_GREEN}[OK] Remote phase-space response:{C_RESET}\n  ↳ {raw_payload}\n")
+                            except Exception as e:
+                                print(f"\n{C_RED}[!] Remote freeze RPC error: {e}{C_RESET}\n")
+                            continue
+                            
                         # 2. Execute remote turn
                         async for event in remote_engine.execute_turn(user_input, mcp_session):
                             ev = event.get("event")

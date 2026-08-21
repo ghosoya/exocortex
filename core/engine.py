@@ -45,6 +45,10 @@ class ExecutionEngine:
             "exocortex_mutate_phase_space": self._handle_mutate_phase_space,
         }
     
+    def freeze_snapshot(self, tag: Optional[str] = None) -> Dict[str, str]:
+        """Exposes snapshot freezing from GraphStore."""
+        return self.graph_store.freeze_snapshot(tag)
+        
     def switch_graph(self, graph_name: str) -> Dict[str, Any]:
         """Switches the active phase space topology."""
         return self.graph_store.switch_graph(graph_name)

@@ -13,6 +13,7 @@ from mcp.server.fastmcp import FastMCP
 from core.config import settings
 from server.vault_io import VaultIO
 from server.graph_store import GraphStore
+import json
 
 # FastMCP server instance
 mcp = FastMCP("Exocortex-Daemon")
@@ -125,6 +126,25 @@ def exocortex_mutate_phase_space(
         return f"<phase_space_mutation status='error' message='{res.get('message')}' />"
     return f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}' />"
 
+@mcp.tool()
+def exocortex_freeze_snapshot(tag: Optional[str] = None) -> str:
+    """
+    Freezes the active phase space topology into an immutable snapshot (JSON + Canvas).
+    Returns snapshot metadata and created file paths.
+    """
+    try:
+        res = graph_store.freeze_snapshot(tag)
+        return json.dumps({
+            "status": "success",    
+            "snapshot_name": res["snapshot_name"],
+            "json_path": res["json_path"],
+            "canvas_path": res["canvas_path"]
+        })
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "message": str(e)
+        })
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exocortex FastMCP Server Daemon")

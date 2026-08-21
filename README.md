@@ -208,7 +208,7 @@ python chat_exocortex.py
 Start the FastMCP daemon in SSE mode:
 
 ```bash
-python server/exocortex_mcp_server.py --host 127.0.0.1 --port 8000
+python -m server.exocortex_mcp_server --host 127.0.0.1 --port 8000
 
 ```
 

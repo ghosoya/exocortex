@@ -1,7 +1,7 @@
 """
 server/graph_store.py
 Topological substrate: NetworkX state management, vector resonance, imprinting,
-and automatic Obsidian Canvas projection.
+Copy-on-Write RAM lifecycle, snapshots, and automatic Obsidian Canvas projection.
 """
 
 from typing import Any, Dict, List, Optional, Tuple
@@ -36,7 +36,15 @@ class GraphStore:
         self.embedding_model = embedding_model
         self.client = ollama.Client(host=ollama_host)
         self.active_graph_name: str = "default"
+        self.is_snapshot: bool = False
+        self.mutations_count: int = 0
         self.graph: nx.DiGraph = nx.DiGraph()
+        
+        # Sicherstellen, dass base/ und snapshots/ Verzeichnisse existieren
+        (self.vault_io.vault_path / "Topologies" / "base").mkdir(parents=True, exist_ok=True)
+        (self.vault_io.vault_path / "Topologies" / "snapshots").mkdir(parents=True, exist_ok=True)
+        (self.vault_io.vault_path / "Canvases" / "snapshots").mkdir(parents=True, exist_ok=True)
+
         self.load_graph("default")
 
     def _get_embedding(self, text: str) -> List[float]:
@@ -52,9 +60,9 @@ class GraphStore:
         """Projects the NetworkX graph into a structured Obsidian .canvas file with weights and vector telemetry."""
         type_config = {
             "BoundaryConstraint": {"x": -950, "color": "1"},   # Red
-            "PotentialWell": {"x": -320, "color": "5"},        # Cyan
-            "TrajectoryOperator": {"x": 320, "color": "3"},    # Purple
-            "PhaseSpaceTrace": {"x": 950, "color": "4"},       # Green
+            "PotentialWell": {"x": -320, "color": "5"},         # Cyan
+            "TrajectoryOperator": {"x": 320, "color": "3"},     # Purple
+            "PhaseSpaceTrace": {"x": 950, "color": "4"},        # Green
         }
 
         y_counters: Dict[str, int] = {k: 0 for k in type_config}
@@ -78,12 +86,10 @@ class GraphStore:
             payload = attrs.get("payload", "").strip()
             weight = float(attrs.get("weight", 1.0))
 
-            # Vektor-Telemetrie prüfen
             embedding = attrs.get("embedding", [])
             has_embedding = bool(isinstance(embedding, list) and len(embedding) > 0)
             vec_badge = f"vec: ✓ ({len(embedding)}d)" if has_embedding else "vec: ✗"
 
-            # Markdown-Karteninhalt mit Telemetrie-Zeile
             text_content = (
                 f"### `{node_id}` {label}\n"
                 f"`w: {weight:.2f}` · `{vec_badge}`\n"
@@ -127,46 +133,86 @@ class GraphStore:
         return str(canvas_path)
 
     def load_graph(self, graph_name: str) -> Dict[str, Any]:
-        """Loads a topology from the vault and synchronizes the Canvas."""
-        data = self.vault_io.read_graph_json(graph_name)
+        """Loads a topology (checking base/ first, then snapshots/) into transient RAM."""
+        clean_name = graph_name.replace(".json", "")
         
-        # Backward compatibility: automatically normalize legacy 'links' to 'edges'
+        # 1. Pfadsuche: Erst in Topologies/base/, dann Topologies/snapshots/, dann Root (Legacy)
+        base_path = self.vault_io.vault_path / "Topologies" / "base" / f"{clean_name}.json"
+        snap_path = self.vault_io.vault_path / "Topologies" / "snapshots" / f"{clean_name}.json"
+        
+        if base_path.exists():
+            data = json.loads(base_path.read_text(encoding="utf-8"))
+            self.is_snapshot = False
+        elif snap_path.exists():
+            data = json.loads(snap_path.read_text(encoding="utf-8"))
+            self.is_snapshot = True
+        else:
+            # Fallback auf vault_io (für default oder flache Ablage)
+            data = self.vault_io.read_graph_json(clean_name)
+            self.is_snapshot = False
+
         if "links" in data and "edges" not in data:
             data["edges"] = data.pop("links")
             
         self.graph = nx.node_link_graph(data, directed=True, multigraph=False)
-        self.active_graph_name = graph_name
+        self.active_graph_name = clean_name
+        self.mutations_count = 0
 
-        dirty = False
+        # Fehlende Embeddings berechnen (in-memory)
         for node_id, attrs in self.graph.nodes(data=True):
             if "embedding" not in attrs or not attrs["embedding"]:
                 payload = attrs.get("payload", "")
                 label = attrs.get("label", node_id)
                 attrs["embedding"] = self._get_embedding(f"{label}: {payload}")
-                dirty = True
 
-        if dirty:
-            self.save_graph(graph_name)
-        else:
-            # Synchronize canvas on load as well
-            self.export_canvas()
-
+        # Live Canvas synchronisieren
+        self.export_canvas("Exocortex_Interactive.canvas")
         return self.get_graph_stats()
 
     def save_graph(self, graph_name: Optional[str] = None) -> str:
-        """Serializes graph state into JSON schema and synchronizes the Canvas."""
+        """
+        Copy-on-Write-Semantik:
+        Blueprints in base/ werden geschützt. Änderungen mutieren den RAM und Canvas.
+        Nur wenn es bereits ein Snapshot ist, wird direkt auf Platte synchronisiert.
+        """
         target_name = graph_name or self.active_graph_name
         self.graph.graph["updated_at"] = datetime.datetime.now().isoformat()
         self.graph.graph["name"] = target_name
         self.graph.graph["embedding_model"] = self.embedding_model
 
-        data = nx.node_link_data(self.graph)
-        path = self.vault_io.write_graph_json(target_name, data)
-        self.active_graph_name = target_name
+        # Live Canvas wird immer aktualisiert
+        self.export_canvas("Exocortex_Interactive.canvas")
 
-        # Automatic Canvas projection
-        self.export_canvas()
-        return path
+        if self.is_snapshot:
+            data = nx.node_link_data(self.graph)
+            snap_path = self.vault_io.vault_path / "Topologies" / "snapshots" / f"{target_name}.json"
+            with open(snap_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            return str(snap_path)
+        
+        return "in-memory (base topology protected)"
+
+    def freeze_snapshot(self, tag: Optional[str] = None) -> Dict[str, str]:
+        """Friert den aktuellen RAM-Zustand als unveränderlichen Snapshot ein."""
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        suffix = f"_{tag}" if tag else ""
+        snapshot_filename = f"{timestamp}_{self.active_graph_name}{suffix}"
+
+        # 1. JSON Snapshot speichern
+        data = nx.node_link_data(self.graph)
+        snap_json_path = self.vault_io.vault_path / "Topologies" / "snapshots" / f"{snapshot_filename}.json"
+        with open(snap_json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        # 2. Canvas Snapshot speichern
+        canvas_rel_path = f"Canvases/snapshots/{snapshot_filename}.canvas"
+        snap_canvas_path = self.export_canvas(canvas_rel_path)
+
+        return {
+            "snapshot_name": snapshot_filename,
+            "json_path": str(snap_json_path),
+            "canvas_path": str(snap_canvas_path)
+        }
 
     def get_graph_stats(self) -> Dict[str, Any]:
         type_counts: Dict[str, int] = {}
@@ -176,34 +222,16 @@ class GraphStore:
 
         return {
             "name": self.active_graph_name,
+            "is_snapshot": self.is_snapshot,
+            "mutations": self.mutations_count,
             "node_count": self.graph.number_of_nodes(),
             "edge_count": self.graph.number_of_edges(),
             "types": type_counts,
         }
-    
+
     def switch_graph(self, graph_name: str) -> Dict[str, Any]:
-        """Loads a different graph by name, ensures embeddings exist, and updates canvas."""
-        # Handle file extension if provided
-        clean_name = graph_name.replace(".json", "")
-        self.load_graph(clean_name)
-        
-        # Compute missing embeddings on-the-fly if needed
-        updated = False
-        for node_id, attrs in self.graph.nodes(data=True):
-            emb = attrs.get("embedding", [])
-            if not emb or len(emb) == 0:
-                payload = attrs.get("payload", "")
-                if payload:
-                    attrs["embedding"] = self._get_embedding(payload)
-                    updated = True
-        
-        if updated:
-            self.save_graph(clean_name)
-        else:
-            self.export_canvas()
-            
-        return self.get_graph_stats()
-        
+        return self.load_graph(graph_name)
+
     def get_resonant_nodes(self, query: str, top_k: int = 4, threshold: float = 0.45) -> List[Tuple[str, Dict[str, Any], float]]:
         query_vec = self._get_embedding(query)
         if not query_vec:
@@ -266,6 +294,7 @@ class GraphStore:
             weight=1.0,
             created_at=datetime.datetime.now().isoformat(),
         )
+        self.mutations_count += 1
 
         wired_connections = []
 
@@ -283,7 +312,7 @@ class GraphStore:
                 self.graph.add_edge(new_id, existing_id, relation="semantic_resonance", weight=round(sim, 2))
                 wired_connections.append(f"{existing_id} (sim: {sim:.2f})")
 
-        # Persists NetworkX JSON AND updates Obsidian Canvas
+        # Aktualisiert Canvas und schützt Base-Topologie vor destructive mutation
         self.save_graph(self.active_graph_name)
 
         return {
@@ -292,8 +321,7 @@ class GraphStore:
             "topology": self.active_graph_name,
             "wired_connections": wired_connections,
         }
-        
- 
+
     def mutate_node(
         self,
         target_node_id: str,
@@ -301,10 +329,6 @@ class GraphStore:
         payload_update: Optional[str] = None,
         delta: float = 0.2
     ) -> Dict[str, Any]:
-        """
-        Executes discrete structural mutations on active topology nodes:
-        STRENGTHEN, DECAY, PRUNE, or UPDATE.
-        """
         if not self.graph.has_node(target_node_id):
             return {
                 "status": "error",
@@ -342,7 +366,6 @@ class GraphStore:
                 }
             
             clean_payload = slice_for_embedding(payload_update.strip())
-            # Recompute embedding (synchronous execution)
             new_embedding = self._get_embedding(clean_payload)
             
             self.graph.nodes[target_node_id]["payload"] = clean_payload
@@ -350,7 +373,6 @@ class GraphStore:
             result_payload["updated_payload"] = clean_payload
         
         elif action == "SET_WEIGHT":
-            # Set weight directly to the provided delta value (clamped to [0.05, 3.0])
             new_weight = max(0.05, min(3.0, round(float(delta), 2)))
             self.graph.nodes[target_node_id]["weight"] = new_weight
             result_payload["previous_weight"] = current_weight
@@ -358,5 +380,6 @@ class GraphStore:
         else:
             return {"status": "error", "message": f"Unknown mutation action: '{action}'."}
 
+        self.mutations_count += 1
         self.save_graph() 
         return result_payload
