@@ -275,7 +275,7 @@ python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices
 * **[Showcase 04: Systemic Kernel & The Jevons Verification Paradox](docs/topologies/04_systemic_kernel_jevons_verification_entropy.md)** 
   *Information-theoretic audit of LLM deployment, modeling the phase transition from generative synthesis to forensic Audit Engineering.*
 * **[Showcase 05: Systemic Kernel & The Thermodynamic Decoupling Audit](docs/topologies/05_systemic_kernel_thermodynamic_decoupling.md)** 
-  *Non-equilibrium thermodynamic audit of 'Green Growth', demonstrating why digitalization is an entropy relocation rather than dematerialization.
+  *Non-equilibrium thermodynamic audit of 'Green Growth', demonstrating why digitalization is an entropy relocation rather than dematerialization.*
 * **[Showcase 06: Regional Shojin & The Brandenburg Terroir Synthesis](docs/topologies/06_regional_shojin_terroir_synthesis.md)** 
   *Aesthetic and micro-seasonal translation of Zen temple cuisine (Ichijū Sansai, Gohō, Mottainai) into the regional terroir of Central Europe.*
   
