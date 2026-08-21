@@ -144,3 +144,5 @@ ollama run gemma4:12b "Audit the alignment and evaluation of Large Language Mode
 python -m core.compiler systemic_kernel | ollama run gemma4:12b "Audit the alignment and evaluation of Large Language Models..."
 
 ```
+
+`
