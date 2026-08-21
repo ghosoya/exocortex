@@ -134,7 +134,7 @@ Thinking...
 ├────────────────────────────────────────┼────────────────────────────────────────┤
 │ Narrative essay explaining Jevons' law │ Formal state-space and entropy model   │
 │ General discussion of "filtering"      │ Formalized concept of Audit Engineering│
-│ Verbose paragraphs                    │ Structured comparative phase table     │
+│ Verbose paragraphs                     │ Structured comparative phase table     │
 │ Explanatory sociological tone          │ Rigorous information-theoretic audit   │
 └────────────────────────────────────────┴────────────────────────────────────────┘
 
@@ -153,22 +153,3 @@ python -m core.compiler systemic_kernel | ollama run gemma4:12b "Analyze the dep
 
 ```
 
-```
-
----
-
-### Update für die `README.md`
-
-Damit hat die Case-Study-Sektion eine vollständige Vierer-Reihe:
-
-```markdown
-## 📚 Topological Case Studies
-
-* **[Showcase 01: Code Architect & The Entropy Breakline](docs/topologies/01_code_architect_entropy_breakline.md)**  
-  *Audit of Monolith vs. Microservices trade-offs, dynamic tensor-link wiring, collision-safe ID allocation, and cross-model rehydration.*
-* **[Showcase 02: Poetic Synthesis & The Anicca–GC Bisociation](docs/topologies/02_poetic_synthesis_anicca_gc.md)**  
-  *A/B benchmark against Vanilla Gemma 4 12B demonstrating anti-cliché invariants, structural isomorphism, and process-oriented ontological synthesis.*
-* **[Showcase 03: Systemic Kernel & The Observer-Collapse Audit](docs/topologies/03_systemic_kernel_observer_collapse.md)**  
-  *A/B benchmark on Second-Order Cybernetics and Goodhart's Law, deconstructing RLHF alignment theater into formal boundary constraints.*
-* **[Showcase 04: Systemic Kernel & The Jevons Verification Paradox](docs/topologies/04_systemic_kernel_jevons_verification_entropy.md)**  
-  *Information-theoretic audit of LLM deployment, modeling the phase transition from generative synthesis to forensic Audit Engineering.*
