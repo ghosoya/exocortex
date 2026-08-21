@@ -106,15 +106,19 @@ Thinking...
 > 1. **State Space Expansion:** LLMs increase candidate states ($N$). With non-zero error probability ($p$), expected entropy $H$ remains constant or increases as $N \to \infty$.
 > 2. **The Verification Bottleneck:** Sampling high-probability tokens requires **active arbitration** in critical systems where $p > 0$.
 > 3. **Inverse Proportionality of Trust:** Human-verified truth becomes an increasingly scarce, premium resource. Cognitive load shifts from *creation* to *arbitration*.
-
-**III. Transition: From Generation to Audit**
-
-| Phase | Primary Action | Cognitive Load Characteristic | Entropy Status |
-| :--- | :--- | :--- | :--- |
-| **Pre-LLM** | Synthesis (Crafting) | High: Construction of logical structures. | Controlled by creator. |
-| **Post-LLM (Low Complexity)** | Selection (Editing) | Low: Filtering low-stakes content. | Entropy reduction via selection. |
-| **Post-LLM (High Complexity)** | Audit (Verification) | High: Validating complex, high-volume systems. | Entropy reduction via forensic analysis. |
-
+>
+> **III. Transition: From Generation to Audit**
+>
+> ```plaintext
+> ┌──────────────────────────────┬────────────────────────┬─────────────────────────────────────┬─────────────────────────────────┐
+> │ Phase                        │ Primary Action         │ Cognitive Load Characteristic       │ Entropy Status                  │
+> ├──────────────────────────────┼────────────────────────┼─────────────────────────────────────┼─────────────────────────────────┤
+> │ Pre-LLM                      │ Synthesis (Crafting)   │ High: Construction of logic         │ Controlled by creator           │
+> │ Post-LLM (Low Complexity)    │ Selection (Editing)    │ Low: Filtering low-stakes content   │ Entropy reduction via selection │
+> │ Post-LLM (High Complexity)   │ Audit (Verification)   │ High: Validating complex systems    │ Forensic entropy reduction      │
+> └──────────────────────────────┴────────────────────────┴─────────────────────────────────────┴─────────────────────────────────┘
+> ```
+>
 > **IV. The Verification Synthesis**
 >
 > The cognitive workload undergoes a phase transition from **generative synthesis** to **verification of the output manifold**.<br>
