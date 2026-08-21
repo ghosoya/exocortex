@@ -78,6 +78,12 @@ Runtime-switchable cognitive modes (`default`, `socratic`, `architect`) to adapt
 7. **Defensive Guards:**
 Automatic token budgeting, code-block stripping for embeddings, and sliding-window turn pruning to avoid context overflow (HTTP 500 mitigation).
 
+8. **Copy-on-Write Topology Isolation & State Freezing:**
+Base blueprints (`topologies/base/`) remain strictly sterile in RAM during sessions. Knowledge artifacts acquired during discourse are dynamically wired into in-memory graphs. The `/freeze [tag]` command creates immutable, versioned JSON and Obsidian Canvas snapshot pairs under `topologies/snapshots/` and `Canvases/snapshots/`.
+
+9. **Substrate-Independent Rehydration Engine:**
+The compiler (`core/compiler.py`) transforms frozen topological graph states into compact, token-efficient Markdown attractor prompts (< 350 tokens). These prompts can be piped directly into any local LLM (`ollama run`) or external API interface, transferring exact epistemic constraints without state leakage.
+
 ---
 
 ## ⚡ Topologies (Hot-Swappable Kognitionsräume)
@@ -101,22 +107,23 @@ exocortex/
 ├── config/
 │   └── system_base.md          # Global cognitive base instructions
 ├── core/
+│   ├── compiler.py             # Rehydration engine (JSON topology -> Markdown prompt)
 │   ├── config.py               # Typed settings & environment loader
 │   ├── engine.py               # ReAct loop and decoupled tool dispatching
 │   ├── guards.py               # Context pruning & embedding guards
 │   ├── prompts.py              # Cognitive lenses & prompt manager
 │   └── session.py              # Session state, token tracking & persistence
+├── docs/
+│   └── topologies/             # Topological case studies & epistemic audit reports
+│       └── 01_code_architect_entropy_breakline.md
 ├── server/
 │   ├── exocortex_mcp_server.py # FastMCP SSE / stdio daemon
-│   ├── graph_store.py          # NetworkX topology & Canvas generator
+│   ├── graph_store.py          # NetworkX topology, vector resonance & Canvas generator
 │   └── vault_io.py             # Sandboxed filesystem & vault I/O
 ├── topologies/
-│   └── code_architect.json     # Modular software architecture
-│   ├── poetic_synthesis.json   # Divergent Associative Reasoning
-│   ├── default.json            # Canonical starter topology (template)
-│   ├── regional_shojin.json    # Mindful Culinary Aesthetics
-│   └── systemic_kernel.json    # Epistemic rigor & systems theory
-├── chat_exocortex.py           # Unified interactive CLI runner
+│   ├── base/                   # Immutable cognitive blueprints (default, code_architect, ...)
+│   └── snapshots/              # Frozen, versioned phase-space states (*.json)
+├── chat_exocortex.py           # Unified interactive CLI runner (Local & Remote)
 ├── test_exocortex.py           # Modular unit & integration test suite
 ├── test_mcp_network.py         # Network MCP integration test
 ├── .env.example                # Environment configuration template
@@ -182,12 +189,13 @@ EXOCORTEX_NUM_CTX=65536
 
 ### 4. Setup Starter Topology
 
-The `topologies/` directory in the repository provides base templates. Initialize your vault's `Topologies/` directory with the default topology:
+The `topologies/` directory in the repository provides base templates and reference snapshots. Initialize your vault's directory structure:
 
 ```bash
-mkdir -p ~/Vaults/exocortex/Topologies
-cp topologies/default.json ~/Vaults/exocortex/Topologies/default.json
+mkdir -p ~/Vaults/exocortex/Topologies/{base,snapshots}
+mkdir -p ~/Vaults/exocortex/Canvases/snapshots
 
+cp -r topologies/* ~/Vaults/exocortex/Topologies/
 ```
 
 ---
@@ -219,24 +227,43 @@ python chat_exocortex.py --remote
 
 ```
 
+### Substrate Rehydration & Shell Pipes
+
+Compile any frozen snapshot directly into a lightweight attractor prompt or pipe it straight into a stateless LLM runner:
+
+```bash
+# 1. Output compiled attractor prompt to stdout
+python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices
+
+# 2. Pipe phase-space state directly into a fresh Ollama instance
+python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices | ollama run gemma4:12b "Evaluate payment boundary extraction against the entropy breakline."
+
+# 3. Copy attractor directly to system clipboard
+python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices --copy
+```
 ---
 
 ## 🛠️ CLI Slash Commands
 
 | Command | Description |
-| --- | --- |
-| `/prompt list` | Lists all available cognitive lenses (`default`, `socratic`, `architect`). |
-| `/prompt set <lens>` | Activates a specific cognitive lens. |
-| `/prompt show` | Displays the active base system prompt. |
+| :--- | :--- |
+| `/prompt [list\|set\|show\|reset]` | Manages cognitive profiles and lenses. |
 | `/graph` | Displays active topology name, node distribution, and edge counts. |
-| `/graph <name>` | Switches active topology and synchronizes Canvas. |
-| `/save [name]` | Persists session simultaneously as Markdown note and JSON state. |
+| `/graph <name>` | Loads base blueprint or frozen snapshot (Local Mode). |
+| `/switch <name>` | Switches active topology on remote daemon (Remote Mode). |
+| **`/freeze [tag]`** | **Freezes active phase-space state into versioned JSON snapshot & Canvas.** |
+| `/save [name]` | Persists session transcript simultaneously as Markdown note and JSON state. |
 | `/load [name]` | Restores or lists saved sessions. |
 | `/context` | Shows estimated token utilization and turn count. |
 | `/clear` | Clears conversation history. |
 | `exit` | Closes the session. |
 
 ---
+
+## 📚 Topological Case Studies
+
+* **[Showcase 01: Code Architect & The Entropy Breakline](docs/topologies/01_code_architect_entropy_breakline.md)**  
+  *Audit of Monolith vs. Microservices trade-offs, dynamic tensor-link wiring, collision-safe ID allocation, and cross-model rehydration.*
 
 ## 🧪 Testing
 
