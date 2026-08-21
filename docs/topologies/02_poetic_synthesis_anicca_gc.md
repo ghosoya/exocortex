@@ -97,13 +97,13 @@ Thinking...
 ### Topological Output:
 
 > **I. THE ARCHITECTURE OF THE HEAP (Loka)**
-> The heap is not a repository; it is a sprawling, recursive thicket of *presence*. In this topology, an "object" is the temporary coagulation of attributes—a cluster of coordinates claiming space in the immediate now. It exists only through its accessibility from the root_set. This is the ontological fact of existence: a thing is "real" so long as it is reachable by the current consciousness.
-> **II. THE MARK (The Recognition of Flux)**
+> The heap is not a repository; it is a sprawling, recursive thicket of *presence*. In this topology, an "object" is the temporary coagulation of attributes—a cluster of coordinates claiming space in the immediate now. It exists only through its accessibility from the root_set. This is the ontological fact of existence: a thing is "real" so long as it is reachable by the current consciousness.<br>
+> **II. THE MARK (The Recognition of Flux)**<br>
 > Before the sweep, there is the traversal. The *Mark* phase functions as the primary realization of *Anicca*. It is the systematic pulse that differentiates between what sustains the core and what has become a lingering shadow—a reference to a ghost. To mark is to realize that most attributes are "dangling."
-> **III. THE SWEEP (The Ritual of Relinquishment)**
+> **III. THE SWEEP (The Ritual of Relinquishment)**<br>
 > *Garbage Collection* is the mechanical liturgy of the void. When the sweep begins, it does not destroy; it merely acknowledges the exhaustion of a pointer. When the link breaks, the memory is reclaimed. This is the thermodynamic inevitability of the system: for new potential to manifest, the stale must be purged.
 > **IV. THE SYNTHESIS (The Equilibrium of Decay)**
-> Memory management and *Anicca* converge at the point of *Non-Retention*. A memory leak is a failure of wisdom—the accumulation of unnecessary attachments that clog the processor of existence.
+> Memory management and *Anicca* converge at the point of *Non-Retention*. A memory leak is a failure of wisdom—the accumulation of unnecessary attachments that clog the processor of existence.<br>
 > *The script of being:*
 > **Reachability determines presence.**
 > **Referencing sustains identity.**
