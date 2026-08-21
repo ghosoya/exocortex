@@ -60,13 +60,13 @@ ollama run gemma4:12b "<PROMPT>"
 
 ### Baseline Output Excerpt:
 
-> *"Concept: Die Nebelküche (The Fog Kitchen)...*
-> *I. Zensai: Roasted Beetroot and Burdock Root with Wild Mustard Greens.*
-> *II. Suimono: Porcini-infused Barley Broth with Sliced Parsnip.*
-> *III. Shoin (Main Dish): Buckwheat (Hirse) and Rye Fillet with Roasted Root Vegetable Medley.*
-> *IV. Gohan & Tsukemono: Sprouted Buckwheat with Fermented Turnips.*
-> *V. Mizumono: Wild Blueberry & Birch Syrup Reduction.*
-> *Mottainai: Trimmings boiled with roasted onion skins..."*
+> *"Concept: Die Nebelküche (The Fog Kitchen)...* <br>
+> *I. Zensai: Roasted Beetroot and Burdock Root with Wild Mustard Greens.* <br>
+> *II. Suimono: Porcini-infused Barley Broth with Sliced Parsnip.* <br>
+> *III. Shoin (Main Dish): Buckwheat (Hirse) and Rye Fillet with Roasted Root Vegetable Medley.* <br>
+> *IV. Gohan & Tsukemono: Sprouted Buckwheat with Fermented Turnips.* <br>
+> *V. Mizumono: Wild Blueberry & Birch Syrup Reduction.* <br>
+> *Mottainai: Trimmings boiled with roasted onion skins..."* 
 
 ### Diagnostic Assessment:
 
@@ -155,29 +155,3 @@ ollama run gemma4:12b "Design a rigorous, authentic late-August... Shojin Ryori 
 python -m core.compiler regional_shojin | ollama run gemma4:12b "Design a rigorous, authentic late-August... Shojin Ryori meal..."
 
 ```
-
----
-
-### Update für die `README.md`
-
-Damit wächst der Case-Study-Bereich auf ein starkes, sechsgliedriges Spektrum an:
-
-```markdown
-## 📚 Topological Case Studies
-
-* **[Showcase 01: Code Architect & The Entropy Breakline](docs/topologies/01_code_architect_entropy_breakline.md)**  
-  *Audit of Monolith vs. Microservices trade-offs, dynamic tensor-link wiring, collision-safe ID allocation, and cross-model rehydration.*
-* **[Showcase 02: Poetic Synthesis & The Anicca–GC Bisociation](docs/topologies/02_poetic_synthesis_anicca_gc.md)**  
-  *A/B benchmark against Vanilla Gemma 4 12B demonstrating anti-cliché invariants, structural isomorphism, and process-oriented ontological synthesis.*
-* **[Showcase 03: Systemic Kernel & The Observer-Collapse Audit](docs/topologies/03_systemic_kernel_observer_collapse.md)**  
-  *A/B benchmark on Second-Order Cybernetics and Goodhart's Law, deconstructing RLHF alignment theater into formal boundary constraints.*
-* **[Showcase 04: Systemic Kernel & The Jevons Verification Paradox](docs/topologies/04_systemic_kernel_jevons_verification_entropy.md)**  
-  *Information-theoretic audit of LLM deployment, modeling the phase transition from generative synthesis to forensic Audit Engineering.*
-* **[Showcase 05: Systemic Kernel & The Thermodynamic Decoupling Audit](docs/topologies/05_systemic_kernel_thermodynamic_decoupling.md)**  
-  *Non-equilibrium thermodynamic audit of 'Green Growth', demonstrating why digitalization is an entropy relocation rather than dematerialization.*
-* **[Showcase 06: Regional Shojin & The Brandenburg Terroir Synthesis](docs/topologies/06_regional_shojin_terroir_synthesis.md)**  
-  *Aesthetic and micro-seasonal translation of Zen temple cuisine (Ichijū Sansai, Gohō, Mottainai) into the regional terroir of Central Europe.*
-
-```
-
-Sobald du die Datei anlegst, können wir Showcase 06 committen.
