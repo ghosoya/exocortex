@@ -95,31 +95,30 @@ Thinking...
 
 ### Topological Output:
 
-> **I. The Jevons Paradox of Synthetic Production**<br>
-> 
-> 1. **Cost Collapse ($\Delta C \to 0$):** The barrier to generating high-volume, structurally coherent text/code collapses.<br>
-> 2. **Consumption Expansion:** Demand explodes, creating a deluge of synthesis-heavy material requiring human integration into complex systems.<br>
-> 3. **Labor Displacement vs. Complexity Shift:** Cognitive effort to *generate* a draft is replaced by equivalent or greater effort required to *verify, audit, and integrate* that draft in high-stakes environments.<br>
-> 
-> **II. Information-Theoretic Entropy & Verification Overhead**<br>
-> 
-> 1. **State Space Expansion:** LLMs increase candidate states ($N$). With non-zero error probability ($p$), expected entropy $H$ remains constant or increases as $N \to \infty$.<br>
+> **I. The Jevons Paradox of Synthetic Production**
+>
+> 1. **Cost Collapse ($\Delta C \to 0$):** The barrier to generating high-volume, structurally coherent text/code collapses.
+> 2. **Consumption Expansion:** Demand explodes, creating a deluge of synthesis-heavy material requiring human integration into complex systems.
+> 3. **Labor Displacement vs. Complexity Shift:** Cognitive effort to *generate* a draft is replaced by equivalent or greater effort required to *verify, audit, and integrate* that draft in high-stakes environments.
+>
+> **II. Information-Theoretic Entropy & Verification Overhead**
+>
+> 1. **State Space Expansion:** LLMs increase candidate states ($N$). With non-zero error probability ($p$), expected entropy $H$ remains constant or increases as $N \to \infty$.
 > 2. **The Verification Bottleneck:** Sampling high-probability tokens requires **active arbitration** in critical systems where $p > 0$.
 > 3. **Inverse Proportionality of Trust:** Human-verified truth becomes an increasingly scarce, premium resource. Cognitive load shifts from *creation* to *arbitration*.
-> 
-> **III. Transition: From Generation to Audit**<br>
-> 
-> | Phase | Primary Action | Cognitive Load Characteristic | Entropy Status |<br>
-> | --- | --- | --- | --- |<br>
-> | **Pre-LLM** | Synthesis (Crafting) | High: Construction of logical structures. | Controlled by creator. |<br>
-> | **Post-LLM (Low Complexity)** | Selection (Editing) | Low: Filtering low-stakes content. | Entropy reduction via selection. |<br>
-> | **Post-LLM (High Complexity)** | Audit (Verification) | High: Validating complex, high-volume systems. | Entropy reduction via forensic analysis. |<br>
-> 
-> **IV. The Verification Synthesis**<br>
-> 
+
+**III. Transition: From Generation to Audit**
+
+| Phase | Primary Action | Cognitive Load Characteristic | Entropy Status |
+| :--- | :--- | :--- | :--- |
+| **Pre-LLM** | Synthesis (Crafting) | High: Construction of logical structures. | Controlled by creator. |
+| **Post-LLM (Low Complexity)** | Selection (Editing) | Low: Filtering low-stakes content. | Entropy reduction via selection. |
+| **Post-LLM (High Complexity)** | Audit (Verification) | High: Validating complex, high-volume systems. | Entropy reduction via forensic analysis. |
+
+> **IV. The Verification Synthesis**
+>
 > The cognitive workload undergoes a phase transition from **generative synthesis** to **verification of the output manifold**.<br>
-> 
-> Infrastructure must pivot from **Content Production** to **Audit Engineering**. The systemic risk is a false economy: lower generation cost merely relocates the bottleneck down the pipeline to deployment, where precise entropy reduction remains absolute.<br>
+> Infrastructure must pivot from **Content Production** to **Audit Engineering**. The systemic risk is a false economy: lower generation cost merely relocates the bottleneck down the pipeline to deployment, where precise entropy reduction remains absolute.
 
 ---
 
