@@ -1,8 +1,8 @@
 # Showcase 01: The Code-Architect Topology & The Entropy Breakline
 
-> **Domain:** Software Systems Design & Distributed Architecture 
-> **Base Topology:** `code_architect.json` 
-> **Frozen Snapshot:** `20260821_080324_code_architect_monolith_vs_microservices.json` 
+> **Domain:** Software Systems Design & Distributed Architecture<br>
+> **Base Topology:** `code_architect.json`<br>
+> **Frozen Snapshot:** `20260821_080324_code_architect_monolith_vs_microservices.json`<br> 
 > **Substrate Target:** Local ReAct Engine / Pipe-Rehydration (Ollama / Gemma 4 12B)
 
 ---
