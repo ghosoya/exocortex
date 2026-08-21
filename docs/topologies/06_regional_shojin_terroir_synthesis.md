@@ -104,6 +104,8 @@ Thinking...
 >
 > 
 > *Season: Fukaki kiri matou (Thick Fog Descends) | Region: Brandenburg/Berlin Heartland*<br>
+>
+>
 > **I. The Foundational Substrate (Vegetal Dashi)**<br>
 > 
 > 
