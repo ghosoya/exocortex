@@ -79,7 +79,7 @@ Runtime-switchable cognitive modes (`default`, `socratic`, `architect`) to adapt
 Automatic token budgeting, code-block stripping for embeddings, and sliding-window turn pruning to avoid context overflow (HTTP 500 mitigation).
 
 8. **Copy-on-Write Topology Isolation & State Freezing:**
-Base blueprints (`topologies/base/`) remain strictly sterile in RAM during sessions. Knowledge artifacts acquired during discourse are dynamically wired into in-memory graphs. The `/freeze [tag]` command creates immutable, versioned JSON and Obsidian Canvas snapshot pairs under `topologies/snapshots/` and `Canvases/snapshots/`.
+Base blueprints (`topologies/base/`) remain strictly sterile in RAM during sessions. Knowledge artifacts acquired during discourse are dynamically wired into in-memory graphs. The `/freeze [tag]` command creates immutable, versioned JSON and Obsidian Canvas snapshot pairs under `Topologies/snapshots/` and `Canvases/snapshots/`.
 
 9. **Substrate-Independent Rehydration Engine:**
 The compiler (`core/compiler.py`) transforms frozen topological graph states into compact, token-efficient Markdown attractor prompts (< 350 tokens). These prompts can be piped directly into any local LLM (`ollama run`) or external API interface, transferring exact epistemic constraints without state leakage.
@@ -264,6 +264,8 @@ python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices
 
 * **[Showcase 01: Code Architect & The Entropy Breakline](docs/topologies/01_code_architect_entropy_breakline.md)**  
   *Audit of Monolith vs. Microservices trade-offs, dynamic tensor-link wiring, collision-safe ID allocation, and cross-model rehydration.*
+* **[Showcase 02: Poetic Synthesis & The Anicca–GC Bisociation](docs/topologies/02_poetic_synthesis_anicca_gc.md)**  
+  *A/B benchmark against Vanilla Gemma 4 12B demonstrating anti-cliché invariants, structural isomorphism, and process-oriented ontological synthesis.*
 
 ## 🧪 Testing
 
