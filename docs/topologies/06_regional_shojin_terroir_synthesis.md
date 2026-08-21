@@ -104,11 +104,11 @@ Thinking...
 >
 > 
 > *Season: Fukaki kiri matou (Thick Fog Descends) | Region: Brandenburg/Berlin Heartland*<br>
-> **I. The Foundational Substrate (Vegetal Dashi)**
+> **I. The Foundational Substrate (Vegetal Dashi)**<br>
 > 
 > 
 > Long-simmered decoction of roasted parsnip trimmings, dehydrated forest mushrooms (*Boletus*), smoked salt, and toasted rye husks. Creates an earthy, suspended umami base evocative of atmospheric fog.<br>
-> **II. Ichiju Sansai (The Arrangement)**
+> **II. Ichiju Sansai (The Arrangement)**<br>
 > 
 > 
 > 1. **Suimono (Soup):** Clear roast-root broth with steamed heirloom cabbage and wild mustard greens. (*Method: Simmered | Color: White/Green | Taste: Umami/Bitter*)
