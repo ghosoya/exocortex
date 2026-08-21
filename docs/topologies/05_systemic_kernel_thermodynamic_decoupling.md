@@ -97,7 +97,7 @@ Thinking...
 
 > **1. Exergy Gradient and Entropy Production**
 > 
-> Macroeconomic activity functions as an open system extracting exergy (work potential) to maintain low-entropy states (urban systems, manufacturing, infrastructure). The Second Law dictates that local entropy reduction necessitates a net increase in global entropy ($\Delta S_{total} > 0$).
+> Macroeconomic activity functions as an open system extracting exergy (work potential) to maintain low-entropy states (urban systems, manufacturing, infrastructure). The Second Law dictates that local entropy reduction necessitates a net increase in global entropy ($ΔS > 0$).
 > 
 > 
 > Efficiency gains minimize $\Delta S$ per unit of output, but cannot eliminate the necessity of an external energy flux. Transitioning to efficient modes merely delays the point where thermal and entropy boundaries constrain the economic manifold.
