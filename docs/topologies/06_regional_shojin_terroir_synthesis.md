@@ -108,6 +108,8 @@ Thinking...
 > 
 > 
 > Long-simmered decoction of roasted parsnip trimmings, dehydrated forest mushrooms (*Boletus*), smoked salt, and toasted rye husks. Creates an earthy, suspended umami base evocative of atmospheric fog.<br>
+>
+>
 > **II. Ichiju Sansai (The Arrangement)**<br>
 > 
 > 
