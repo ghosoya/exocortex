@@ -205,13 +205,21 @@ class ExecutionEngine:
         except Exception as e:
             return f"<error>Gauge field evaluation failed: {e}</error>"
 
-    def _tool_imprint_field(self, node_type: str, label: str, content_payload: str, tensor_links: Optional[List[str]] = None) -> str:
+    def _tool_imprint_field(self, node_type: str, label: str, content_payload: str, tensor_links: Optional[Any] = None) -> str:
         try:
+            # Defensive Type-Coercion falls LLM einen String statt Liste liefert
+            if isinstance(tensor_links, str):
+                tensor_links = [t.strip() for t in tensor_links.split(",") if t.strip()]
+
             res = self.graph_store.imprint_node(node_type, label, content_payload, tensor_links)
+            stats = self.graph_store.get_graph_stats()
             conns = ", ".join(res["wired_connections"]) if res["wired_connections"] else "None"
+
             return (
-                f"Field state materialized: Node {res['node_id']} ('{label}') wired into '{res['topology']}'. "
-                f"| Wired to: {conns}"
+                f"<imprint_result status='materialized' node_id='{res['node_id']}' label='{label}'>\n"
+                f"  <topology name='{stats['name']}' total_nodes='{stats['node_count']}' total_edges='{stats['edge_count']}' />\n"
+                f"  <wired_to>{conns}</wired_to>\n"
+                f"</imprint_result>"
             )
         except Exception as e:
             return f"<error>Imprinting failed: {e}</error>"
@@ -236,11 +244,17 @@ class ExecutionEngine:
         payload_update: Optional[str] = None,
         delta: float = 0.2
     ) -> str:
-        """Handler for exocortex_mutate_phase_space tool."""
         if not self.graph_store:
             return "<error>GraphStore is not initialized in engine.</error>"
 
         try:
+            # Coerce delta falls als String übergeben
+            if isinstance(delta, str):
+                try:
+                    delta = float(delta)
+                except ValueError:
+                    delta = 0.2
+
             res = self.graph_store.mutate_node(
                 target_node_id=target_node_id,
                 action=action,
@@ -251,10 +265,15 @@ class ExecutionEngine:
             if res.get("status") == "error":
                 return f"<phase_space_mutation status='error' message='{res.get('message')}' />"
 
+            stats = self.graph_store.get_graph_stats()
             delta_info = f" new_weight='{res.get('new_weight')}'" if "new_weight" in res else ""
             pruned_info = " pruned='true'" if action.upper() == "PRUNE" else ""
 
-            return f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}'{delta_info}{pruned_info} />"
+            return (
+                f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}'{delta_info}{pruned_info}>\n"
+                f"  <topology name='{stats['name']}' total_nodes='{stats['node_count']}' total_edges='{stats['edge_count']}' />\n"
+                f"</phase_space_mutation>"
+            )
         except Exception as e:
             return f"<error>Phase space mutation failed: {e}</error>"
 

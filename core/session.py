@@ -20,6 +20,35 @@ def _sanitize_filename(name: str) -> str:
     return clean.strip("._") or "session_unnamed"
 
 
+def _sanitize_tool_calls(tool_calls: Optional[List[Any]]) -> Optional[List[Dict[str, Any]]]:
+    """Converts Ollama ToolCall objects or raw dicts into plain JSON-serializable structures."""
+    if not tool_calls:
+        return None
+
+    clean_calls = []
+    for tc in tool_calls:
+        if isinstance(tc, dict):
+            clean_calls.append(tc)
+        elif hasattr(tc, "model_dump"):  # Pydantic v2
+            clean_calls.append(tc.model_dump())
+        elif hasattr(tc, "__dict__"):
+            clean_calls.append(tc.__dict__)
+        else:
+            fn = getattr(tc, "function", None)
+            if fn:
+                fn_name = getattr(fn, "name", "")
+                fn_args = getattr(fn, "arguments", {})
+                clean_calls.append({
+                    "function": {
+                        "name": fn_name,
+                        "arguments": fn_args if isinstance(fn_args, dict) else str(fn_args)
+                    }
+                })
+            else:
+                clean_calls.append({"raw": str(tc)})
+    return clean_calls
+
+
 class SessionManager:
     def __init__(self, session_name: str = "systemic", vault_io: Optional[VaultIO] = None):
         self.vault_io = vault_io or VaultIO()
@@ -31,10 +60,10 @@ class SessionManager:
     def add_user_message(self, content: str) -> None:
         self.messages.append({"role": "user", "content": content or ""})
 
-    def add_assistant_message(self, content: Optional[str], tool_calls: Optional[List[Dict[str, Any]]] = None) -> None:
+    def add_assistant_message(self, content: str, tool_calls: Optional[List[Any]] = None) -> None:
         msg: Dict[str, Any] = {"role": "assistant", "content": content or ""}
         if tool_calls:
-            msg["tool_calls"] = tool_calls
+            msg["tool_calls"] = _sanitize_tool_calls(tool_calls)
         self.messages.append(msg)
 
     def add_tool_response(self, content: str) -> None:
@@ -52,7 +81,7 @@ class SessionManager:
         }
 
     def save_session(self, target_name: Optional[str] = None) -> Dict[str, str]:
-        """Synchronously persists the session as a Markdown note and JSON state."""
+        """Synchronously persists the session as a Markdown note and sanitized JSON state."""
         name = _sanitize_filename(target_name or self.session_name)
         self.session_name = name
         timestamp_human = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -80,12 +109,19 @@ class SessionManager:
         md_path = self.vault_io.sessions_dir / f"{name}.md"
         md_path.write_text("\n".join(md_lines), encoding="utf-8")
 
-        # 2. JSON state export (for complete session rehydration)
+        # 2. Defensively sanitized JSON state export
+        sanitized_messages = []
+        for m in self.messages:
+            clean_m = dict(m)
+            if clean_m.get("tool_calls"):
+                clean_m["tool_calls"] = _sanitize_tool_calls(clean_m["tool_calls"])
+            sanitized_messages.append(clean_m)
+
         state_data = {
             "session_name": name,
             "saved_at": datetime.datetime.now().isoformat(),
             "active_graph": self.active_graph,
-            "messages": self.messages,
+            "messages": sanitized_messages,
         }
         json_path = self.vault_io.sessions_dir / f"{name}.json"
         json_path.write_text(json.dumps(state_data, indent=2, ensure_ascii=False), encoding="utf-8")
