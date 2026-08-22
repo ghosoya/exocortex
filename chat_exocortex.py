@@ -201,23 +201,24 @@ def print_banner(mode: str, target: str, model: str):
     print(f"{C_CYAN}{'=' * 70}{C_RESET}\n")
 
 
-def print_help(mode: str):
+def print_help(mode: str = "local"):
     print(f"\n{C_BOLD}[INFO] Command Overview ({mode.upper()} Mode):{C_RESET}")
     print("  /prompt [list|set|show|reset] - Manage cognitive profiles")
-    if mode == "local":
-        print("  /graph list                   - List all topologies in vault")
-        print("  /graph load <Name>            - Switch active topology")
-        print("  /graph info                   - Status and node distribution")
+    
+    if mode.lower() == "local":
+        print("  /graph                        - Display active topology status & node metrics")
+        print("  /graph <Name>                 - Switch active topology (e.g. /graph code_architect)")
         print("  /freeze [Tag]                 - Freeze topology state (JSON snapshot + Canvas)")
     else:
-        print("  /switch <Name>                - Switch topology on remote daemon")
+        print("  /switch <Name>                - Switch topology on remote daemon (e.g. /switch code_architect)")
         print("  /freeze [Tag]                 - Freeze topology state on remote daemon")
+        
     print("  /save [Name]                  - Save session transcript (Markdown + JSON)")
-    print("  /load [Name]                  - Load or list saved sessions")
-    print("  /context                      - Display token usage")
+    print("  /load                         - List all saved sessions in vault")
+    print("  /load <Name>                  - Load saved session transcript")
+    print("  /context                      - Display active token usage")
     print("  /clear                        - Clear message history")
-    print("  exit                          - Terminate session\n")
-
+    print("  exit / quit                   - Terminate session\n")
 
 # ==============================================================================
 # RUNNER MODES
