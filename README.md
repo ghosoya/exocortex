@@ -1,4 +1,4 @@
-# 🧠 Exocortex (v1.4.2)
+# 🧠 Exocortex (v1.4.4)
 
 > **Topological Cognitive Substrate & Autopoietic Thinking Partner**
 > An open-source, local-first cognition engine featuring dynamic phase-space memory, Model Context Protocol (MCP) integration, and bi-directional Obsidian vault synchronization.
@@ -255,7 +255,7 @@ python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices
 | `/graph` | Displays active topology name, node distribution, and edge counts. |
 | `/graph <name>` | Loads base blueprint or frozen snapshot (Local Mode). |
 | `/switch <name>` | Switches active topology on remote daemon (Remote Mode). |
-| **`/freeze [tag]`** | **Freezes active phase-space state into versioned JSON snapshot & Canvas.** |
+| `/freeze [tag]` | Freezes active phase-space state into versioned JSON snapshot & Canvas. |
 | `/save [name]` | Persists session transcript simultaneously as Markdown note and JSON state. |
 | `/load [name]` | Restores or lists saved sessions. |
 | `/context` | Shows estimated token utilization and turn count. |
