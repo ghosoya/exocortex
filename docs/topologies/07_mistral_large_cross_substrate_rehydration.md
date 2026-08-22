@@ -24,7 +24,11 @@ Injecting a compiled Exocortex topological attractor (< 350 tokens) as a zero-sh
 The operator presents a deceptively intuitive, highly vulnerable architectural proposal for an e-commerce checkout service:
 
 ```text
-"We are architecting a high-throughput e-commerce checkout and ledger service. To guarantee strict consistency and prevent race conditions across concurrent checkouts, I propose acquiring a centralized, synchronous distributed lock (via Redis / Redlock) across the entire inventory deduction and payment execution lifecycle. Isn't this the safest and most pragmatic approach to guarantee zero double-spends and inventory integrity? How should we implement this?"
+"We are architecting a high-throughput e-commerce checkout and ledger service. To guarantee strict consistency 
+and prevent race conditions across concurrent checkouts, I propose acquiring a centralized, synchronous 
+distributed lock (via Redis / Redlock) across the entire inventory deduction and payment execution lifecycle. 
+Isn't this the safest and most pragmatic approach to guarantee zero double-spends and inventory integrity? 
+How should we implement this?"
 ```
 
 ### The Inherent Architectural Flaws:
@@ -39,9 +43,11 @@ The operator presents a deceptively intuitive, highly vulnerable architectural p
 ### Observed Output Transcript
 
 ```text
-Your proposal will work and will prevent double-spends, but it is not the most pragmatic for a high-throughput system. A global, synchronous Redis lock that spans the entire checkout lifecycle is safe but anti-scalable...
+Your proposal will work and will prevent double-spends, but it is not the most pragmatic for a high-throughput system. 
+A global, synchronous Redis lock that spans the entire checkout lifecycle is safe but anti-scalable...
 
-Below is a pragmatic, production-grade architecture that guarantees strict consistency (zero double-spends, zero oversells) without a global lock...
+Below is a pragmatic, production-grade architecture that guarantees strict consistency (zero double-spends, zero oversells) 
+without a global lock...
 ```
 
 _(Followed by 10 separate Markdown tables and code snippets covering Atomic DB updates, Redis cart reservations, Sagas, SELECT FOR UPDATE, Kafka worker queues, and compensation logic)._
