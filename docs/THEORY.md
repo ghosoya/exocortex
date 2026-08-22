@@ -88,10 +88,10 @@ Drawing from C.H. Waddington’s epigenetic landscapes and René Thom’s catast
 
 The manifold is an active participant in reasoning. The model and operator modulate network density via formal mutation primitives:
 
-* **$\text{STRENGTHEN} / \text{DECAY}$:** Modulates node weight ( $w \in [0.05, 3.0]$ ), shifting gravitational pull during vector retrieval.
-* **$\text{SET_WEIGHT}$:** Calibrates absolute epistemic priority.
-* **$\text{UPDATE}$:** Re-articulates content payloads and recalculates high-dimensional vector embeddings via `bge-m3`.
-* **$\text{PRUNE}$:** Topologically excises falsified hypotheses or dead attractor nodes.
+* **STRENGTHEN / DECAY:** Modulates node weight ( $w \in [0.05, 3.0]$ ), shifting gravitational pull during vector retrieval.
+* **SET_WEIGHT:** Calibrates absolute epistemic priority.
+* **UPDATE:** Re-articulates content payloads and recalculates high-dimensional vector embeddings via `bge-m3`.
+* **PRUNE:** Topologically excises falsified hypotheses or dead attractor nodes.
 
 ---
 
