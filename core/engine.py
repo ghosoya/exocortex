@@ -258,12 +258,13 @@ class ExecutionEngine:
         except Exception as e:
             return f"<error>Phase space mutation failed: {e}</error>"
 
-    # --- ReAct Execution Loop ---
+    # --- ReAct Execution Loop (Streaming Enabled) ---
     def execute_turn(self, user_input: str, max_turns: int = 5) -> Generator[Dict[str, Any], None, None]:
         """
-        Executes a full cognitive turn including the ReAct tool loop.
+        Executes a full cognitive turn including the ReAct tool loop with live streaming.
         Yielded Events:
           - {'event': 'field_context', 'xml': str}
+          - {'event': 'token', 'delta': str}
           - {'event': 'tool_call', 'name': str, 'args': dict}
           - {'event': 'tool_result', 'result': str}
           - {'event': 'completed', 'final_text': str}
@@ -291,33 +292,59 @@ class ExecutionEngine:
 
             while turn_count < max_turns:
                 turn_count += 1
+                accumulated_content = ""
+                accumulated_tool_calls = []
 
                 try:
-                    response = self.client.chat(
+                    stream = self.client.chat(
                         model=self.model_name,
                         messages=messages_payload,
                         tools=self.tools_schema,
                         options={"num_ctx": self.num_ctx},
+                        stream=True,
                     )
+
+                    for chunk in stream:
+                        # Robust extraction across ollama-python versions (dict or object)
+                        msg = chunk.get("message", {}) if isinstance(chunk, dict) else getattr(chunk, "message", {})
+                        content_delta = (msg.get("content") if isinstance(msg, dict) else getattr(msg, "content", "")) or ""
+                        chunk_tool_calls = (msg.get("tool_calls") if isinstance(msg, dict) else getattr(msg, "tool_calls", [])) or []
+
+                        if chunk_tool_calls:
+                            accumulated_tool_calls.extend(chunk_tool_calls)
+
+                        if content_delta:
+                            accumulated_content += content_delta
+                            # Only stream visible tokens if not part of a tool call
+                            if not chunk_tool_calls:
+                                yield {"event": "token", "delta": content_delta}
+
                 except Exception as api_err:
                     err_msg = f"Inference engine failure: {api_err}"
                     yield {"event": "error", "message": err_msg}
                     self.session.add_assistant_message(f"### [System Error]\n{err_msg}")
                     return
 
-                msg = response.get("message", {})
-                content = msg.get("content") or ""
-                tool_calls = msg.get("tool_calls", [])
-
                 # Tool calls detected?
-                if tool_calls:
-                    messages_payload.append({"role": "assistant", "content": content, "tool_calls": tool_calls})
-                    self.session.add_assistant_message(content, tool_calls=tool_calls)
+                if accumulated_tool_calls:
+                    messages_payload.append({
+                        "role": "assistant",
+                        "content": accumulated_content,
+                        "tool_calls": accumulated_tool_calls,
+                    })
+                    self.session.add_assistant_message(accumulated_content, tool_calls=accumulated_tool_calls)
 
-                    for call in tool_calls:
-                        fn = call.get("function", {})
-                        fn_name = fn.get("name", "")
-                        fn_args = fn.get("arguments", {})
+                    for call in accumulated_tool_calls:
+                        fn = call.get("function", {}) if isinstance(call, dict) else getattr(call, "function", {})
+                        fn_name = fn.get("name", "") if isinstance(fn, dict) else getattr(fn, "name", "")
+                        fn_args = fn.get("arguments", {}) if isinstance(fn, dict) else getattr(fn, "arguments", {})
+
+                        if isinstance(fn_args, str):
+                            try:
+                                import json
+                                fn_args = json.loads(fn_args)
+                            except Exception:
+                                pass
 
                         yield {"event": "tool_call", "name": fn_name, "args": fn_args}
 
@@ -333,8 +360,9 @@ class ExecutionEngine:
                         yield {"event": "tool_result", "result": tool_result}
                         messages_payload.append({"role": "tool", "content": tool_result})
                         self.session.add_tool_response(tool_result)
+
                 else:
-                    final_response_text = content
+                    final_response_text = accumulated_content
                     yield {"event": "completed", "final_text": final_response_text}
                     self.session.add_assistant_message(final_response_text)
                     break

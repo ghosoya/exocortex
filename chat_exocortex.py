@@ -89,7 +89,6 @@ def list_available_sessions(vault_io: VaultIO) -> List[str]:
     sessions_dir = vault_io.vault_path / "Sessions"
     if not sessions_dir.exists():
         return []
-    # Collect JSON files without extension
     return sorted([f.stem for f in sessions_dir.glob("*.json")])
 
 
@@ -149,32 +148,66 @@ class RemoteMCPEngine:
         messages_payload = [{"role": "system", "content": full_system_prompt}] + history
 
         turn_count = 0
+        final_response_text = ""
+
         while turn_count < max_turns:
             turn_count += 1
+            accumulated_content = ""
+            accumulated_tool_calls = []
 
-            # Non-blocking chat call via thread
-            response = await asyncio.to_thread(
-                self.client.chat,
-                model=self.model_name,
-                messages=messages_payload,
-                tools=self.tools_schema,
-                options={"num_ctx": self.num_ctx},
-            )
+            try:
+                # Synchronous Ollama stream wrapped for async loop
+                stream = self.client.chat(
+                    model=self.model_name,
+                    messages=messages_payload,
+                    tools=self.tools_schema,
+                    options={"num_ctx": self.num_ctx},
+                    stream=True,
+                )
 
-            msg = response.get("message", {})
-            content = msg.get("content", "")
-            tool_calls = msg.get("tool_calls", [])
+                for chunk in stream:
+                    msg = chunk.get("message", {}) if isinstance(chunk, dict) else getattr(chunk, "message", {})
+                    content_delta = (msg.get("content") if isinstance(msg, dict) else getattr(msg, "content", "")) or ""
+                    chunk_tool_calls = (msg.get("tool_calls") if isinstance(msg, dict) else getattr(msg, "tool_calls", [])) or []
 
-            if tool_calls:
-                messages_payload.append({"role": "assistant", "content": content or "", "tool_calls": tool_calls})
+                    if chunk_tool_calls:
+                        accumulated_tool_calls.extend(chunk_tool_calls)
 
-                for call in tool_calls:
-                    fn_name = call.get("function", {}).get("name", "")
-                    fn_args = call.get("function", {}).get("arguments", {})
+                    if content_delta:
+                        accumulated_content += content_delta
+                        if not chunk_tool_calls:
+                            yield {"event": "token", "delta": content_delta}
+
+                    # Yield control briefly to event loop
+                    await asyncio.sleep(0)
+
+            except Exception as api_err:
+                err_msg = f"Remote inference failure: {api_err}"
+                yield {"event": "error", "message": err_msg}
+                self.session.add_assistant_message(f"### [System Error]\n{err_msg}")
+                return
+
+            if accumulated_tool_calls:
+                messages_payload.append({
+                    "role": "assistant",
+                    "content": accumulated_content,
+                    "tool_calls": accumulated_tool_calls,
+                })
+                self.session.add_assistant_message(accumulated_content, tool_calls=accumulated_tool_calls)
+
+                for call in accumulated_tool_calls:
+                    fn = call.get("function", {}) if isinstance(call, dict) else getattr(call, "function", {})
+                    fn_name = fn.get("name", "") if isinstance(fn, dict) else getattr(fn, "name", "")
+                    fn_args = fn.get("arguments", {}) if isinstance(fn, dict) else getattr(fn, "arguments", {})
+
+                    if isinstance(fn_args, str):
+                        try:
+                            fn_args = json.loads(fn_args)
+                        except Exception:
+                            pass
 
                     yield {"event": "tool_call", "name": fn_name, "args": fn_args}
 
-                    # Remote tool execution via FastMCP
                     try:
                         res = await mcp_session.call_tool(fn_name, arguments=fn_args)
                         tool_result = res.content[0].text if res.content else ""
@@ -183,10 +216,18 @@ class RemoteMCPEngine:
 
                     yield {"event": "tool_result", "result": tool_result}
                     messages_payload.append({"role": "tool", "content": tool_result})
+                    self.session.add_tool_response(tool_result)
+
             else:
-                yield {"event": "completed", "final_text": content}
-                self.session.add_assistant_message(content)
+                final_response_text = accumulated_content
+                yield {"event": "completed", "final_text": final_response_text}
+                self.session.add_assistant_message(final_response_text)
                 break
+
+        if not final_response_text and turn_count >= max_turns:
+            fallback_msg = "Cognitive ReAct budget exhausted: Maximum tool execution turns reached."
+            yield {"event": "completed", "final_text": fallback_msg}
+            self.session.add_assistant_message(fallback_msg)
 
 
 # ==============================================================================
@@ -219,6 +260,7 @@ def print_help(mode: str = "local"):
     print("  /context                      - Display active token usage")
     print("  /clear                        - Clear message history")
     print("  exit / quit                   - Terminate session\n")
+
 
 # ==============================================================================
 # RUNNER MODES
@@ -312,16 +354,31 @@ def run_local():
                     print(f"\n{C_RED}[!] Failed to freeze snapshot: {e}{C_RESET}\n")
                 continue
 
-            # 2. Execute ReAct turn
+            # 2. Execute ReAct turn (Streaming Loop)
+            header_printed = False
             for event in engine.execute_turn(user_input):
                 ev = event.get("event")
-                if ev == "tool_call":
+                if ev == "token":
+                    if not header_printed:
+                        print(f"\n{C_BOLD}Exocortex >{C_RESET} ", end="", flush=True)
+                        header_printed = True
+                    sys.stdout.write(event["delta"])
+                    sys.stdout.flush()
+                elif ev == "tool_call":
+                    if header_printed:
+                        print()
+                        header_printed = False
                     args = json.dumps(event.get("args", {}), ensure_ascii=False)
                     print(f"\n{C_YELLOW}⚡ [TOOL CALL]{C_RESET} {event['name']}({args})")
                 elif ev == "tool_result":
                     print(f"{C_CYAN}↳ [RESULT]{C_RESET} {event['result']}")
                 elif ev == "completed":
-                    print(f"\n{C_BOLD}Exocortex >{C_RESET} {event['final_text']}\n")
+                    if not header_printed:
+                        print(f"\n{C_BOLD}Exocortex >{C_RESET} {event['final_text']}\n")
+                    else:
+                        print("\n")
+                elif ev == "error":
+                    print(f"\n{C_RED}[!] Error:{C_RESET} {event['message']}\n")
 
         except KeyboardInterrupt:
             continue
@@ -406,7 +463,6 @@ async def run_remote(sse_url: str):
                             if len(parts) > 1:
                                 target_graph = parts[1].strip()
                                 try:
-                                    # Remote-Aufruf an das MCP-Tool auf dem Server
                                     res = await mcp_session.call_tool(
                                         "exocortex_switch_topology",
                                         arguments={"topology_name": target_graph}
@@ -427,7 +483,6 @@ async def run_remote(sse_url: str):
                                 result = await mcp_session.call_tool("exocortex_freeze_snapshot", arguments=call_args)
                                 raw_payload = result.content[0].text if result.content else ""
 
-                                # Robuster Parser: Prüfen, ob JSON oder XML/Text zurückkommt
                                 try:
                                     payload = json.loads(raw_payload)
                                     if payload.get("status") == "success":
@@ -438,22 +493,36 @@ async def run_remote(sse_url: str):
                                     else:
                                         print(f"\n{C_RED}[!] Remote freeze failed: {payload.get('message')}{C_RESET}\n")
                                 except (json.JSONDecodeError, TypeError):
-                                    # Direkte Ausgabe, falls der Server XML/Text liefert
                                     print(f"\n{C_GREEN}[OK] Remote phase-space response:{C_RESET}\n  ↳ {raw_payload}\n")
                             except Exception as e:
                                 print(f"\n{C_RED}[!] Remote freeze RPC error: {e}{C_RESET}\n")
                             continue
-                            
-                        # 2. Execute remote turn
+
+                        # 2. Execute remote turn (Streaming Loop)
+                        header_printed = False
                         async for event in remote_engine.execute_turn(user_input, mcp_session):
                             ev = event.get("event")
-                            if ev == "tool_call":
+                            if ev == "token":
+                                if not header_printed:
+                                    print(f"\n{C_BOLD}Exocortex >{C_RESET} ", end="", flush=True)
+                                    header_printed = True
+                                sys.stdout.write(event["delta"])
+                                sys.stdout.flush()
+                            elif ev == "tool_call":
+                                if header_printed:
+                                    print()
+                                    header_printed = False
                                 args = json.dumps(event.get("args", {}), ensure_ascii=False)
                                 print(f"\n{C_YELLOW}⚡ [REMOTE TOOL]{C_RESET} {event['name']}({args})")
                             elif ev == "tool_result":
                                 print(f"{C_CYAN}↳ [RESULT]{C_RESET} {event['result']}")
                             elif ev == "completed":
-                                print(f"\n{C_BOLD}Exocortex >{C_RESET} {event['final_text']}\n")
+                                if not header_printed:
+                                    print(f"\n{C_BOLD}Exocortex >{C_RESET} {event['final_text']}\n")
+                                else:
+                                    print("\n")
+                            elif ev == "error":
+                                print(f"\n{C_RED}[!] Remote Error:{C_RESET} {event['message']}\n")
 
                     except (KeyboardInterrupt, asyncio.CancelledError):
                         continue
@@ -465,7 +534,7 @@ async def run_remote(sse_url: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Exocortex Terminal Runner (v1.4.2)")
+    parser = argparse.ArgumentParser(description="Exocortex Terminal Runner (v1.4.4)")
     parser.add_argument(
         "--remote",
         nargs="?",
