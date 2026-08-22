@@ -120,7 +120,8 @@ exocortex/
 │       ├── 03_systemic_kernel_observer_collapse.md
 │       ├── 04_systemic_kernel_jevons_verification_entropy.md
 │       ├── 05_systemic_kernel_thermodynamic_decoupling.md
-│       └── 06_regional_shojin_terroir_synthesis.md
+│       ├── 06_regional_shojin_terroir_synthesis.md
+│       └── 07_mistral_large_cross_substrate_rehydration.md
 ├── server/
 │   ├── exocortex_mcp_server.py  # FastMCP SSE / stdio daemon
 │   ├── graph_store.py           # NetworkX topology, vector resonance & Canvas generator
