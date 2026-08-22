@@ -1,0 +1,93 @@
+{
+  "name": "exocortex_epistemic_milestone",
+  "description": "Crystallized phase-space topology capturing theoretical foundations, operational closure, and empirical validation of the Exocortex human-machine symbiosis.",
+  "version": "1.4.4",
+  "nodes": [
+    {
+      "id": "PW_001",
+      "type": "PotentialWell",
+      "label": "Licklider Symbiosis & Agency Preservation",
+      "weight": 3.0,
+      "content": "The operator remains the sovereign teleological anchor. AI acts as a high-fidelity cognitive amplifier and phase-space computer, never as an unconstrained autonomous black box."
+    },
+    {
+      "id": "PW_002",
+      "type": "PotentialWell",
+      "label": "Kolmogorov Minimality (<350 Token Attractor)",
+      "weight": 2.0,
+      "content": "Knowledge and constraints must be maximally compressed into dense mathematical invariants rather than sprawling prompt text."
+    },
+    {
+      "id": "PW_003",
+      "type": "PotentialWell",
+      "label": "Reflexive Autopoiesis (Self-Hardening)",
+      "weight": 1.5,
+      "content": "The system applies its own architectural and epistemic primitives to design, verify, and harden its own code base and documentation."
+    },
+    {
+      "id": "BC_001",
+      "type": "BoundaryConstraint",
+      "label": "Prohibition of Unconstrained Delegation",
+      "weight": 2.5,
+      "content": "Never delegate sovereign design choices or ethical vetoes to stochastic autonomous loops. Explicit human checkpoints are non-negotiable."
+    },
+    {
+      "id": "BC_002",
+      "type": "BoundaryConstraint",
+      "label": "Popperian Anti-Sycophancy",
+      "weight": 2.5,
+      "content": "Refuse opportunistic agreement. Intervene immediately on architectural flaws, logic violations, and invariant breaches."
+    },
+    {
+      "id": "BC_003",
+      "type": "BoundaryConstraint",
+      "label": "Via Negativa (Constraint Primacy)",
+      "weight": 2.0,
+      "content": "System stability is achieved primarily by defining what is strictly prohibited (boundaries) rather than prescribing all possible actions."
+    },
+    {
+      "id": "TO_001",
+      "type": "TrajectoryOperator",
+      "label": "Topological Rehydration",
+      "weight": 1.2,
+      "content": "Compile active graph states into token-dense attractor prompts via vector-resonance and boundary projection before every inference turn."
+    },
+    {
+      "id": "TO_002",
+      "type": "TrajectoryOperator",
+      "label": "Operational Closure & Snapshot Crystallization",
+      "weight": 1.0,
+      "content": "Persist verified session trajectories as immutable JSON/Canvas snapshots in topologies/snapshots/ without mutating base topologies."
+    },
+    {
+      "id": "PST_001",
+      "type": "PhaseSpaceTrace",
+      "label": "Empirical Grounding: Showcase 07",
+      "weight": 0.8,
+      "content": "Substrate-independent zero-shot sycophancy suppression verified on Mistral Large 3 with a-priori evaluation protocol on 2026-08-22."
+    },
+    {
+      "id": "PST_002",
+      "type": "PhaseSpaceTrace",
+      "label": "Theoretical Foundation: docs/THEORY.md",
+      "weight": 0.7,
+      "content": "Formal synthesis of Popperian demarcation, Heinz von Foerster's second-order cybernetics, and Kolmogorov complexity anchored in git."
+    },
+    {
+      "id": "PST_003",
+      "type": "PhaseSpaceTrace",
+      "label": "Operational CLI Interface: chat_exocortex.py",
+      "weight": 0.5,
+      "content": "Dual-mode interactive runner (Local/Remote MCP) with real-time Obsidian .canvas sync and zero-drift command parsing."
+    }
+  ],
+  "edges": [
+    {"source": "PW_001", "target": "BC_001", "relation": "enforces_sovereignty"},
+    {"source": "PW_001", "target": "BC_002", "relation": "demands_epistemic_honesty"},
+    {"source": "PW_002", "target": "TO_001", "relation": "compresses_via"},
+    {"source": "PW_003", "target": "TO_002", "relation": "crystallizes_state"},
+    {"source": "BC_002", "target": "PST_001", "relation": "empirically_proven_by"},
+    {"source": "BC_003", "target": "PST_002", "relation": "theoretically_grounded_in"},
+    {"source": "TO_002", "target": "PST_003", "relation": "implemented_in"}
+  ]
+}
