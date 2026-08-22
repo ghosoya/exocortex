@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-chat_exocortex.py (v1.4.4)
+chat_exocortex.py (v1.4.5)
 Universal terminal runner with dual-mode support:
   1. Embedded Mode (Local via direct class instances)
   2. Remote Mode   (Network via FastMCP / SSE client)
@@ -47,6 +47,24 @@ C_RED = "\033[1;31m"
 C_GRAY = "\033[90m"
 C_BOLD = "\033[1m"
 C_RESET = "\033[0m"
+
+
+def build_prompt_keybindings() -> Optional[Any]:
+    """Configures Enter to submit and Alt+Enter / Esc+Enter for newlines."""
+    if not HAS_PROMPT_TOOLKIT:
+        return None
+
+    kb = KeyBindings()
+
+    @kb.add("enter")
+    def _handle_enter(event):
+        event.current_buffer.validate_and_handle()
+
+    @kb.add("escape", "enter")
+    def _handle_alt_enter(event):
+        event.current_buffer.insert_text("\n")
+
+    return kb
 
 
 # ==============================================================================
@@ -156,7 +174,6 @@ class RemoteMCPEngine:
             accumulated_tool_calls = []
 
             try:
-                # Synchronous Ollama stream wrapped for async loop
                 stream = self.client.chat(
                     model=self.model_name,
                     messages=messages_payload,
@@ -178,7 +195,6 @@ class RemoteMCPEngine:
                         if not chunk_tool_calls:
                             yield {"event": "token", "delta": content_delta}
 
-                    # Yield control briefly to event loop
                     await asyncio.sleep(0)
 
             except Exception as api_err:
@@ -235,7 +251,7 @@ class RemoteMCPEngine:
 # ==============================================================================
 def print_banner(mode: str, target: str, model: str):
     print(f"{C_CYAN}{'=' * 70}{C_RESET}")
-    print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.4 (Dual-Mode Runner){C_RESET}")
+    print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.5 (Dual-Mode Runner){C_RESET}")
     print(f"[*] Mode: {C_GREEN}{mode.upper()}{C_RESET} | Target: {C_YELLOW}{target}{C_RESET} | Model: {C_CYAN}{model}{C_RESET}")
     print(f"[*] Send: [Enter] | Line break: [Alt+Enter] | Quit: 'exit'")
     print(f"[*] Commands: /save | /load | /prompt | /context | /clear | /help" + (" | /graph" if mode == "local" else " | /switch <Topology>"))
@@ -276,11 +292,8 @@ def run_local():
 
     p_session = None
     if HAS_PROMPT_TOOLKIT:
-        kb = KeyBindings()
-        @kb.add("enter")
-        def _(event):
-            event.current_buffer.validate_and_handle()
-        p_session = PromptSession(key_bindings=kb, multiline=False)
+        kb = build_prompt_keybindings()
+        p_session = PromptSession(key_bindings=kb, multiline=True)
 
     while True:
         try:
@@ -403,11 +416,8 @@ async def run_remote(sse_url: str):
 
                 p_session = None
                 if HAS_PROMPT_TOOLKIT:
-                    kb = KeyBindings()
-                    @kb.add("enter")
-                    def _(event):
-                        event.current_buffer.validate_and_handle()
-                    p_session = PromptSession(key_bindings=kb, multiline=False)
+                    kb = build_prompt_keybindings()
+                    p_session = PromptSession(key_bindings=kb, multiline=True)
 
                 while True:
                     try:
@@ -534,7 +544,7 @@ async def run_remote(sse_url: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Exocortex Terminal Runner (v1.4.4)")
+    parser = argparse.ArgumentParser(description="Exocortex Terminal Runner (v1.4.5)")
     parser.add_argument(
         "--remote",
         nargs="?",

@@ -1,4 +1,4 @@
-# 🧠 Exocortex (v1.4.4)
+# 🧠 Exocortex (v1.4.5)
 
 > **Topological Cognitive Substrate & Autopoietic Thinking Partner**
 > An open-source, local-first cognition engine featuring dynamic phase-space memory, Model Context Protocol (MCP) integration, and bi-directional Obsidian vault synchronization.
