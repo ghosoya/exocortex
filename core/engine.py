@@ -5,7 +5,6 @@ ExecutionEngine: ReAct loop, tool dispatching, and dynamic context assembly.
 
 from typing import Any, Callable, Dict, Generator, List, Optional
 from pathlib import Path
-import json
 import datetime
 import ollama
 
@@ -31,8 +30,8 @@ class ExecutionEngine:
         self.model_name = model_name or settings.chat_model
         self.num_ctx = num_ctx or settings.context_window
         self.client = ollama.Client(host=ollama_host or settings.ollama_host)
-        self.config_dir = config_dir or (Path(__file__).parent.parent / "config")
-        self.prompt_manager = PromptManager()
+        self.config_dir = config_dir or (settings.project_root / "config")
+        self.prompt_manager = PromptManager(config_dir=self.config_dir)
 
         # Tool registry (decoupled dispatching)
         self.tools_schema = self._build_tools_schema()
@@ -44,19 +43,19 @@ class ExecutionEngine:
             "exocortex_temporal_anchor": self._tool_temporal_anchor,
             "exocortex_mutate_phase_space": self._handle_mutate_phase_space,
         }
-    
+
     def freeze_snapshot(self, tag: Optional[str] = None) -> Dict[str, str]:
         """Exposes snapshot freezing from GraphStore."""
         return self.graph_store.freeze_snapshot(tag)
-        
+
     def switch_graph(self, graph_name: str) -> Dict[str, Any]:
         """Switches the active phase space topology."""
         return self.graph_store.switch_graph(graph_name)
-    
+
     def get_graph_stats(self) -> Dict[str, Any]:
         """Returns stats of the currently active graph topology."""
         return self.graph_store.get_graph_stats()
-    
+
     def _build_tools_schema(self) -> List[Dict[str, Any]]:
         return [
             {
@@ -147,35 +146,35 @@ class ExecutionEngine:
                 },
             },
             {
-    "type": "function",
-    "function": {
-        "name": "exocortex_mutate_phase_space",
-        "description": "Modulates, updates, decays, or prunes an existing node in the active phase-space topology.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "target_node_id": {
-                    "type": "string",
-                    "description": "Unique identifier of the target node (e.g. 'PW_001', 'BC_001')"
-                },
-                "action": {
-                    "type": "string",
-                    "enum": ["STRENGTHEN", "DECAY", "SET_WEIGHT", "PRUNE", "UPDATE"],
-                    "description": "Structural operation: STRENGTHEN (+delta), DECAY (-delta), SET_WEIGHT (set absolute weight via delta), PRUNE (remove node), UPDATE (modify payload)"
-                },
-                "payload_update": {
-                    "type": "string",
-                    "description": "New payload text (mandatory if action is UPDATE)"
-                },
-                "delta": {
-                    "type": "number",
-                    "description": "Weight modification delta for STRENGTHEN or DECAY (default: 0.2)"
+                "type": "function",
+                "function": {
+                    "name": "exocortex_mutate_phase_space",
+                    "description": "Modulates, updates, decays, or prunes an existing node in the active phase-space topology.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "target_node_id": {
+                                "type": "string",
+                                "description": "Unique identifier of the target node (e.g. 'PW_001', 'BC_001')"
+                            },
+                            "action": {
+                                "type": "string",
+                                "enum": ["STRENGTHEN", "DECAY", "SET_WEIGHT", "PRUNE", "UPDATE"],
+                                "description": "Structural operation: STRENGTHEN (+delta), DECAY (-delta), SET_WEIGHT (set absolute weight via delta), PRUNE (remove node), UPDATE (modify payload)"
+                            },
+                            "payload_update": {
+                                "type": "string",
+                                "description": "New payload text (mandatory if action is UPDATE)"
+                            },
+                            "delta": {
+                                "type": "number",
+                                "description": "Weight modification delta for STRENGTHEN or DECAY (default: 0.2)"
+                            }
+                        },
+                        "required": ["target_node_id", "action"]
+                    }
                 }
-            },
-            "required": ["target_node_id", "action"]
-        }
-    }
-}
+            }
         ]
 
     # --- Tool Implementations ---
@@ -194,14 +193,17 @@ class ExecutionEngine:
             return f"<error>Error writing to scratchpad: {e}</error>"
 
     def _tool_gauge_field(self, query_vector: str, top_k: int = 3) -> str:
-        res = self.graph_store.get_resonant_nodes(query_vector, top_k=top_k)
-        if not res:
-            return "<field_gauge status='quiescent' />"
-        lines = [f"<field_gauge query='{query_vector}'>"]
-        for nid, attrs, sim in res:
-            lines.append(f"  <resonance id='{nid}' label='{attrs.get('label')}' type='{attrs.get('type')}' score='{sim:.2f}' />")
-        lines.append("</field_gauge>")
-        return "\n".join(lines)
+        try:
+            res = self.graph_store.get_resonant_nodes(query_vector, top_k=top_k)
+            if not res:
+                return "<field_gauge status='quiescent' />"
+            lines = [f"<field_gauge query='{query_vector}'>"]
+            for nid, attrs, sim in res:
+                lines.append(f"  <resonance id='{nid}' label='{attrs.get('label')}' type='{attrs.get('type')}' score='{sim:.2f}' />")
+            lines.append("</field_gauge>")
+            return "\n".join(lines)
+        except Exception as e:
+            return f"<error>Gauge field evaluation failed: {e}</error>"
 
     def _tool_imprint_field(self, node_type: str, label: str, content_payload: str, tensor_links: Optional[List[str]] = None) -> str:
         try:
@@ -219,8 +221,14 @@ class ExecutionEngine:
         iso = now.isoformat()
         human = now.strftime("%d.%m.%Y, %H:%M:%S")
         kw = now.isocalendar()[1]
-        return f"<temporal_anchor>\n  <human_readable>{human}</human_readable>\n  <iso8601>{iso}</iso8601>\n  <calendar_context>Week {kw}, Year {now.year}</calendar_context>\n</temporal_anchor>"
-    
+        return (
+            f"<temporal_anchor>\n"
+            f"  <human_readable>{human}</human_readable>\n"
+            f"  <iso8601>{iso}</iso8601>\n"
+            f"  <calendar_context>Week {kw}, Year {now.year}</calendar_context>\n"
+            f"</temporal_anchor>"
+        )
+
     def _handle_mutate_phase_space(
         self,
         target_node_id: str,
@@ -232,21 +240,24 @@ class ExecutionEngine:
         if not self.graph_store:
             return "<error>GraphStore is not initialized in engine.</error>"
 
-        res = self.graph_store.mutate_node(
-            target_node_id=target_node_id,
-            action=action,
-            payload_update=payload_update,
-            delta=delta
-        )
+        try:
+            res = self.graph_store.mutate_node(
+                target_node_id=target_node_id,
+                action=action,
+                payload_update=payload_update,
+                delta=delta
+            )
 
-        if res.get("status") == "error":
-            return f"<phase_space_mutation status='error' message='{res.get('message')}' />"
+            if res.get("status") == "error":
+                return f"<phase_space_mutation status='error' message='{res.get('message')}' />"
 
-        delta_info = f" new_weight='{res.get('new_weight')}'" if "new_weight" in res else ""
-        pruned_info = " pruned='true'" if action.upper() == "PRUNE" else ""
+            delta_info = f" new_weight='{res.get('new_weight')}'" if "new_weight" in res else ""
+            pruned_info = " pruned='true'" if action.upper() == "PRUNE" else ""
 
-        return f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}'{delta_info}{pruned_info} />"
-        
+            return f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}'{delta_info}{pruned_info} />"
+        except Exception as e:
+            return f"<error>Phase space mutation failed: {e}</error>"
+
     # --- ReAct Execution Loop ---
     def execute_turn(self, user_input: str, max_turns: int = 5) -> Generator[Dict[str, Any], None, None]:
         """
@@ -255,62 +266,85 @@ class ExecutionEngine:
           - {'event': 'field_context', 'xml': str}
           - {'event': 'tool_call', 'name': str, 'args': dict}
           - {'event': 'tool_result', 'result': str}
-          - {'event': 'response_chunk', 'text': str}
           - {'event': 'completed', 'final_text': str}
+          - {'event': 'error', 'message': str}
         """
-        # 1. Compute vector resonance via embedding guard
-        safe_query = slice_for_embedding(user_input)
-        field_xml = self.graph_store.assemble_field_context(safe_query)
-        yield {"event": "field_context", "xml": field_xml}
+        try:
+            # 1. Compute vector resonance via embedding guard
+            safe_query = slice_for_embedding(user_input)
+            field_xml = self.graph_store.assemble_field_context(safe_query)
+            yield {"event": "field_context", "xml": field_xml}
 
-        # 2. Dynamically assemble system prompt
-        full_system_prompt = self.prompt_manager.build_system_prompt(field_xml)
+            # 2. Dynamically assemble system prompt
+            full_system_prompt = self.prompt_manager.build_system_prompt(field_xml)
 
-        # 3. Update session with new user input
-        self.session.add_user_message(user_input)
-        self.session.active_graph = self.graph_store.active_graph_name
+            # 3. Update session with new user input
+            self.session.add_user_message(user_input)
+            self.session.active_graph = self.graph_store.active_graph_name
 
-        # 4. Prepare message history for Ollama
-        history = prune_history_if_needed(self.session.messages)
-        messages_payload = [{"role": "system", "content": full_system_prompt}] + history
+            # 4. Prepare message history for Ollama
+            history = prune_history_if_needed(self.session.messages)
+            messages_payload = [{"role": "system", "content": full_system_prompt}] + history
 
-        turn_count = 0
-        final_response_text = ""
+            turn_count = 0
+            final_response_text = ""
 
-        while turn_count < max_turns:
-            turn_count += 1
+            while turn_count < max_turns:
+                turn_count += 1
 
-            response = self.client.chat(
-                model=self.model_name,
-                messages=messages_payload,
-                tools=self.tools_schema,
-                options={"num_ctx": self.num_ctx},
-            )
+                try:
+                    response = self.client.chat(
+                        model=self.model_name,
+                        messages=messages_payload,
+                        tools=self.tools_schema,
+                        options={"num_ctx": self.num_ctx},
+                    )
+                except Exception as api_err:
+                    err_msg = f"Inference engine failure: {api_err}"
+                    yield {"event": "error", "message": err_msg}
+                    self.session.add_assistant_message(f"### [System Error]\n{err_msg}")
+                    return
 
-            msg = response.get("message", {})
-            content = msg.get("content", "")
-            tool_calls = msg.get("tool_calls", [])
+                msg = response.get("message", {})
+                content = msg.get("content") or ""
+                tool_calls = msg.get("tool_calls", [])
 
-            # Tool calls detected?
-            if tool_calls:
-                messages_payload.append({"role": "assistant", "content": content or "", "tool_calls": tool_calls})
+                # Tool calls detected?
+                if tool_calls:
+                    messages_payload.append({"role": "assistant", "content": content, "tool_calls": tool_calls})
+                    self.session.add_assistant_message(content, tool_calls=tool_calls)
 
-                for call in tool_calls:
-                    fn_name = call.get("function", {}).get("name", "")
-                    fn_args = call.get("function", {}).get("arguments", {})
+                    for call in tool_calls:
+                        fn = call.get("function", {})
+                        fn_name = fn.get("name", "")
+                        fn_args = fn.get("arguments", {})
 
-                    yield {"event": "tool_call", "name": fn_name, "args": fn_args}
+                        yield {"event": "tool_call", "name": fn_name, "args": fn_args}
 
-                    handler = self.tool_handlers.get(fn_name)
-                    if handler:
-                        tool_result = str(handler(**fn_args))
-                    else:
-                        tool_result = f"<error>Unknown tool '{fn_name}'</error>"
+                        handler = self.tool_handlers.get(fn_name)
+                        if handler:
+                            try:
+                                tool_result = str(handler(**fn_args))
+                            except Exception as exec_err:
+                                tool_result = f"<error>Tool execution failed for '{fn_name}': {exec_err}</error>"
+                        else:
+                            tool_result = f"<error>Unknown tool '{fn_name}'</error>"
 
-                    yield {"event": "tool_result", "result": tool_result}
-                    messages_payload.append({"role": "tool", "content": tool_result})
-            else:
-                final_response_text = content
-                yield {"event": "completed", "final_text": final_response_text}
-                self.session.add_assistant_message(final_response_text)
-                break
+                        yield {"event": "tool_result", "result": tool_result}
+                        messages_payload.append({"role": "tool", "content": tool_result})
+                        self.session.add_tool_response(tool_result)
+                else:
+                    final_response_text = content
+                    yield {"event": "completed", "final_text": final_response_text}
+                    self.session.add_assistant_message(final_response_text)
+                    break
+
+            # Catch exhausted turns without clean answer
+            if not final_response_text and turn_count >= max_turns:
+                fallback_msg = "Cognitive ReAct budget exhausted: Maximum tool execution turns reached."
+                yield {"event": "completed", "final_text": fallback_msg}
+                self.session.add_assistant_message(fallback_msg)
+
+        except Exception as general_err:
+            fatal_msg = f"Fatal execution loop exception: {general_err}"
+            yield {"event": "error", "message": fatal_msg}

@@ -5,24 +5,30 @@ Copy-on-Write RAM lifecycle, snapshots, and automatic Obsidian Canvas projection
 """
 
 from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path
 import datetime
 import json
 import math
-from pathlib import Path
+import os
 import networkx as nx
 import ollama
-from core.guards import slice_for_embedding
 
+from core.compiler import _normalize_topology_schema
+from core.guards import slice_for_embedding
 from .vault_io import VaultIO
 
 
 def cosine_similarity(v1: List[float], v2: List[float]) -> float:
+    """Calculates bounded cosine similarity between two float vectors."""
     if not v1 or not v2 or len(v1) != len(v2):
         return 0.0
     dot = sum(a * b for a, b in zip(v1, v2))
     norm1 = math.sqrt(sum(a * a for a in v1))
     norm2 = math.sqrt(sum(b * b for b in v2))
-    return dot / (norm1 * norm2) if norm1 > 0 and norm2 > 0 else 0.0
+    if norm1 <= 0.0 or norm2 <= 0.0:
+        return 0.0
+    val = dot / (norm1 * norm2)
+    return max(-1.0, min(1.0, val))
 
 
 class GraphStore:
@@ -40,7 +46,7 @@ class GraphStore:
         self.mutations_count: int = 0
         self.graph: nx.DiGraph = nx.DiGraph()
         
-        # Sicherstellen, dass base/ und snapshots/ Verzeichnisse existieren
+        # Ensure base, snapshot, and canvas directories exist
         (self.vault_io.vault_path / "Topologies" / "base").mkdir(parents=True, exist_ok=True)
         (self.vault_io.vault_path / "Topologies" / "snapshots").mkdir(parents=True, exist_ok=True)
         (self.vault_io.vault_path / "Canvases" / "snapshots").mkdir(parents=True, exist_ok=True)
@@ -48,7 +54,9 @@ class GraphStore:
         self.load_graph("default")
 
     def _get_embedding(self, text: str) -> List[float]:
-        safe_text = text[:1500]
+        safe_text = slice_for_embedding(text, max_chars=1500)
+        if not safe_text:
+            return []
         try:
             res = self.client.embeddings(model=self.embedding_model, prompt=safe_text)
             return res.get("embedding", [])
@@ -98,7 +106,7 @@ class GraphStore:
             )
 
             canvas_nodes.append({
-                "id": node_id,
+                "id": str(node_id),
                 "x": col_x,
                 "y": node_y,
                 "width": card_width,
@@ -112,9 +120,9 @@ class GraphStore:
             relation = data.get("relation", "")
             edge_entry: Dict[str, Any] = {
                 "id": f"edge_{u}_{v}",
-                "fromNode": u,
+                "fromNode": str(u),
                 "fromSide": "right",
-                "toNode": v,
+                "toNode": str(v),
                 "toSide": "left",
             }
             if relation:
@@ -127,30 +135,35 @@ class GraphStore:
         }
 
         canvas_path = self.vault_io.vault_path / canvas_filename
-        with open(canvas_path, "w", encoding="utf-8") as f:
+        canvas_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Atomic write
+        tmp_path = canvas_path.with_suffix(".tmp")
+        with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(canvas_data, f, indent=2, ensure_ascii=False)
+        os.replace(tmp_path, canvas_path)
 
         return str(canvas_path)
 
     def load_graph(self, graph_name: str) -> Dict[str, Any]:
-        """Loads a topology (checking base/ first, then snapshots/) into transient RAM."""
+        """Loads a topology (checking base/, snapshots/, and vault root) with schema normalization."""
         clean_name = graph_name.replace(".json", "")
         
-        # 1. Pfadsuche: Erst in Topologies/base/, dann Topologies/snapshots/, dann Root (Legacy)
         base_path = self.vault_io.vault_path / "Topologies" / "base" / f"{clean_name}.json"
         snap_path = self.vault_io.vault_path / "Topologies" / "snapshots" / f"{clean_name}.json"
         
         if base_path.exists():
-            data = json.loads(base_path.read_text(encoding="utf-8"))
+            raw_data = json.loads(base_path.read_text(encoding="utf-8"))
             self.is_snapshot = False
         elif snap_path.exists():
-            data = json.loads(snap_path.read_text(encoding="utf-8"))
+            raw_data = json.loads(snap_path.read_text(encoding="utf-8"))
             self.is_snapshot = True
         else:
-            # Fallback auf vault_io (für default oder flache Ablage)
-            data = self.vault_io.read_graph_json(clean_name)
+            raw_data = self.vault_io.read_graph_json(clean_name)
             self.is_snapshot = False
 
+        # Normalize schema (handles declarative blueprints and graph exports)
+        data = _normalize_topology_schema(raw_data)
         if "links" in data and "edges" not in data:
             data["edges"] = data.pop("links")
             
@@ -158,53 +171,59 @@ class GraphStore:
         self.active_graph_name = clean_name
         self.mutations_count = 0
 
-        # Fehlende Embeddings berechnen (in-memory)
+        # Compute missing embeddings in-memory
         for node_id, attrs in self.graph.nodes(data=True):
             if "embedding" not in attrs or not attrs["embedding"]:
                 payload = attrs.get("payload", "")
                 label = attrs.get("label", node_id)
                 attrs["embedding"] = self._get_embedding(f"{label}: {payload}")
 
-        # Live Canvas synchronisieren
+        # Sync live canvas
         self.export_canvas("Exocortex_Interactive.canvas")
         return self.get_graph_stats()
 
     def save_graph(self, graph_name: Optional[str] = None) -> str:
         """
-        Copy-on-Write-Semantik:
-        Blueprints in base/ werden geschützt. Änderungen mutieren den RAM und Canvas.
-        Nur wenn es bereits ein Snapshot ist, wird direkt auf Platte synchronisiert.
+        Copy-on-Write semantics:
+        Base topologies remain protected in RAM. Snapshots are synchronized to disk atomically.
         """
         target_name = graph_name or self.active_graph_name
         self.graph.graph["updated_at"] = datetime.datetime.now().isoformat()
         self.graph.graph["name"] = target_name
         self.graph.graph["embedding_model"] = self.embedding_model
 
-        # Live Canvas wird immer aktualisiert
         self.export_canvas("Exocortex_Interactive.canvas")
 
         if self.is_snapshot:
             data = nx.node_link_data(self.graph)
             snap_path = self.vault_io.vault_path / "Topologies" / "snapshots" / f"{target_name}.json"
-            with open(snap_path, "w", encoding="utf-8") as f:
+            snap_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            tmp_path = snap_path.with_suffix(".tmp")
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_path, snap_path)
             return str(snap_path)
         
         return "in-memory (base topology protected)"
 
     def freeze_snapshot(self, tag: Optional[str] = None) -> Dict[str, str]:
-        """Friert den aktuellen RAM-Zustand als unveränderlichen Snapshot ein."""
+        """Freezes the current RAM state into an immutable snapshot (JSON + Canvas)."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         suffix = f"_{tag}" if tag else ""
         snapshot_filename = f"{timestamp}_{self.active_graph_name}{suffix}"
 
-        # 1. JSON Snapshot speichern
+        # 1. JSON snapshot
         data = nx.node_link_data(self.graph)
         snap_json_path = self.vault_io.vault_path / "Topologies" / "snapshots" / f"{snapshot_filename}.json"
-        with open(snap_json_path, "w", encoding="utf-8") as f:
+        snap_json_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        tmp_json = snap_json_path.with_suffix(".tmp")
+        with open(tmp_json, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+        os.replace(tmp_json, snap_json_path)
 
-        # 2. Canvas Snapshot speichern
+        # 2. Canvas snapshot
         canvas_rel_path = f"Canvases/snapshots/{snapshot_filename}.canvas"
         snap_canvas_path = self.export_canvas(canvas_rel_path)
 
@@ -276,8 +295,8 @@ class GraphStore:
 
         existing_nums = []
         for n in self.graph.nodes():
-            if n.startswith(f"{prefix}_"):
-                parts = n.split("_")
+            if str(n).startswith(f"{prefix}_"):
+                parts = str(n).split("_")
                 if len(parts) >= 2 and parts[1].isdigit():
                     existing_nums.append(int(parts[1]))
         next_idx = max(existing_nums, default=0) + 1
@@ -312,7 +331,6 @@ class GraphStore:
                 self.graph.add_edge(new_id, existing_id, relation="semantic_resonance", weight=round(sim, 2))
                 wired_connections.append(f"{existing_id} (sim: {sim:.2f})")
 
-        # Aktualisiert Canvas und schützt Base-Topologie vor destructive mutation
         self.save_graph(self.active_graph_name)
 
         return {

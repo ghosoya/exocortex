@@ -2,23 +2,23 @@
 """
 server/exocortex_mcp_server.py
 MCP server interface (FastMCP).
-Exposes vault I/O and the phase space as standardized MCP tools.
+Exposes vault I/O and the phase space as standardized MCP tools with fail-safe boundaries.
 """
 
 from typing import List, Optional
-import datetime
 import argparse
+import datetime
+import json
 from mcp.server.fastmcp import FastMCP
 
 from core.config import settings
 from server.vault_io import VaultIO
 from server.graph_store import GraphStore
-import json
 
 # FastMCP server instance
 mcp = FastMCP("Exocortex-Daemon")
 
-# Substrate instances (transparently utilize settings.vault_path etc.)
+# Substrate instances
 vault_io = VaultIO()
 graph_store = GraphStore(vault_io=vault_io)
 
@@ -107,7 +107,8 @@ def exocortex_switch_topology(topology_name: str) -> str:
         return f"<topology_switched name='{stats['name']}' nodes='{stats['node_count']}' edges='{stats['edge_count']}' />"
     except Exception as e:
         return f"<error>Topology switch failed: {e}</error>"
-        
+
+
 @mcp.tool()
 def exocortex_mutate_phase_space(
     target_node_id: str,
@@ -115,16 +116,20 @@ def exocortex_mutate_phase_space(
     payload_update: Optional[str] = None,
     delta: float = 0.2
 ) -> str:
-    """Modulates, updates, decays, sets weight, or prunes an existing node in the active phase space (actions: STRENGTHEN, DECAY, SET_WEIGHT, PRUNE, UPDATE)."""
-    res = graph_store.mutate_node(
-        target_node_id=target_node_id,
-        action=action,
-        payload_update=payload_update,
-        delta=delta
-    )
-    if res.get("status") == "error":
-        return f"<phase_space_mutation status='error' message='{res.get('message')}' />"
-    return f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}' />"
+    """Modulates, updates, decays, sets weight, or prunes an existing node in the active phase space."""
+    try:
+        res = graph_store.mutate_node(
+            target_node_id=target_node_id,
+            action=action,
+            payload_update=payload_update,
+            delta=delta
+        )
+        if res.get("status") == "error":
+            return f"<phase_space_mutation status='error' message='{res.get('message')}' />"
+        return f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}' />"
+    except Exception as e:
+        return f"<error>Phase space mutation failed: {e}</error>"
+
 
 @mcp.tool()
 def exocortex_freeze_snapshot(tag: Optional[str] = None) -> str:
@@ -135,7 +140,7 @@ def exocortex_freeze_snapshot(tag: Optional[str] = None) -> str:
     try:
         res = graph_store.freeze_snapshot(tag)
         return json.dumps({
-            "status": "success",    
+            "status": "success",
             "snapshot_name": res["snapshot_name"],
             "json_path": res["json_path"],
             "canvas_path": res["canvas_path"]
@@ -145,6 +150,7 @@ def exocortex_freeze_snapshot(tag: Optional[str] = None) -> str:
             "status": "error",
             "message": str(e)
         })
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exocortex FastMCP Server Daemon")

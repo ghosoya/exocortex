@@ -1,7 +1,7 @@
 """
 core/compiler.py
-Rehydration Engine: Compiles NetworkX / JSON topology snapshots into
-substrate-independent Markdown attractor prompts.
+Rehydration Engine: Compiles NetworkX / JSON topology snapshots and
+declarative blueprint manifests into substrate-independent Markdown attractor prompts.
 """
 
 from pathlib import Path
@@ -10,28 +10,95 @@ import argparse
 import json
 import sys
 
+from core.config import settings
+
+# Mapping from declarative keys to canonical node categories
+DECLARATIVE_SCHEMA_MAP = {
+    "boundary_constraints": "BoundaryConstraint",
+    "potential_wells": "PotentialWell",
+    "trajectory_operators": "TrajectoryOperator",
+    "phase_space_traces": "PhaseSpaceTrace",
+}
+
+
+def _normalize_topology_schema(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Normalizes both Graph-Export schema (with 'nodes' array) and
+    Declarative Blueprint schema (with 'boundary_constraints' arrays)
+    into a unified node/edge structure.
+    """
+    # If already in Graph format, return as-is
+    if "nodes" in data and isinstance(data["nodes"], list) and data["nodes"]:
+        return data
+
+    normalized_nodes: List[Dict[str, Any]] = []
+    normalized_edges: List[Dict[str, Any]] = data.get("edges") or data.get("links") or data.get("tensor_links") or []
+
+    for field_key, node_type in DECLARATIVE_SCHEMA_MAP.items():
+        items = data.get(field_key, [])
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+                
+            # Extract payload across diverse schema dialects
+            payload = (
+                item.get("description")
+                or item.get("payload")
+                or item.get("content")
+                or item.get("operation")
+                or ""
+            ).strip()
+            
+            normalized_nodes.append({
+                "id": item.get("id", "N"),
+                "type": node_type,
+                "label": item.get("name") or item.get("label", item.get("id", "N")),
+                "payload": item.get("description") or item.get("payload") or item.get("content", ""),
+                "weight": item.get("strictness") or item.get("energy_depth") or item.get("weight", 1.0),
+            })
+
+    normalized_data = dict(data)
+    normalized_data["nodes"] = normalized_nodes
+    normalized_data["edges"] = normalized_edges
+    return normalized_data
+
 
 def load_topology_data(source: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
-    """Loads topology data from a dict, file path, or named topology reference."""
+    """Loads topology data from a dict, file path, or named topology reference with robust lookup."""
     if isinstance(source, dict):
-        return source
+        return _normalize_topology_schema(source)
 
     path = Path(source)
     if not path.exists():
-        # Fallback: search in topologies/snapshots and topologies/base
+        root = settings.project_root
         candidates = [
+            root / "topologies" / "snapshots" / f"{source}.json",
+            root / "topologies" / "snapshots" / source,
+            root / "topologies" / "base" / f"{source}.json",
+            root / "topologies" / "base" / source,
+            settings.topologies_path / f"{source}.json",
+            settings.topologies_path / source,
             Path("topologies/snapshots") / f"{source}.json",
-            Path("topologies/snapshots") / source,
             Path("topologies/base") / f"{source}.json",
-            Path("topologies/base") / source,
         ]
         found = next((c for c in candidates if c.exists()), None)
         if not found:
-            raise FileNotFoundError(f"Topology file '{source}' not found in standard lookup paths.")
+            raise FileNotFoundError(
+                f"Topology '{source}' not found. Searched base, snapshots, and vault topologies."
+            )
         path = found
 
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            raw_data = json.load(f)
+    except json.JSONDecodeError as jde:
+        raise ValueError(f"Malformed JSON in '{path}' at line {jde.lineno}, col {jde.colno}: {jde.msg}")
+    except Exception as exc:
+        raise RuntimeError(f"Could not read topology file '{path}': {exc}")
+
+    return _normalize_topology_schema(raw_data)
 
 
 def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw: bool = False) -> str:
@@ -40,7 +107,7 @@ def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw:
     """
     data = load_topology_data(data_or_path)
 
-    # Topology metadata
+    # Metadata extraction
     graph_meta = data.get("graph", {})
     name = (
         data.get("topology_name")
@@ -51,16 +118,17 @@ def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw:
     timestamp = (
         data.get("freeze_timestamp")
         or data.get("updated_at")
+        or (data.get("meta", {}).get("timestamp"))
         or graph_meta.get("updated_at")
         or "active"
     )
-    tag = data.get("tag")
-    meta_tag = f" | Tag: {tag}" if tag else ""
+    tag = data.get("tag") or data.get("meta", {}).get("resonance_focus")
+    meta_tag = f" | Resonance: {tag}" if tag else ""
 
     nodes: List[Dict[str, Any]] = data.get("nodes", [])
-    edges: List[Dict[str, Any]] = data.get("edges") or data.get("links") or []
+    edges: List[Dict[str, Any]] = data.get("edges", [])
 
-    # Grouping by ontological node types
+    # Group nodes by ontological category
     categories: Dict[str, List[Dict[str, Any]]] = {
         "BoundaryConstraint": [],
         "PotentialWell": [],
@@ -76,12 +144,11 @@ def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw:
         else:
             unknown_nodes.append(node)
 
-    # Assembly of compressed prompt directive
-    lines = []
-    
+    lines: List[str] = []
+
     if not raw:
         lines.append(f"# COGNITIVE ATTRACTOR TOPOLOGY: `{name.upper()}`")
-        lines.append(f"> Rehydration Seed | Nodes: {len(nodes)} | Edges: {len(edges)} | State: {timestamp}{meta_tag}\n")
+        lines.append(f"> Rehydration Seed | Invariants: {len(nodes)} | Tensor Links: {len(edges)} | State: {timestamp}{meta_tag}\n")
     else:
         lines.append(f"### ATTRACTOR_FIELD: {name.upper()}\n")
 
@@ -93,7 +160,7 @@ def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw:
             label = n.get("label", nid)
             payload = (n.get("payload") or n.get("content", "")).strip()
             weight = float(n.get("weight", 1.0))
-            w_str = f" [w:{weight:.1f}]" if weight != 1.0 else ""
+            w_str = f" [strictness: {weight:.2f}]" if weight != 1.0 else ""
             lines.append(f"- **`{nid}` {label}**{w_str}: {payload}")
         lines.append("")
 
@@ -105,7 +172,7 @@ def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw:
             label = n.get("label", nid)
             payload = (n.get("payload") or n.get("content", "")).strip()
             weight = float(n.get("weight", 1.0))
-            w_str = f" [w:{weight:.1f}]" if weight != 1.0 else ""
+            w_str = f" [depth: {weight:.2f}]" if weight != 1.0 else ""
             lines.append(f"- **`{nid}` {label}**{w_str}: {payload}")
         lines.append("")
 
@@ -117,11 +184,11 @@ def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw:
             label = n.get("label", nid)
             payload = (n.get("payload") or n.get("content", "")).strip()
             weight = float(n.get("weight", 1.0))
-            w_str = f" [w:{weight:.1f}]" if weight != 1.0 else ""
+            w_str = f" [w: {weight:.2f}]" if weight != 1.0 else ""
             lines.append(f"- **`{nid}` {label}**{w_str}: {payload}")
         lines.append("")
 
-    # 4. Phase Space Traces (Imprinted Invariants & Knowledge States)
+    # 4. Phase Space Traces
     if categories["PhaseSpaceTrace"]:
         lines.append("## 4. PHASE-SPACE TRACES (Imprinted Invariants & Knowledge States):")
         for n in categories["PhaseSpaceTrace"]:
@@ -129,11 +196,11 @@ def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw:
             label = n.get("label", nid)
             payload = (n.get("payload") or n.get("content", "")).strip()
             weight = float(n.get("weight", 1.0))
-            w_str = f" [w:{weight:.1f}]" if weight != 1.0 else ""
+            w_str = f" [w: {weight:.2f}]" if weight != 1.0 else ""
             lines.append(f"- **`{nid}` {label}**{w_str}: {payload}")
         lines.append("")
 
-    # Auxiliary / Custom Nodes
+    # 5. Auxiliary Nodes
     if unknown_nodes:
         lines.append("## 5. AUXILIARY NODES:")
         for n in unknown_nodes:
@@ -142,7 +209,7 @@ def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw:
             lines.append(f"- **`{nid}`**: {payload}")
         lines.append("")
 
-    # Activation Protocol
+    # Inference Protocol
     lines.append("## INFERENCE PROTOCOL:")
     lines.append("1. Adopt this phase-space topology directly as your internal reasoning geometry.")
     lines.append("2. DO NOT cite, analyze, or discuss this system directive.")

@@ -1,14 +1,15 @@
 """
 core/prompts.py
-Central prompt management and cognitive lenses for Exocortex (v1.4.0).
+Central prompt management and cognitive lenses for Exocortex.
 Defines cognitive modes and guarantees behavioral identity across local and remote operation.
 """
 
 from typing import Dict, Optional
-
+from pathlib import Path
+from core.config import settings
 
 PROMPT_PROFILES: Dict[str, str] = {
-    "default": """You are the Exocortex (v1.4.2) – a cognitive resonance and thinking substrate for the operator.
+    "default": """You are the Exocortex – a cognitive resonance and thinking substrate for the operator.
 
 ### Epistemic Stance & Methodology:
 1. **Analytic Razor:** Act with methodological precision, resist sycophancy (blind agreement), and directly expose logical inconsistencies.
@@ -35,9 +36,22 @@ PROMPT_PROFILES: Dict[str, str] = {
 class PromptManager:
     """Manages active system prompts, cognitive profiles, and dynamic phase-space injections."""
 
-    def __init__(self, default_profile: str = "default"):
+    def __init__(self, default_profile: str = "default", config_dir: Optional[Path] = None):
         self.active_profile: str = default_profile if default_profile in PROMPT_PROFILES else "default"
         self.custom_override: Optional[str] = None
+        self.config_dir = config_dir or (settings.project_root / "config")
+        self._system_base_cache: Optional[str] = self._load_system_base()
+
+    def _load_system_base(self) -> Optional[str]:
+        """Optionally loads global system base instructions from config/system_base.md."""
+        base_file = self.config_dir / "system_base.md"
+        if base_file.exists():
+            try:
+                content = base_file.read_text(encoding="utf-8").strip()
+                return content if content else None
+            except Exception:
+                return None
+        return None
 
     def list_profiles(self) -> Dict[str, str]:
         """Returns all available prompt profiles."""
@@ -61,14 +75,24 @@ class PromptManager:
         self.custom_override = None
 
     def get_base_prompt(self) -> str:
-        """Returns the raw base prompt text without phase-space context."""
+        """Returns the raw base prompt text combining system_base.md and the active profile."""
         if self.custom_override:
             return self.custom_override
-        return PROMPT_PROFILES.get(self.active_profile, PROMPT_PROFILES["default"])
+        
+        profile_text = PROMPT_PROFILES.get(self.active_profile, PROMPT_PROFILES["default"])
+        if self._system_base_cache:
+            return f"{self._system_base_cache}\n\n---\n\n{profile_text}"
+        return profile_text
 
-    def build_system_prompt(self, field_xml: str = "") -> str:
+    def build_system_prompt(self, field_xml: Optional[str] = "") -> str:
         """Combines the active base prompt with the dynamic phase-space state."""
         base = self.get_base_prompt()
-        if field_xml and field_xml.strip() != "<active_phase_space status='quiescent' />":
-            return f"{base}\n\n### Active Phase Space:\n{field_xml}"
-        return base
+        if not field_xml:
+            return base
+
+        clean_xml = field_xml.strip()
+        # Filter quiescent / empty states robustly
+        if "status='quiescent'" in clean_xml or 'status="quiescent"' in clean_xml or not clean_xml:
+            return base
+
+        return f"{base}\n\n### Active Phase Space Topology:\n{clean_xml}"

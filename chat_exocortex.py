@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-chat_exocortex.py (v1.4.2)
+chat_exocortex.py (v1.4.4)
 Universal terminal runner with dual-mode support:
   1. Embedded Mode (Local via direct class instances)
   2. Remote Mode   (Network via FastMCP / SSE client)
@@ -194,7 +194,7 @@ class RemoteMCPEngine:
 # ==============================================================================
 def print_banner(mode: str, target: str, model: str):
     print(f"{C_CYAN}{'=' * 70}{C_RESET}")
-    print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.2 (Dual-Mode Runner){C_RESET}")
+    print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.4 (Dual-Mode Runner){C_RESET}")
     print(f"[*] Mode: {C_GREEN}{mode.upper()}{C_RESET} | Target: {C_YELLOW}{target}{C_RESET} | Model: {C_CYAN}{model}{C_RESET}")
     print(f"[*] Send: [Enter] | Line break: [Alt+Enter] | Quit: 'exit'")
     print(f"[*] Commands: /save | /load | /prompt | /context | /clear | /help" + (" | /graph" if mode == "local" else " | /switch <Topology>"))
