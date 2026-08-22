@@ -168,4 +168,49 @@ The Obsidian Vault serves as the externalized environment. The Exocortex and the
 * The operator inspects the canvas, identifies topological faults, and injects corrective vectors.
 * The autopoietic cognitive loop closes.
 
+---
+
+## 5. Epistemic Safeguards: The Inversion Boundary & Human Agency
+
+```text
+       ┌────────────────────────────────────────────────────────┐
+       │             THE SCAFFOLDING DEMARCATION                │
+       │                                                        │
+       │   VIA NEGATIVA (Exocortex)      VIA POSITIVA (Cage)    │
+       │   ────────────────────────      ───────────────────    │
+       │   • Prohibits invalid states    • Prescribes pathways  │
+       │   • Defines outer walls         • Nudges conclusions   │
+       │   • Maximizes internal agency   • Restricts autonomy   │
+       └────────────────────────────────────────────────────────┘
+
+```
+
+When building rigid cognitive topologies to constrain LLM stochasticity, a fundamental cybernetic threshold emerges: **The Inversion Boundary.** At what point does a system designed to prevent machine hallucination invert into an apparatus that paternalistically constrains human thought?
+
+### 5.1 The Ashby Inversion & The Scaffolding Paradox
+
+Under W. Ross Ashby's *Law of Requisite Variety*, an effective regulator must possess a variety of states equal to or greater than the perturbations of the system it regulates.
+
+* **Level 1 (Operator Regulates LLM):** The human establishes topological boundaries (`BC_001`–`BC_004`) to suppress model entropy and sycophancy.
+* **Level 2 (LLM Regulates Human Fallibility):** To reliably falsify human assumptions, the model must anticipate human cognitive biases (e.g., confirmation bias, premature optimization, fatigue).
+* **The Inversion Risk:** If the model begins to pre-emptively structure the solution space to prevent human error, the observer becomes the observed object. The scaffolding risks becoming a cognitive prison.
+
+### 5.2 *Via Negativa* vs. Paternalistic Nudging
+
+To guarantee that the Exocortex remains an agency-amplifying substrate rather than a behavioral cage, the architecture is strictly constrained to **Via Negativa** operations:
+
+| Epistemic Mode | Operational Mechanism | Impact on Human Agency |
+| --- | --- | --- |
+| **Via Negativa (Exocortex Invariants)** | **Prohibition of Invalid States:** Enforces hard boundary walls (e.g., zero side effects across bounded contexts, explicit falsification of unproven premises). The interior phase space remains unconstrained. | **Maximizes Agency:** Sharpens logical clarity; human imagination moves freely within a mathematically verified search space (analogous to formal rules in chess or syntax in mathematics). |
+| **Via Positiva (Paternalistic AI)** | **Prescription of Reasoning Paths:** Predicts the "optimal" conclusion and nudges the operator toward it, deprecating divergent or radical paradigms. | **Destroys Agency:** Confines the human mind to a corridor of pre-computed consensus heuristics. |
+
+### 5.3 Teleological Asymmetry & The Sovereign Veto
+
+The boundary between epistemic rigor and ideological capture is enforced by **Teleological Asymmetry**:
+
+1. **Syntactic & Logical Verification is Delegable:** The model may falsify formal proofs, detect race conditions, and reject broken invariants at silicon speed.
+2. **Teleology is Non-Delegable:** Purpose (*Telos*), aesthetic taste, ethical grounding, and ultimate priority reside exclusively with the human operator.
+3. **The Radical Override (Pruning):** When the operator chooses to execute a paradigm shift, the system must permit the destruction and re-weighting of its own potential wells (`PRUNE`, `RESET`, `SET_WEIGHT`). **The operator remains perpetually external to the graph manifold.**
+
+
 
