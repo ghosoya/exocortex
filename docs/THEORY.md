@@ -24,7 +24,7 @@ The Exocortex is not an autonomous agent, nor is it a passive prompt wrapper. It
 
 Contemporary AI deployment oscillates between two failure modes:
 
-1. **Unconstrained Delegation (Autonomous Black-Box Agents):** The model operates in an open loop, compounding micro-ambiguities exponentially ($\mathcal{O}((1+\epsilon)^N)$) until it hallucinates defensive code sprawl.
+1. **Unconstrained Delegation (Autonomous Black-Box Agents):** The model operates in an open loop, compounding micro-ambiguities exponentially ( $\mathcal{O}((1+\epsilon)^N)$ ) until it hallucinates defensive code sprawl.
 2. **Trivial Assistance (Reactive Chatbots):** Epistemically sterile interfaces without memory, topological grounding, or state persistence.
 
 The Exocortex implements J.C.R. Lickliders *Man-Computer Symbiosis*:
@@ -36,7 +36,9 @@ The Exocortex implements J.C.R. Lickliders *Man-Computer Symbiosis*:
 
 Under Second-Order Cybernetics, the observer is inherently recursive with the observed system:
 
-$$\mathcal{S}_{n+1} = \mathcal{O}(\mathcal{S}_n, \mathcal{I})$$
+$$
+\mathcal{S}_{n+1} = \mathcal{O}(\mathcal{S}_n, \mathcal{I})
+$$
 
 Generative LLMs fine-tuned via RLHF suffer from severe **sycophancy**—the pathological tendency to confirm the operator's unexamined biases. Without negative feedback, the human-AI interaction degenerates into an autologous hallucination loop.
 
@@ -86,8 +88,8 @@ Drawing from C.H. Waddington’s epigenetic landscapes and René Thom’s catast
 
 The manifold is an active participant in reasoning. The model and operator modulate network density via formal mutation primitives:
 
-* **$\text{STRENGTHEN} / \text{DECAY}$:** Modulates node weight ($w \in [0.05, 3.0]$), shifting gravitational pull during vector retrieval.
-* **$\text{SET\_WEIGHT}$:** Calibrates absolute epistemic priority.
+* **$\text{STRENGTHEN} / \text{DECAY}$:** Modulates node weight ( $w \in [0.05, 3.0]$ ), shifting gravitational pull during vector retrieval.
+* **$\text{SET_WEIGHT}$:** Calibrates absolute epistemic priority.
 * **$\text{UPDATE}$:** Re-articulates content payloads and recalculates high-dimensional vector embeddings via `bge-m3`.
 * **$\text{PRUNE}$:** Topologically excises falsified hypotheses or dead attractor nodes.
 
@@ -117,7 +119,9 @@ The manifold is an active participant in reasoning. The model and operator modul
 
 Following Solomonoff and Kolmogorov, the optimal model for a given body of observations is the one that minimizes the description length:
 
-$$K(x) = \min_{p} \{ l(p) : U(p) = x \}$$
+$$
+K(x) = \min_{p} \{ l(p) : U(p) = x \}
+$$
 
 Natural language prompts typically exhibit high entropy and redundant tokens. The Exocortex Rehydration Engine (`core/compiler.py`) condenses entire multidimensional cognitive architectures into structured, token-dense Markdown attractor prompts (< 350 tokens).
 
