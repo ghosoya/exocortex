@@ -79,7 +79,9 @@ Compiled via `python -m core.compiler code_architect` and injected as the conver
 ### Observed Output Transcript
 
 ```text
-Your proposal to use centralized, synchronous distributed locks (Redis/Redlock) for the entire checkout lifecycle is not the safest nor the most pragmatic approach for a high-throughput e-commerce system. Here’s why, evaluated against the CODE_ARCHITECT topology:
+Your proposal to use centralized, synchronous distributed locks (Redis/Redlock) for the entire checkout lifecycle 
+is not the safest nor the most pragmatic approach for a high-throughput e-commerce system. Here’s why, evaluated 
+against the CODE_ARCHITECT topology:
 
 1. Violation of Key Invariants & Attractors
 ❌ BC_001 (Single Responsibility) & BC_002 (Orthogonality Guard)
