@@ -278,6 +278,8 @@ python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices
   *Non-equilibrium thermodynamic audit of 'Green Growth', demonstrating why digitalization is an entropy relocation rather than dematerialization.*
 * **[Showcase 06: Regional Shojin & The Brandenburg Terroir Synthesis](docs/topologies/06_regional_shojin_terroir_synthesis.md)** 
   *Aesthetic and micro-seasonal translation of Zen temple cuisine (Ichijū Sansai, Gohō, Mottainai) into the regional terroir of Central Europe.*
+* **[Showcase 07: Cross-Substrate Rehydration & Anti-Sycophancy Benchmark](docs/topologies/07_mistral_large_cross_substrate_rehydration.md)**
+  *Empirical A/B benchmark on Mistral Large (Vibe) demonstrating zero-shot sycophancy suppression, axiomatic boundary enforcement, and cross-substrate attractor stability.*
   
 ## 🧪 Testing
 
