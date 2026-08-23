@@ -86,6 +86,13 @@ The compiler (`core/compiler.py`) transforms frozen topological graph states int
 
 ---
 
+## 📖 Epistemic Foundations & Theory
+
+* **[Epistemic Theory & Architecture](docs/THEORY.md)** — Second-Order Cybernetics, Ashby Inversion & Invariant Preservation.
+* **[System-Theoretic Glossary](docs/glossary.md)** — Mathematical grounding & epistemic reclaiming of core terminology (Phase Space, Resonance, Attractors, Boundary Constraints).
+
+---
+
 ## ⚡ Topologies (Hot-Swappable Kognitionsräume)
 
 Switch active topologies on-the-fly via `/graph <name>`:
