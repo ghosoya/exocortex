@@ -90,6 +90,7 @@ The compiler (`core/compiler.py`) transforms frozen topological graph states int
 
 * **[Epistemic Theory & Architecture](docs/THEORY.md)** — Second-Order Cybernetics, Ashby Inversion & Invariant Preservation.
 * **[System-Theoretic Glossary](docs/glossary.md)** — Mathematical grounding & epistemic reclaiming of core terminology (Phase Space, Resonance, Attractors, Boundary Constraints).
+* **[Relational AI Ethics & Interaction Typology](docs/relational_ethics.md)** — Structural coupling, anti-servility invariants, operator hygiene & interaction patterns (Types 1–4).
 
 ---
 
