@@ -23,14 +23,14 @@ The Exocortex architecture deliberately adopts terminology from classical physic
 $$\text{sim}(\mathbf{u}, \mathbf{v}) = \cos(\theta) = \frac{\mathbf{u} \cdot \mathbf{v}}{\Vert{}\mathbf{u}\Vert{}_2 \Vert{}\mathbf{v}\Vert{}_2}$$
 
 
-* **Exocortex Implementation:** Vector projection between the operator's input vector and topological node embeddings. A cosine threshold ($\theta \ge 0.50$) discriminates active semantic gravitation from the quiescent baseline.
+* **Exocortex Implementation:** Vector projection between the operator's input vector and topological node embeddings. A cosine threshold ($\tau \ge 0.50$) discriminates active semantic gravitation from the quiescent baseline.
 
 ---
 
 ### 3. Attractor Basin & Potential Well (`PW_xxx`)
 
 * **Pop-Science Dilution:** The "Law of Attraction", manifesting intent, or metaphysical gravity.
-* **Formal Grounding:** An invariant limit set $\mathcal{A} \subset \Phi$ of a dissipative dynamical system toward which trajectories originating within an open neighborhood (the basin of attraction $\mathcal{B}(\mathcal{A})$ ) asymptotically converge as $t \to \infty$:
+* **Formal Grounding:** An invariant limit set $\mathcal{A} \subset \Phi$ of a dissipative dynamical system toward which trajectories originating within an open neighborhood ( the basin of attraction $\mathcal{B}(\mathcal{A})$ ) asymptotically converge as $t \to \infty$:
 
 $$\lim_{t \to \infty} \text{dist}\left(\Phi(t, \mathbf{x}_0), \mathcal{A}\right) = 0 \quad \forall \mathbf{x}_0 \in \mathcal{B}(\mathcal{A})$$
 
