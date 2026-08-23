@@ -11,6 +11,9 @@ import json
 import math
 import os
 import networkx as nx
+import re
+from typing import Optional, Dict
+
 import ollama
 
 from core.compiler import _normalize_topology_schema
@@ -211,13 +214,19 @@ class GraphStore:
         """Freezes the current RAM state into an immutable snapshot (JSON + Canvas)."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         suffix = f"_{tag}" if tag else ""
-        snapshot_filename = f"{timestamp}_{self.active_graph_name}{suffix}"
+    
+        # Rekursive Timestamp-Kaskaden (YYYYMMDD_HHMMSS_) restlos entfernen
+        clean_base_name = re.sub(r"^(\d{8}_\d{6}_)+", "", self.active_graph_name).strip("_")
+        if not clean_base_name:
+            clean_base_name = "default"
+
+        snapshot_filename = f"{timestamp}_{clean_base_name}{suffix}"
 
         # 1. JSON snapshot
         data = nx.node_link_data(self.graph)
         snap_json_path = self.vault_io.vault_path / "Topologies" / "snapshots" / f"{snapshot_filename}.json"
         snap_json_path.parent.mkdir(parents=True, exist_ok=True)
-        
+    
         tmp_json = snap_json_path.with_suffix(".tmp")
         with open(tmp_json, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
@@ -232,7 +241,7 @@ class GraphStore:
             "json_path": str(snap_json_path),
             "canvas_path": str(snap_canvas_path)
         }
-
+    
     def get_graph_stats(self) -> Dict[str, Any]:
         type_counts: Dict[str, int] = {}
         for _, attrs in self.graph.nodes(data=True):
@@ -251,7 +260,7 @@ class GraphStore:
     def switch_graph(self, graph_name: str) -> Dict[str, Any]:
         return self.load_graph(graph_name)
 
-    def get_resonant_nodes(self, query: str, top_k: int = 4, threshold: float = 0.45) -> List[Tuple[str, Dict[str, Any], float]]:
+    def get_resonant_nodes(self, query: str, top_k: int = 4, threshold: float = 0.50) -> List[Tuple[str, Dict[str, Any], float]]:
         query_vec = self._get_embedding(query)
         if not query_vec:
             return []

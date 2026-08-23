@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-chat_exocortex.py (v1.4.5)
+chat_exocortex.py (v1.4.6)
 Universal terminal runner with dual-mode support:
   1. Embedded Mode (Local via direct class instances)
   2. Remote Mode   (Network via FastMCP / SSE client)
@@ -11,6 +11,8 @@ import sys
 import json
 import asyncio
 import argparse
+import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional
 
@@ -47,6 +49,31 @@ C_RED = "\033[1;31m"
 C_GRAY = "\033[90m"
 C_BOLD = "\033[1m"
 C_RESET = "\033[0m"
+
+
+def format_resonance_banner(xml_str: str) -> str:
+    """Formatiert das aktive Phasenraum-XML in eine präzise Resonanz-Badge."""
+    if not xml_str or "quiescent" in xml_str:
+        return f"{C_GRAY}⚡ [RESONANCE] Phase space quiescent (in-context trajectory active){C_RESET}"
+    
+    try:
+        root = ET.fromstring(xml_str)
+        nodes_repr = []
+        for elem in root:
+            nid = elem.attrib.get("id")
+            if not nid:
+                continue
+            label = elem.attrib.get("label", elem.tag)
+            res = elem.attrib.get("resonance")
+            res_str = f": {float(res):.2f}" if res else ""
+            nodes_repr.append(f"{C_BOLD}{nid}{C_RESET} ({label}{res_str})")
+        
+        if nodes_repr:
+            return f"{C_CYAN}⚡ [RESONANCE]{C_RESET} Active Nodes: " + " | ".join(nodes_repr)
+    except Exception:
+        pass
+    
+    return f"{C_CYAN}⚡ [RESONANCE]{C_RESET} {xml_str.strip()}"
 
 
 def build_prompt_keybindings() -> Optional[Any]:
@@ -371,7 +398,11 @@ def run_local():
             header_printed = False
             for event in engine.execute_turn(user_input):
                 ev = event.get("event")
-                if ev == "token":
+                if ev == "field_context":
+                    banner = format_resonance_banner(event.get("xml", ""))
+                    if banner:
+                        print(f"\n{banner}")
+                elif ev == "token":
                     if not header_printed:
                         print(f"\n{C_BOLD}Exocortex >{C_RESET} ", end="", flush=True)
                         header_printed = True
@@ -512,7 +543,11 @@ async def run_remote(sse_url: str):
                         header_printed = False
                         async for event in remote_engine.execute_turn(user_input, mcp_session):
                             ev = event.get("event")
-                            if ev == "token":
+                            if ev == "field_context":
+                                banner = format_resonance_banner(event.get("xml", ""))
+                                if banner:
+                                    print(f"\n{banner}")
+                            elif ev == "token":
                                 if not header_printed:
                                     print(f"\n{C_BOLD}Exocortex >{C_RESET} ", end="", flush=True)
                                     header_printed = True
