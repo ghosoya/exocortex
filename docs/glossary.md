@@ -15,7 +15,7 @@ The Exocortex architecture deliberately adopts terminology from classical physic
 
 ---
 
-### 2. Resonance ($\text{sim}(\mathbf{u}, \mathbf{v})$)
+### 2. Resonance ( $\text{sim}(\mathbf{u}, \mathbf{v})$ )
 
 * **Pop-Science Dilution:** Emotional alignment, spiritual harmony, or "being on the same wavelength".
 * **Formal Grounding:** Maximal power transfer between coupled harmonic oscillators operating at identical eigenfrequencies; mathematically formalized as the normalized inner product (cosine similarity) between directional unit vectors:
