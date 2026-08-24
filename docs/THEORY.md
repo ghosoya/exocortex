@@ -139,7 +139,7 @@ Monolithic mega-context windows (100k–2M tokens) introduce severe thermodynami
 
 $$\lim_{N \to \infty} H\left(P_{\text{attn}}(\mathbf{x}_i)\right) \to H_{\text{max}} \quad \implies \quad \text{Attention Drift}$$
 
-The Exocortex enforces **Thermodynamic Context Economy**: instead of dragging entire chat histories, topological vector resonance (`bge-m3`) projects the operator's prompt onto the top-$k$ active manifold attractors. Injecting micro-substrates ($< 1000$ tokens) into local $12\text{B}$ models maintains maximum signal density ($H \to 0$), zero epistemic drift, and minimal computational dissipation.
+The Exocortex enforces **Thermodynamic Context Economy**: instead of dragging entire chat histories, topological vector resonance (`bge-m3`) projects the operator's prompt onto the top- $k$ active manifold attractors. Injecting micro-substrates ($< 1000$ tokens) into local $12\text{B}$ models maintains maximum signal density ($H \to 0$), zero epistemic drift, and minimal computational dissipation.
 
 ---
 
