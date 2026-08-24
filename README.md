@@ -70,8 +70,8 @@ The model or operator can actively reshape the phase space during runtime:
 
 5. **Real-Time Cognitive Telemetry (Navigator Engine):**
 Deterministic vector telemetry computed live after each inference turn to audit reasoning integrity without token overhead:
-* **Echo Ratio** ($\rho_{\text{echo}} = \text{sim}(\mathbf{p}, \mathbf{r})$): Measures semantic friction against the prompt vector to detect sycophantic mirroring ($\rho \to 1.0$) vs. grounded synthesis.
-* **Epistemic Lift** ($\Delta E = \text{sim}(\mathbf{r}, \mathbf{w}) - \text{sim}(\mathbf{p}, \mathbf{w})$): Tracks directional convergence toward the active attractor basin ($\mathbf{w}$) in phase space.
+* **Echo Ratio:** $\rho_{\mathrm{echo}} = \mathrm{sim}(\mathbf{p}, \mathbf{r})$ — Measures semantic friction against the prompt vector to detect sycophantic mirroring ($\rho \to 1.0$) vs. grounded synthesis.
+* **Epistemic Lift:** $\Delta E = \mathrm{sim}(\mathbf{r}, \mathbf{w}) - \mathrm{sim}(\mathbf{p}, \mathbf{w})$ — Tracks directional convergence toward the active attractor basin ($\mathbf{w}$) in phase space.
 
 6. **Dual-Mode Runner:**
 * **Local Mode:** Self-contained in-memory execution loop without network overhead.
