@@ -233,3 +233,97 @@ When interacting with generative AI, operators risk cognitive atrophy through un
 
 Under Ashby’s Law ( $H(\text{Operator}) \ge H(\text{Substrate})$ ), the Exocortex is designed not as an autopilot that conceals implementation details, but as a high-density epistemic mirror that reinforces and sharpens the operator's own mental model.
 
+## 6. Cognitive Telemetry & Phase-Space Trajectory Navigation
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                     PHASE-SPACE VECTOR TRAJECTORY                      │
+│                                                                        │
+│                   Boundary Constraint Invariant (BC)                   │
+│             ══════════════════════════════════════════════             │
+│                                   │                                    │
+│                                   ▼ (Invariant Boundary)               │
+│  ┌─────────────────┐       Trajectory r        ┌────────────────────┐  │
+│  │  Prompt Vector  ├──────────────────────────►│   Potential Well   │  │
+│  │       (p)       │                           │    Attractor (w)   │  │
+│  └────────┬────────┘                           └─────────┬──────────┘  │
+│           │                                              │             │
+│           └────────────── Epistemic Lift ΔE ─────────────┘             │
+│                     ΔE = sim(r, w) - sim(p, w)                         │
+└────────────────────────────────────────────────────────────────────────┘
+
+```
+
+Inference in the Exocortex is not treated as an unconstrained stochastic text stream, but as a **directed vector trajectory** $\mathbf{r} \in \mathbb{R}^D$ originating from the operator prompt $\mathbf{p} \in \mathbb{R}^D$ through high-dimensional embedding space $\Phi$.
+
+To verify reasoning integrity and prevent conversational degeneration (*sycophantic mirroring*, *hallucinatory drift*) without introducing heavy token overhead, the substrate continuously computes two deterministic telemetry metrics per turn.
+
+### 6.1 Real-Time Epistemic Telemetry
+
+Let $\mathbf{p}, \mathbf{r}, \mathbf{w} \in \mathbb{R}^D$ denote the high-dimensional embedding vectors for the operator prompt, the synthesized response, and the resonant attractor node (Potential Well), with the canonical similarity metric defined as normalized cosine similarity:
+
+$$\text{sim}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\Vert{}\mathbf{u}\Vert{} \Vert{}\mathbf{v}\Vert{}}$$
+
+#### A. Echo Ratio ($\rho_{\text{echo}}$)
+
+Quantifies directional alignment and conversational friction between prompt and response:
+
+$$\rho_{\text{echo}} = \text{sim}(\mathbf{p}, \mathbf{r})$$
+
+* **$\rho_{\text{echo}} \to 1.0$ (Conversational Echo / Sycophancy):** The response merely mirrors, paraphrases, or affirms the prompt's assumptions without contributing structural novelty or independent deductive depth.
+* **$\rho_{\text{echo}} \to 0.0$ (Topic Rupture / Hallucination):** The response breaks semantic coherence with the prompt vector, introducing disconnected tangents.
+* **$\rho_{\text{echo}} \in [\tau_{\text{min}}, \tau_{\text{max}}]$ (Optimal Dialectic Friction):** The response maintains thematic grounding while actively synthesizing new information, formal invariants, or structural code diffs.
+
+#### B. Epistemic Lift ($\Delta E$)
+
+Measures the differential gravitational pull toward the primary active attractor $\mathbf{w}$ (Potential Well) identified during topological resonance:
+
+$$\Delta E = \text{sim}(\mathbf{r}, \mathbf{w}) - \text{sim}(\mathbf{p}, \mathbf{w})$$
+
+* **$\Delta E > 0$ (Positive Epistemic Lift):** The response actively converges toward the axiomatic attractor basin, grounding the inquiry through foundational constraints.
+* **$\Delta E \approx 0$ (Quiescent Navigation):** Neutral trajectory; the system navigates open phase space without directional bias or artificial attractor distortion.
+* **$\Delta E < 0$ (Epistemic Drift):** The response moves away from established foundational invariants toward speculative noise.
+
+---
+
+### 6.2 Topologically Augmented Traversal ($k$-Hop Field Gauging)
+
+Pure vector similarity search suffers from semantic fragmentation—it retrieves isolated snippets without contextual lineage. The Exocortex resolves this via **hybrid vector-topological traversal**:
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                   HYBRID TOPOLOGICAL FIELD GAUGING                     │
+│                                                                        │
+│                          Query Vector (p)                              │
+│                                 │                                      │
+│                                 ▼ (Vector Cosine Resonance)            │
+│                 ┌───────────────────────────────┐                      │
+│                 │     Resonant Centroid Node    │                      │
+│                 │            (PW_004)           │                      │
+│                 └───────────────┬───────────────┘                      │
+│                                 │                                      │
+│                                 ▼ Directed Edge (E)                    │
+│                 ┌───────────────────────────────┐                      │
+│                 │      Topological Neighbor     │                      │
+│                 │            (PW_002)           │                      │
+│                 └───────────────────────────────┘                      │
+└────────────────────────────────────────────────────────────────────────┘
+
+```
+
+1. **Vector Gauging:** The operator's prompt vector $\mathbf{p}$ identifies the top-$k$ resonant centroid nodes $\mathcal{V}_{\text{res}} \subset \mathcal{V}$ above threshold $\tau$.
+2. **Graph Expansion ($1$-Hop Adjacency):** The engine traverses directed edges $\mathcal{E}$ in the NetworkX graph, pulling immediate topological neighbors $\mathcal{N}(\mathcal{V}_{\text{res}})$ into context.
+3. **Invariant Frame Compilation:** The active Boundary Constraints $\mathcal{V}_{\text{BC}}$, resonant attractors, and 1-hop contextual neighbors are compiled into a dense, token-minimal invariant frame ($< 400$ tokens) prior to generation.
+
+---
+
+### 6.3 Distributed State Isolation (MCP Protocol Decoupling)
+
+To guarantee substrate independence, all vector mathematics, graph traversals, and telemetry computations are decoupled from the user interface:
+
+* **State Daemon (FastMCP):** Exposes graph mutations, vault I/O, and real-time telemetry calculations as standardized Model Context Protocol (MCP) endpoints over Server-Sent Events (SSE).
+* **Thin Client Runner:** Operates statelessly with zero local embedding overhead, interacting with the phase space exclusively through transactional RPC primitives.
+
+
+
+

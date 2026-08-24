@@ -10,7 +10,7 @@ import ollama
 
 from core.config import settings
 from core.prompts import PromptManager
-from server.graph_store import GraphStore
+from server.graph_store import GraphStore, cosine_similarity
 from .guards import prune_history_if_needed, slice_for_embedding
 from .session import SessionManager
 
@@ -391,7 +391,36 @@ class ExecutionEngine:
 
                 else:
                     final_response_text = accumulated_content
-                    yield {"event": "completed", "final_text": final_response_text}
+                    
+                    # -------------------------------------------------------------
+                    # ⚡ [NAVIGATOR TELEMETRIE]
+                    # -------------------------------------------------------------
+                    telemetry = {"echo": 0.0, "delta_e": None, "attractor": None}
+                    try:
+                        if final_response_text.strip():
+                            p_vec = self.graph_store._get_embedding(safe_query)
+                            r_vec = self.graph_store._get_embedding(slice_for_embedding(final_response_text))
+                            telemetry["echo"] = round(cosine_similarity(p_vec, r_vec), 2)
+                            
+                            # Resonante Knoten des aktuellen Feldes abfragen
+                            resonant = self.graph_store.get_resonant_nodes(safe_query, top_k=3)
+                            if resonant:
+                                best_nid, best_attrs, _ = resonant[0]
+                                w_vec = best_attrs.get("embedding", [])
+                                if w_vec:
+                                    sim_p_w = cosine_similarity(p_vec, w_vec)
+                                    sim_r_w = cosine_similarity(r_vec, w_vec)
+                                    telemetry["delta_e"] = round(sim_r_w - sim_p_w, 2)
+                                    telemetry["attractor"] = best_attrs.get("label", best_nid)
+                    except Exception as nav_err:
+                        # Navigator-Fehler dürfen niemals den Haupt-Chat blockieren
+                        pass
+
+                    yield {
+                        "event": "completed", 
+                        "final_text": final_response_text,
+                        "telemetry": telemetry
+                    }
                     self.session.add_assistant_message(final_response_text)
                     break
 

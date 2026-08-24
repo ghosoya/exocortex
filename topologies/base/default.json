@@ -51,7 +51,7 @@
       "id": "PST_001",
       "type": "PhaseSpaceTrace",
       "label": "Bootstrap_State",
-      "payload": "Exocortex v1.4.7 substrate initialized. Dynamic phase-space conditioning and vector resonance active.",
+      "payload": "Exocortex substrate initialized. Dynamic phase-space conditioning and vector resonance active.",
       "embedding": [],
       "weight": 1.0
     }

@@ -217,6 +217,52 @@ class TestGraphStore(unittest.TestCase):
         edge = self.store.graph.edges[node_id_2, node_id_1]
         self.assertEqual(edge.get("relation"), "tensor_link")
         self.assertEqual(edge.get("weight"), 0.85)
+        
+    def test_get_graph_stats(self):
+        stats = self.store.get_graph_stats()
+        self.assertEqual(stats["name"], "default")
+        self.assertEqual(stats["node_count"], 2)
+        self.assertEqual(stats["edge_count"], 0)
+
+    def test_assemble_field_context_with_1hop_links(self):
+        # 1. Zweiten Knoten und gerichtete Kante anlegen
+        self.store.graph.add_node(
+            "TO_001",
+            type="TrajectoryOperator",
+            label="Decoupling_Operator",
+            payload="Isolate dependencies",
+            weight=1.0
+        )
+        self.store.graph.add_edge("PW_001", "TO_001", relation="grounds_in", weight=0.85)
+        
+        # 2. Query zielt semantisch direkt auf PW_001 ('Modular architecture')
+        xml_context = self.store.assemble_field_context("Modular software architecture and components")
+        
+        # 3. Assertions: XML-Struktur, Resonanz und 1-Hop-Nachbar
+        self.assertIn("<active_phase_space", xml_context)
+        self.assertIn("PW_001", xml_context)
+        self.assertIn("TO_001", xml_context)
+        self.assertIn("topological_neighbor", xml_context)
+        self.assertIn("<topological_links>", xml_context)
+        self.assertIn("relation='grounds_in'", xml_context)
+
+    def test_compute_telemetry_mechanics(self):
+        # Prüft die mathematische Integrität des Navigators
+        prompt_vec = [1.0, 0.0, 0.0]
+        resp_echo = [1.0, 0.0, 0.0]     # Volles Echo (sim = 1.0)
+        resp_diff = [0.0, 1.0, 0.0]     # Orthogonal (sim = 0.0)
+        well_vec = [0.0, 1.0, 0.0]      # Attraktor liegt auf Achse 2
+        
+        # Echo-Test
+        self.assertAlmostEqual(cosine_similarity(prompt_vec, resp_echo), 1.0)
+        self.assertAlmostEqual(cosine_similarity(prompt_vec, resp_diff), 0.0)
+        
+        # Lift-Test: Lift = sim(resp, well) - sim(prompt, well)
+        lift_positive = cosine_similarity(resp_diff, well_vec) - cosine_similarity(prompt_vec, well_vec)
+        self.assertAlmostEqual(lift_positive, 1.0)  # 1.0 - 0.0 = +1.0
+        
+        lift_neutral = cosine_similarity(prompt_vec, well_vec) - cosine_similarity(prompt_vec, well_vec)
+        self.assertAlmostEqual(lift_neutral, 0.0)
 
 
 class TestCompilerAndPrompts(unittest.TestCase):

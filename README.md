@@ -1,4 +1,4 @@
-# 🧠 Exocortex (v1.4.7)
+# 🧠 Exocortex (v1.4.8)
 
 > **Topological Cognitive Substrate & Autopoietic Thinking Partner**
 > An open-source, local-first cognition engine featuring dynamic phase-space memory, Model Context Protocol (MCP) integration, and bi-directional Obsidian vault synchronization.
@@ -68,21 +68,25 @@ The model or operator can actively reshape the phase space during runtime:
 * `UPDATE`: Payload rewriting with automatic re-embedding via `bge-m3`.
 * `PRUNE`: Topological deletion of obsolete hypothesis traces and redundant vectors.
 
+5. **Real-Time Cognitive Telemetry (Navigator Engine):**
+Deterministic vector telemetry computed live after each inference turn to audit reasoning integrity without token overhead:
+* **Echo Ratio ($\rho_{\text{echo}} = \text{sim}(\mathbf{p}, \mathbf{r})$):** Measures semantic friction against the prompt vector to detect sycophantic mirroring ($\rho \to 1.0$) vs. grounded synthesis.
+* **Epistemic Lift ($\Delta E = \text{sim}(\mathbf{r}, \mathbf{w}) - \text{sim}(\mathbf{p}, \mathbf{w})$):** Tracks directional convergence toward the active attractor basin ($\mathbf{w}$) in phase space.
 
-5. **Dual-Mode Runner:**
+6. **Dual-Mode Runner:**
 * **Local Mode:** Self-contained in-memory execution loop without network overhead.
 * **Remote Mode:** Client-server setup via FastMCP over SSE, enabling external agent architectures and remote tool calls.
 
-6. **Cognitive Lenses:**
+7. **Cognitive Lenses:**
 Runtime-switchable cognitive modes (`default`, `socratic`, `architect`) to adapt the epistemological stance on the fly.
 
-7. **Defensive Guards:**
+8. **Defensive Guards:**
 Automatic token budgeting, code-block stripping for embeddings, and sliding-window turn pruning to avoid context overflow (HTTP 500 mitigation).
 
-8. **Copy-on-Write Topology Isolation & State Freezing:**
+9. **Copy-on-Write Topology Isolation & State Freezing:**
 Base blueprints (`topologies/base/`) remain strictly sterile in RAM during sessions. Knowledge artifacts acquired during discourse are dynamically wired into in-memory graphs. The `/freeze [tag]` command creates immutable, versioned JSON and Obsidian Canvas snapshot pairs under `Topologies/snapshots/` and `Canvases/snapshots/`.
 
-9. **Substrate-Independent Rehydration Engine:**
+10. **Substrate-Independent Rehydration Engine:**
 The compiler (`core/compiler.py`) transforms frozen topological graph states into compact, token-efficient Markdown attractor prompts (< 350 tokens). These prompts can be piped directly into any local LLM (`ollama run`) or external API interface, transferring exact epistemic constraints without state leakage.
 
 ---

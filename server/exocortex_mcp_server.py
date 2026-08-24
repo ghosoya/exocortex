@@ -13,8 +13,9 @@ from mcp.server.fastmcp import FastMCP
 
 from core.config import settings
 from server.vault_io import VaultIO
-from server.graph_store import GraphStore
+from server.graph_store import GraphStore, cosine_similarity
 from core.prompts import PromptManager
+from core.guards import slice_for_embedding
 from pydantic import Field
 
 # FastMCP server instance
@@ -45,27 +46,24 @@ def append_scratchpad(content: str, filename: str = "Active_Scratchpad.md") -> s
     except Exception as e:
         return f"<error>Error writing to scratchpad: {e}</error>"
 
-
 @mcp.tool()
 def exocortex_gauge_field(query_vector: str, top_k: int = 3) -> str:
-    """Gauges resonant nodes within the active phase space for a semantic topic."""
+    """Gauges resonant nodes and topological 1-hop links within the active phase space."""
     try:
-        resonant = graph_store.get_resonant_nodes(query_vector, top_k=top_k)
-        if not resonant:
-            return "<field_gauge status='quiescent' />"
-
-        lines = [f"<field_gauge query='{query_vector}' topology='{graph_store.active_graph_name}'>"]
-        for node_id, attrs, sim in resonant:
-            lines.append(
-                f"  <resonance id='{node_id}' label='{attrs.get('label')}' type='{attrs.get('type')}' score='{sim:.2f}'>\n"
-                f"    {attrs.get('payload', '')}\n"
-                f"  </resonance>"
-            )
-        lines.append("</field_gauge>")
-        return "\n".join(lines)
+        # Nutzt die vollwertige GraphStore-Traversierung inkl. 1-Hop-Links
+        return graph_store.assemble_field_context(query_vector)
     except Exception as e:
         return f"<error>Field Gauge error: {e}</error>"
 
+
+@mcp.tool()
+def exocortex_get_topology_stats() -> str:
+    """Returns active topology name, node count, and edge count."""
+    try:
+        stats = graph_store.get_graph_stats()
+        return json.dumps(stats)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
 
 @mcp.tool()
 def exocortex_imprint_field(
@@ -181,6 +179,35 @@ def exocortex_inspect_payload(query: str = "") -> str:
         )
     except Exception as e:
         return f"<error>Failed to compile payload: {e}</error>"
+        
+@mcp.tool()
+def exocortex_compute_telemetry(prompt: str, response: str) -> str:
+    """Computes echo ratio and epistemic lift (delta_e) in phase space."""
+    try:
+        if not prompt.strip() or not response.strip():
+            return json.dumps({"echo": 0.0, "delta_e": None, "attractor": None})
+
+        p_vec = graph_store._get_embedding(slice_for_embedding(prompt))
+        r_vec = graph_store._get_embedding(slice_for_embedding(response))
+        echo = round(cosine_similarity(p_vec, r_vec), 2)
+
+        telemetry = {"echo": echo, "delta_e": None, "attractor": None}
+
+        # Resonante Knoten prüfen
+        resonant = graph_store.get_resonant_nodes(slice_for_embedding(prompt), top_k=3)
+        if resonant:
+            best_nid, best_attrs, _ = resonant[0]
+            w_vec = best_attrs.get("embedding", [])
+            if w_vec:
+                sim_p_w = cosine_similarity(p_vec, w_vec)
+                sim_r_w = cosine_similarity(r_vec, w_vec)
+                telemetry["delta_e"] = round(sim_r_w - sim_p_w, 2)
+                telemetry["attractor"] = best_attrs.get("label", best_nid)
+
+        return json.dumps(telemetry)
+    except Exception as e:
+        print(f"[!] Server telemetry error: {e}")  # Sichtbar in der Server-Konsole!
+        return json.dumps({"echo": 0.0, "delta_e": None, "attractor": None, "error": str(e)})
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exocortex FastMCP Server Daemon")
@@ -197,3 +224,5 @@ if __name__ == "__main__":
         mcp.settings.host = args.host
         mcp.settings.port = args.port
         mcp.run(transport="sse")
+
+

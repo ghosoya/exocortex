@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-chat_exocortex.py (v1.4.7)
+chat_exocortex.py (v1.4.8)
 Universal terminal runner with dual-mode support:
   1. Embedded Mode (Local via direct class instances)
   2. Remote Mode   (Network via FastMCP / SSE client)
@@ -273,7 +273,24 @@ class RemoteMCPEngine:
 
             else:
                 final_response_text = accumulated_content
-                yield {"event": "completed", "final_text": final_response_text}
+
+                # ⚡ [REMOTE TELEMETRIE VIA MCP TOOL]
+                telemetry_payload = {"echo": 0.0, "delta_e": None, "attractor": None}
+                try:
+                    tel_call = await mcp_session.call_tool(
+                        "exocortex_compute_telemetry", 
+                        arguments={"prompt": user_input, "response": final_response_text}
+                    )
+                    if tel_call.content:
+                        telemetry_payload = json.loads(tel_call.content[0].text)
+                except Exception:
+                    pass
+
+                yield {
+                    "event": "completed", 
+                    "final_text": final_response_text,
+                    "telemetry": telemetry_payload
+                }
                 self.session.add_assistant_message(final_response_text)
                 break
 
@@ -292,7 +309,7 @@ def print_banner(mode: str, target: str, model: str):
     divider = "-" * width
     
     print(f"{C_CYAN}{border}{C_RESET}")
-    print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.7 (Dual-Mode Runner){C_RESET}")
+    print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.8 (Dual-Mode Runner){C_RESET}")
     print(f"[*] Mode: {mode.upper()} | Target: {target} | Model: {model}")
     print(f"{C_GRAY}{divider}{C_RESET}")
     print(f"{C_GRAY}[*] Topology:  {C_RESET}/graph   /freeze   /payload   /prompt")
@@ -455,10 +472,24 @@ def run_local():
                 elif ev == "tool_result":
                     print(f"{C_CYAN}↳ [RESULT]{C_RESET} {event['result']}")
                 elif ev == "completed":
+                    final_text = event.get("final_text", "")
                     if not header_printed:
-                        print(f"\n{C_BOLD}Exocortex >{C_RESET} {event['final_text']}\n")
+                        print(f"\n{C_BOLD}Exocortex >{C_RESET} {final_text}\n")
                     else:
                         print("\n")
+
+                    # ⚡ [NAVIGATOR TELEMETRIE]
+                    tel = event.get("telemetry")
+                    if tel:
+                        echo = tel.get("echo", 0.0)
+                        delta = tel.get("delta_e")
+                        attr = tel.get("attractor")
+                        if delta is not None:
+                            sign = "+" if delta >= 0 else ""
+                            attr_label = f" ({attr})" if attr else ""
+                            print(f"{C_GRAY}⚡ [NAV] Echo: {echo:.2f} | ΔE: {sign}{delta:.2f}{attr_label}{C_RESET}\n")
+                        else:
+                            print(f"{C_GRAY}⚡ [NAV] Echo: {echo:.2f} | ΔE: N/A (Quiescent Trajectory){C_RESET}\n")
                 elif ev == "error":
                     print(f"\n{C_RED}[!] Error:{C_RESET} {event['message']}\n")
 
@@ -552,7 +583,12 @@ async def run_remote(sse_url: str):
                                 except Exception as e:
                                     print(f"\n[!] Failed to switch graph on remote daemon: {e}\n")
                             else:
-                                print(f"\n[!] Please specify a topology name: /switch <name>\n")
+                                try:
+                                    res = await mcp_session.call_tool("exocortex_get_topology_stats")
+                                    stats = json.loads(res.content[0].text)
+                                    print(f"\n[REMOTE GRAPH] '{stats['name']}' | {stats['node_count']} nodes | {stats['edge_count']} edges\n")
+                                except Exception as e:
+                                    print(f"\n[!] Failed to fetch remote topology stats: {e}\n")
                             continue
                         elif user_input.startswith("/freeze"):
                             parts = user_input.strip().split(maxsplit=1)
@@ -623,10 +659,24 @@ async def run_remote(sse_url: str):
                             elif ev == "tool_result":
                                 print(f"{C_CYAN}↳ [RESULT]{C_RESET} {event['result']}")
                             elif ev == "completed":
+                                final_text = event.get("final_text", "")
                                 if not header_printed:
-                                    print(f"\n{C_BOLD}Exocortex >{C_RESET} {event['final_text']}\n")
+                                    print(f"\n{C_BOLD}Exocortex >{C_RESET} {final_text}\n")
                                 else:
                                     print("\n")
+
+                                tel = event.get("telemetry")
+                                if tel:
+                                    echo = tel.get("echo", 0.0)
+                                    delta = tel.get("delta_e")
+                                    attr = tel.get("attractor")
+                                    if delta is not None:
+                                        sign = "+" if delta >= 0 else ""
+                                        attr_label = f" ({attr})" if attr else ""
+                                        print(f"{C_GRAY}⚡ [NAV] Echo: {echo:.2f} | ΔE: {sign}{delta:.2f}{attr_label}{C_RESET}\n")
+                                    else:
+                                        print(f"{C_GRAY}⚡ [NAV] Echo: {echo:.2f} | ΔE: N/A (Quiescent Trajectory){C_RESET}\n")
+
                             elif ev == "error":
                                 print(f"\n{C_RED}[!] Remote Error:{C_RESET} {event['message']}\n")
 
@@ -637,7 +687,6 @@ async def run_remote(sse_url: str):
     except Exception as e:
         print(f"{C_RED}[!] Error in remote turn:{C_RESET}")
         traceback.print_exc()
-
 
 def main():
     parser = argparse.ArgumentParser(description="Exocortex Terminal Runner (v1.4.5)")
