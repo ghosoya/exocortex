@@ -265,6 +265,7 @@ python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices
 | `/graph` | Displays active topology name, node distribution, and edge counts. |
 | `/graph <name>` | Loads base blueprint or frozen snapshot (Local Mode). |
 | `/switch <name>` | Switches active topology on remote daemon (Remote Mode). |
+| `/payload [query]` | Inspects compiled system prompt (base + active Boundary Constraints + optional resonant field). |
 | `/freeze [tag]` | Freezes active phase-space state into versioned JSON snapshot & Canvas. |
 | `/save [name]` | Persists session transcript simultaneously as Markdown note and JSON state. |
 | `/load [name]` | Restores or lists saved sessions. |

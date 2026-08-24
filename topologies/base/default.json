@@ -1,10 +1,10 @@
-	{
+{
   "directed": true,
   "multigraph": false,
   "graph": {
     "name": "default",
     "embedding_model": "bge-m3",
-    "updated_at": "2026-08-19T22:30:00"
+    "updated_at": "2026-08-24T15:28:00"
   },
   "nodes": [
     {
@@ -24,6 +24,22 @@
       "weight": 1.0
     },
     {
+      "id": "PW_002",
+      "type": "PotentialWell",
+      "label": "Ashby_Requisite_Variety",
+      "payload": "Law of Requisite Variety: Internal control entropy (H_control) >= perturbation entropy (H_perturbation). Systemic stability requires that the operator/regulator maintains variety matching environmental complexity.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PW_003",
+      "type": "PotentialWell",
+      "label": "Popperian_Falsification",
+      "payload": "Theories are dynamic, falsifiable structures. Empirical discrepancies enforce surgical theoretical modification while strictly preserving core boundary invariants.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
       "id": "TO_001",
       "type": "TrajectoryOperator",
       "label": "Tool_Chaining_Synthesis",
@@ -35,7 +51,7 @@
       "id": "PST_001",
       "type": "PhaseSpaceTrace",
       "label": "Bootstrap_State",
-      "payload": "Exocortex v1.4.2 substrate initialized. Dynamic phase-space conditioning active.",
+      "payload": "Exocortex v1.4.7 substrate initialized. Dynamic phase-space conditioning and vector resonance active.",
       "embedding": [],
       "weight": 1.0
     }
@@ -52,6 +68,30 @@
       "target": "PW_001",
       "relation": "grounds_in",
       "weight": 1.0
+    },
+    {
+      "source": "TO_001",
+      "target": "PW_002",
+      "relation": "regulated_by",
+      "weight": 1.0
+    },
+    {
+      "source": "TO_001",
+      "target": "PW_003",
+      "relation": "falsified_via",
+      "weight": 1.0
+    },
+    {
+      "source": "PW_003",
+      "target": "BC_001",
+      "relation": "reinforces_invariance",
+      "weight": 0.9
+    },
+    {
+      "source": "PW_002",
+      "target": "PW_001",
+      "relation": "grounds_in",
+      "weight": 0.85
     },
     {
       "source": "PST_001",
