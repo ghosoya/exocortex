@@ -129,7 +129,7 @@ $$\mathbf{v}_R \to \mathcal{A}_{\text{PW}} \quad \land \quad \mathbf{v}_R \model
 
 $$\lim_{N \to \infty} H\left(P_{\text{attn}}(\mathbf{x}_i)\right) \to H_{\text{max}} \quad \implies \quad \text{Attention Drift}$$
 
-* **Exocortex Implementation:** Thermodynamic efficiency in cognition. Instead of dragging monolithic context windows across turns, vector resonance (`bge-m3`) projects the prompt onto the top- $k$ active manifold attractors. Injection of micro-substrates ($< 1000$ tokens) into local $12\text{B}$ models achieves maximum argument density with minimal compute and zero epistemic leakage.
+* **Exocortex Implementation:** Thermodynamic efficiency in cognition. Instead of dragging monolithic context windows across turns, vector resonance (`bge-m3`) projects the prompt onto the top - $k$ active manifold attractors. Injection of micro-substrates ($< 1000$ tokens) into local $12\text{B}$ models achieves maximum argument density with minimal compute and zero epistemic leakage.
 
 ---
 
