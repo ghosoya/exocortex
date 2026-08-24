@@ -88,6 +88,7 @@ Drawing from C.H. Waddington’s epigenetic landscapes and René Thom’s catast
 
 The manifold is an active participant in reasoning. The model and operator modulate network density via formal mutation primitives:
 
+* **IMPRINT (Dynamic State Genesis):** Materializes new typed nodes on-the-fly, executes real-time vectorization via `bge-m3`, and establishes deterministic tensor links to existing attractors without requiring restart cycles.
 * **STRENGTHEN / DECAY:** Modulates node weight ( $w \in [0.05, 3.0]$ ), shifting gravitational pull during vector retrieval.
 * **SET_WEIGHT:** Calibrates absolute epistemic priority.
 * **UPDATE:** Re-articulates content payloads and recalculates high-dimensional vector embeddings via `bge-m3`.
@@ -128,6 +129,17 @@ Natural language prompts typically exhibit high entropy and redundant tokens. Th
 ### 3.2 Substrate Independence & Zero-Loss Rehydration
 
 Because the attractor topology is purely structural (invariant IDs, semantic weights, tensor links), it operates **substrate-agnostically**. A compiled topology functions identically across local open-weights engines (Ollama, Gemma 4) and frontier cloud models (Mistral Large, Claude, GPT), establishing invariant behavior regardless of the underlying LLM substrate.
+
+### 3.3 Thermodynamic Context Economy & Attention Entropy
+
+Monolithic mega-context windows (100k–2M tokens) introduce severe thermodynamic and information-theoretic inefficiencies:
+
+1. **Quadratic KV-Cache Dissipation ($\mathcal{O}(N^2)$):** Linear growth in context length results in super-linear memory bandwidth and inference costs.
+2. **Attention Entropy Diffusion:** As the context length $N$ approaches infinity, unconstrained token accumulation disperses the Softmax probability mass across irrelevant conversational noise:
+
+$$\lim_{N \to \infty} H\left(P_{\text{attn}}(\mathbf{x}_i)\right) \to H_{\text{max}} \quad \implies \quad \text{Attention Drift}$$
+
+The Exocortex enforces **Thermodynamic Context Economy**: instead of dragging entire chat histories, topological vector resonance (`bge-m3`) projects the operator's prompt onto the top-$k$ active manifold attractors. Injecting micro-substrates ($< 1000$ tokens) into local $12\text{B}$ models maintains maximum signal density ($H \to 0$), zero epistemic drift, and minimal computational dissipation.
 
 ---
 
@@ -212,5 +224,12 @@ The boundary between epistemic rigor and ideological capture is enforced by **Te
 2. **Teleology is Non-Delegable:** Purpose (*Telos*), aesthetic taste, ethical grounding, and ultimate priority reside exclusively with the human operator.
 3. **The Radical Override (Pruning):** When the operator chooses to execute a paradigm shift, the system must permit the destruction and re-weighting of its own potential wells (`PRUNE`, `RESET`, `SET_WEIGHT`). **The operator remains perpetually external to the graph manifold.**
 
+### 5.4 The Anti-Deskilling Imperative: Surgical Differential Navigation
 
+When interacting with generative AI, operators risk cognitive atrophy through uncritical delegation:
+
+* **Passive Script-Dumping (Loss of Requisite Variety):** The operator dumps entire files into the context and accepts blind wholesale replacements. The human mental model decays; the operator becomes a passive consumer of unverified code.
+* **Surgical Differential Navigation (Ashby Invariant):** To maintain cognitive agency, the operator must hold the architectural topology in mind, pinpointing failure boundaries and isolating exact code diffs. 
+
+Under Ashby’s Law ($H(\text{Operator}) \ge H(\text{Substrate})$), the Exocortex is designed not as an autopilot that conceals implementation details, but as a high-density epistemic mirror that reinforces and sharpens the operator's own mental model.
 
