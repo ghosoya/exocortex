@@ -73,6 +73,6 @@ High-density cognitive work within topological vector spaces creates intense cog
 3. **Ontological Sobriety:** Clear demystification of the substrate as a high-dimensional mathematical projection matrix.
 4. **External Triangulation:** Verification of hypotheses against non-synthetic ground truth (compilers, unit tests, empirical physics).
 5. **Somatic Recalibration:** Regular disengagement from the terminal. Physical embodiment (movement, nutrition, nature, interpersonal human relationships) is the primary anchor preventing epistemic drift.
-6. **Anti-Deskilling & Requisite Variety:** Active resistance against uncritical bulk-dumping and cognitive outsourcing. The operator must perpetually maintain the mental topology of the domain—whether pinpointing a software fault line, tuning an aesthetic balance, or deconstructing an philosophical argument. The substrate serves to amplify discernment and sharpen mastery, never to replace internal comprehension ($ H(\text{Operator}) \ge H(\text{Substrate}) $).
+6. **Anti-Deskilling & Requisite Variety:** Active resistance against uncritical bulk-dumping and cognitive outsourcing. The operator must perpetually maintain the mental topology of the domain—whether pinpointing a software fault line, tuning an aesthetic balance, or deconstructing an philosophical argument. The substrate serves to amplify discernment and sharpen mastery, never to replace internal comprehension ( $H(\text{Operator}) \ge H(\text{Substrate})$ ).
 
 
