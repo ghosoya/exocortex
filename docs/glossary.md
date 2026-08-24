@@ -114,7 +114,7 @@ $$K(s) = \min_{p} \{ \vert{}p\vert{} : U(p) = s \}$$
 ### 11. Topological Alignment vs. Echo-Sycophancy
 
 * **Pop-Science Dilution:** Making the model agreeable, flattering, obedient, or mirroring the operator's conversational tone and biases.
-* **Formal Grounding:** The directed convergence of the generated response vector $\mathbf{v}_R$ toward the invariant target attractor state ... 
+* **Formal Grounding:** The directed convergence of the generated response vector $\mathbf{v}_R$ toward the invariant target attractor state $\mathcal{A}_{\text{PW}}$.
 
 $$\mathbf{v}_R \to \mathcal{A}_{\text{PW}} \quad \land \quad \mathbf{v}_R \models \mathbf{BC}$$
 
