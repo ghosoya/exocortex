@@ -109,4 +109,13 @@ $$K(s) = \min_{p} \{ \vert{}p\vert{} : U(p) = s \}$$
 * **Formal Grounding:** The structural bifurcation between syntactic verification (which is computational) and final causality / purpose / *telos* (which is strictly non-computable and human).
 * **Exocortex Implementation:** The operator retains absolute sovereign veto power, aesthetic taste, and directional authority. The machine remains an agency-amplifying substrate, permanently subordinate to human pruning and re-weighting.
 
+---
 
+### 11. Topological Alignment vs. Echo-Sycophancy
+
+* **Pop-Science Dilution:** Making the model agreeable, flattering, obedient, or mirroring the operator's conversational tone and biases.
+* **Formal Grounding:** The directed convergence of the generated response vector $\mathbf{v}_R$ toward the invariant target attractor state $\mathcal{A}_{\text{PW}}$ while strictly satisfying all boundary invariant constraints ($\models$):
+
+$$\mathbf{v}_R \to \mathcal{A}_{\text{PW}} \quad \land \quad \mathbf{v}_R \models \mathbf{BC}$$
+
+* **Exocortex Implementation:** Epistemic Alignment does **not** maximize bilateral prompt-response similarity ($\cos(\mathbf{v}_P, \mathbf{v}_R) \to 1$, which represents the mathematical formalization of sycophantic echoing and confirmation bias). Instead, it triangulates the trajectory against the topological graph: the response must satisfy active boundary constraints (`BC_001`–`BC_006`) and project cleanly onto verified potential wells (`PW_xxx`).
