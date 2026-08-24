@@ -545,13 +545,38 @@ class GraphStore:
 
         self.graph.add_node(node_id, **node_attrs)
 
-        # 4. Kanten (Tensor-Links) schlagen
+        # 4. Kanten (Tensor-Links) schlagen: Explizit + Dynamische Vektor-Resonanz
         wired = []
+        threshold = 0.50  # Resonanz-Schwelle (tau)
+        
+        # 4a. Explizit übergebene Links bedienen
         for target_id in tensor_links:
             target_id = target_id.strip()
-            if self.graph.has_node(target_id):
+            if target_id and self.graph.has_node(target_id) and target_id != node_id:
+                # Standardgewicht 0.85 für explizite Verlinkung
                 self.graph.add_edge(node_id, target_id, relation="tensor_link", weight=0.85)
-                wired.append(target_id)
+                if target_id not in wired:
+                    wired.append(target_id)
+
+        # 4b. Autonome Vektor-Resonanz gegen alle bestehenden Knoten berechnen
+        new_vec = self.graph.nodes[node_id].get("embedding")
+        if new_vec:
+            for other_id, other_data in self.graph.nodes(data=True):
+                if other_id == node_id or other_id in wired:
+                    continue
+                
+                other_vec = other_data.get("embedding")
+                if other_vec:
+                    # Kosinus-Ähnlichkeit berechnen
+                    sim = cosine_similarity(new_vec, other_vec)
+                    if sim >= threshold:
+                        self.graph.add_edge(
+                            node_id, 
+                            other_id, 
+                            relation="tensor_link", 
+                            weight=round(float(sim), 3)
+                        )
+                        wired.append(other_id)
 
         # 5. Persistieren (JSON + Canvas-Sync)
         self.save_graph()
