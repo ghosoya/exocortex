@@ -119,3 +119,36 @@ $$K(s) = \min_{p} \{ \vert{}p\vert{} : U(p) = s \}$$
 $$\mathbf{v}_R \to \mathcal{A}_{\text{PW}} \quad \land \quad \mathbf{v}_R \models \mathbf{BC}$$
 
 * **Exocortex Implementation:** Epistemic Alignment does **not** maximize bilateral prompt-response similarity ( $\cos(\mathbf{v}_P, \mathbf{v}_R ) \to 1$, which represents the mathematical formalization of sycophantic echoing and confirmation bias). Instead, it triangulates the trajectory against the topological graph: the response must satisfy active boundary constraints (`BC_001`–`BC_006`) and project cleanly onto verified potential wells (`PW_xxx`).
+
+---
+
+### 12. Thermodynamic Context Economy (Subspace Projection vs. Mega-Context Bloat)
+
+* **Pop-Science Dilution:** "Just give the AI infinite context / 2M token windows so it never forgets anything."
+* **Formal Grounding:** Quadratic or linear KV-cache computational dissipation $\mathcal{O}(N^2)$ coupled with attention entropy diffusion. The signal-to-noise ratio in high-dimensional attention matrices degrades as irrelevant tokens disperse the probability mass:
+
+$$\lim_{N \to \infty} H\left(P_{\text{attn}}(\mathbf{x}_i)\right) \to H_{\text{max}} \quad \implies \quad \text{Attention Drift}$$
+
+* **Exocortex Implementation:** Thermodynamic efficiency in cognition. Instead of dragging monolithic context windows across turns, vector resonance (`bge-m3`) projects the prompt onto the top-$k$ active manifold attractors. Injection of micro-substrates ($< 1000$ tokens) into local $12\text{B}$ models achieves maximum argument density with minimal compute and zero epistemic leakage.
+
+---
+
+### 13. Structural Coupling & Anti-Deskilling Invariant
+
+* **Pop-Science Dilution:** "Vibe coding", "AI autopilot", or total cognitive outsourcing.
+* **Formal Grounding:** Humberto Maturana’s reciprocal perturbation of operationally closed cognitive systems without structural dissolution. The operator’s internal variety $H(\text{Operator})$ must strictly match or exceed system variety to satisfy Ashby’s Law of Requisite Variety:
+
+$$H(\text{Operator}) \ge H(\text{Substrate}) - H(\text{Guards})$$
+
+* **Exocortex Implementation:** Anti-Deskilling Invariant (`BC_001`). Rejection of passive "script-dumping". The interaction mandates surgical differential navigation: the operator actively localizes failure boundaries and state mutations in the codebase, using the model as a resonant epistemic mirror rather than an unverified code generator.
+
+---
+
+### 14. Closed-Loop Field Imprinting & Dynamic Vector Genesis
+
+* **Pop-Science Dilution:** "The AI learning on the fly" or "updating its internal memory".
+* **Formal Grounding:** Endogenous discrete state genesis on a directed topological graph $G_{t+1} = G_t \cup \{v_{\text{new}}, \mathcal{E}_{\text{new}}\}$, accompanied by real-time isometric latent manifold projection:
+
+$$\mathbf{e}(v_{\text{new}}) = f_{\text{embed}}(\text{label} \circ \text{payload}) \in \mathbb{R}^{1024}$$
+
+* **Exocortex Implementation:** FastMCP tool execution (`exocortex_imprint_field`). 1-shot deterministic node instantiation (`PotentialWell`, `TrajectoryOperator`, etc.), on-the-fly `bge-m3` vectorization, topological tensor-link wiring, and immediate live synchronization with the Obsidian Canvas without requiring server restarts.
