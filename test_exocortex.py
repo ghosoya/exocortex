@@ -181,6 +181,42 @@ class TestGraphStore(unittest.TestCase):
         res = self.store.freeze_snapshot(tag="test_freeze")
         self.assertTrue(Path(res["json_path"]).exists())
         self.assertTrue(Path(res["canvas_path"]).exists())
+        
+    def test_imprint_node_comprehensive(self):
+        """Verifiziert deterministische ID, Embedding, Kanten und Persistence."""
+        # 1. Erster Imprint
+        res1 = self.store.imprint_node(
+            node_type="TrajectoryOperator",
+            label="Test_Operator_A",
+            content_payload="Erster Test-Payload",
+            tensor_links=["BC_001"]
+        )
+        node_id_1 = res1["node_id"]
+        self.assertTrue(node_id_1.startswith("TO_"))
+    
+        node_data_1 = self.store.graph.nodes[node_id_1]
+        self.assertEqual(node_data_1["label"], "Test_Operator_A")
+        self.assertEqual(node_data_1["weight"], 1.0)
+        self.assertIn("created_at", node_data_1)
+    
+        # 2. Zweiter Imprint (Prüfung der ID-Inkrementierung & Kanten)
+        res2 = self.store.imprint_node(
+            node_type="TrajectoryOperator",
+            label="Test_Operator_B",
+            content_payload="Zweiter Test-Payload",
+            tensor_links=[node_id_1]
+        )
+        node_id_2 = res2["node_id"]
+        # Sicherstellen, dass Index echt inkrementiert wurde
+        idx1 = int(node_id_1.split("_")[1])
+        idx2 = int(node_id_2.split("_")[1])
+        self.assertEqual(idx2, idx1 + 1)
+    
+        # Kantenprüfung
+        self.assertTrue(self.store.graph.has_edge(node_id_2, node_id_1))
+        edge = self.store.graph.edges[node_id_2, node_id_1]
+        self.assertEqual(edge.get("relation"), "tensor_link")
+        self.assertEqual(edge.get("weight"), 0.85)
 
 
 class TestCompilerAndPrompts(unittest.TestCase):

@@ -1,4 +1,4 @@
-# 🧠 Exocortex (v1.4.6)
+# 🧠 Exocortex (v1.4.7)
 
 > **Topological Cognitive Substrate & Autopoietic Thinking Partner**
 > An open-source, local-first cognition engine featuring dynamic phase-space memory, Model Context Protocol (MCP) integration, and bi-directional Obsidian vault synchronization.
@@ -62,6 +62,7 @@ Every graph mutation or topology switch automatically writes an interactive, col
 
 4. **Synaptic Plasticity & Mutation Actions**
 The model or operator can actively reshape the phase space during runtime:
+* `IMPRINT`: Autonomous materialization of new typed nodes with real-time `bge-m3` vectorization and deterministic tensor-link wiring.
 * `STRENGTHEN` / `DECAY`: Relative weight modulation ($\Delta w$).
 * `SET_WEIGHT`: Absolute weight calibration ($[0.05, 3.0]$).
 * `UPDATE`: Payload rewriting with automatic re-embedding via `bge-m3`.

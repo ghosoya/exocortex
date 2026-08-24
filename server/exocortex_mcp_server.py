@@ -14,6 +14,8 @@ from mcp.server.fastmcp import FastMCP
 from core.config import settings
 from server.vault_io import VaultIO
 from server.graph_store import GraphStore
+from core.prompts import PromptManager
+from pydantic import Field
 
 # FastMCP server instance
 mcp = FastMCP("Exocortex-Daemon")
@@ -21,6 +23,7 @@ mcp = FastMCP("Exocortex-Daemon")
 # Substrate instances
 vault_io = VaultIO()
 graph_store = GraphStore(vault_io=vault_io)
+prompt_manager = PromptManager()
 
 
 @mcp.tool()
@@ -66,10 +69,22 @@ def exocortex_gauge_field(query_vector: str, top_k: int = 3) -> str:
 
 @mcp.tool()
 def exocortex_imprint_field(
-    node_type: str,
-    label: str,
-    content_payload: str,
-    tensor_links: Optional[List[str]] = None,
+    node_type: str = Field(
+        ...,
+        description="Allowed values: 'BoundaryConstraint', 'PotentialWell', 'TrajectoryOperator', 'PhaseSpaceTrace'",
+    ),
+    label: str = Field(
+        ...,
+        description="Compact snake_case or CamelCase identifier, e.g. 'Projective_Decoupling'",
+    ),
+    content_payload: str = Field(
+        ...,
+        description="Axiomatic content, synthesis mechanism, or invariant payload",
+    ),
+    tensor_links: List[str] = Field(
+        default_factory=list,
+        description="Optional: List of existing target node IDs to link to (e.g. ['PW_004', 'TO_003']). Leave empty or omit if no links exist. Do NOT use dicts or integers.",
+    ),
 ) -> str:
     """Deterministically imprints a new insight node into the active topology."""
     try:
@@ -151,6 +166,21 @@ def exocortex_freeze_snapshot(tag: Optional[str] = None) -> str:
             "message": str(e)
         })
 
+@mcp.tool()
+def exocortex_inspect_payload(query: str = "") -> str:
+    """
+    Assembles and returns the full compiled system prompt payload 
+    (base stance + immutable boundary invariants + optional dynamic resonant field).
+    """
+    try:
+        invariants_xml = graph_store.assemble_invariants_frame()
+        field_xml = graph_store.assemble_field_context(query) if query else ""
+        return prompt_manager.build_system_prompt(
+            field_xml=field_xml, 
+            invariants_xml=invariants_xml
+        )
+    except Exception as e:
+        return f"<error>Failed to compile payload: {e}</error>"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exocortex FastMCP Server Daemon")

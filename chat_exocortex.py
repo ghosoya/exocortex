@@ -12,7 +12,6 @@ import json
 import asyncio
 import argparse
 import re
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional
 
@@ -50,31 +49,42 @@ C_GRAY = "\033[90m"
 C_BOLD = "\033[1m"
 C_RESET = "\033[0m"
 
-
 def format_resonance_banner(xml_str: str) -> str:
-    """Formatiert das aktive Phasenraum-XML in eine präzise Resonanz-Badge."""
+    """Formatiert das aktive Phasenraum-XML in eine präzise, ausfallsichere Resonanz-Badge."""
     if not xml_str or "quiescent" in xml_str:
         return f"{C_GRAY}⚡ [RESONANCE] Phase space quiescent (in-context trajectory active){C_RESET}"
     
-    try:
-        root = ET.fromstring(xml_str)
-        nodes_repr = []
-        for elem in root:
-            nid = elem.attrib.get("id")
-            if not nid:
-                continue
-            label = elem.attrib.get("label", elem.tag)
-            res = elem.attrib.get("resonance")
-            res_str = f": {float(res):.2f}" if res else ""
-            nodes_repr.append(f"{C_BOLD}{nid}{C_RESET} ({label}{res_str})")
-        
-        if nodes_repr:
-            return f"{C_CYAN}⚡ [RESONANCE]{C_RESET} Active Nodes: " + " | ".join(nodes_repr)
-    except Exception:
-        pass
-    
-    return f"{C_CYAN}⚡ [RESONANCE]{C_RESET} {xml_str.strip()}"
+    import re
+    # 1. Extrahiere alle Nodes via Regex (immun gegen XML-Parsing-Fehler im Header/Query)
+    # Matcht <NodeType id='...' label='...'> oder <resonance id='...' label='...'>
+    pattern = r"<(?!(?:topological_links|link|field_gauge|active_phase_space|\/))([A-Za-z_]+)\s+([^>]+)>"
+    matches = re.findall(pattern, xml_str)
 
+    nodes_repr = []
+    for tag_name, attrs_raw in matches:
+        # Extrahiere id, label, score/resonance und context
+        id_match = re.search(r"id=['\"]([^'\"]+)['\"]", attrs_raw)
+        if not id_match:
+            continue
+        nid = id_match.group(1)
+
+        label_match = re.search(r"label=['\"]([^'\"]+)['\"]", attrs_raw)
+        label = label_match.group(1) if label_match else tag_name
+
+        score_match = re.search(r"(?:resonance|score)=['\"]([\d\.]+)['\"]", attrs_raw)
+        if score_match:
+            res_str = f": {float(score_match.group(1)):.2f}"
+        elif "context='topological_neighbor'" in attrs_raw:
+            res_str = " (1-hop link)"
+        else:
+            res_str = ""
+
+        nodes_repr.append(f"{C_BOLD}{nid}{C_RESET} ({label}{res_str})")
+
+    if nodes_repr:
+        return f"{C_CYAN}⚡ [RESONANCE]{C_RESET} Active Nodes: " + " | ".join(nodes_repr)
+
+    return ""
 
 def build_prompt_keybindings() -> Optional[Any]:
     """Configures Enter to submit and Alt+Enter / Esc+Enter for newlines."""
@@ -277,13 +287,18 @@ class RemoteMCPEngine:
 # UI & BANNER
 # ==============================================================================
 def print_banner(mode: str, target: str, model: str):
-    print(f"{C_CYAN}{'=' * 70}{C_RESET}")
+    width = 70
+    border = "=" * width
+    divider = "-" * width
+    
+    print(f"{C_CYAN}{border}{C_RESET}")
     print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.5 (Dual-Mode Runner){C_RESET}")
-    print(f"[*] Mode: {C_GREEN}{mode.upper()}{C_RESET} | Target: {C_YELLOW}{target}{C_RESET} | Model: {C_CYAN}{model}{C_RESET}")
-    print(f"[*] Send: [Enter] | Line break: [Alt+Enter] | Quit: 'exit'")
-    print(f"[*] Commands: /save | /load | /prompt | /context | /clear | /help" + (" | /graph" if mode == "local" else " | /switch <Topology>"))
-    print(f"{C_CYAN}{'=' * 70}{C_RESET}\n")
-
+    print(f"[*] Mode: {mode.upper()} | Target: {target} | Model: {model}")
+    print(f"{C_GRAY}{divider}{C_RESET}")
+    print(f"{C_GRAY}[*] Topology:  {C_RESET}/graph   /freeze   /payload   /prompt")
+    print(f"{C_GRAY}[*] Session:   {C_RESET}/save    /load     /context   /clear   {C_GRAY}(/help){C_RESET}")
+    print(f"{C_GRAY}[*] Controls:  [Enter] Send  |  [Alt+Enter] Linebreak  |  'exit' Quit{C_RESET}")
+    print(f"{C_CYAN}{border}{C_RESET}\n")
 
 def print_help(mode: str = "local"):
     print(f"\n{C_BOLD}[INFO] Command Overview ({mode.upper()} Mode):{C_RESET}")
@@ -300,6 +315,7 @@ def print_help(mode: str = "local"):
     print("  /save [Name]                  - Save session transcript (Markdown + JSON)")
     print("  /load                         - List all saved sessions in vault")
     print("  /load <Name>                  - Load saved session transcript")
+    print("  /payload [query]              - Inspect compiled system prompt (base + BCs + optional resonant field)")
     print("  /context                      - Display active token usage")
     print("  /clear                        - Clear message history")
     print("  exit / quit                   - Terminate session\n")
@@ -392,6 +408,28 @@ def run_local():
                     print(f"  ↳ Canvas:   {res['canvas_path']}\n")
                 except Exception as e:
                     print(f"\n{C_RED}[!] Failed to freeze snapshot: {e}{C_RESET}\n")
+                continue
+            elif user_input.startswith("/payload"):
+                parts = user_input.strip().split(maxsplit=1)
+                test_query = parts[1].strip() if len(parts) > 1 else ""
+
+                invariants_xml = graph_store.assemble_invariants_frame()
+                field_xml = graph_store.assemble_field_context(test_query) if test_query else ""
+                
+                full_prompt = engine.prompt_manager.build_system_prompt(
+                    field_xml=field_xml,
+                    invariants_xml=invariants_xml
+                )
+
+                print(f"\n{C_CYAN}{'='*70}{C_RESET}")
+                print(f"{C_BOLD}[COMPILED SYSTEM PROMPT PAYLOAD]{C_RESET}")
+                if test_query:
+                    print(f"{C_GRAY}Simulierte Resonanz-Query: '{test_query}'{C_RESET}")
+                else:
+                    print(f"{C_GRAY}Zustand: Base-Prompt + Statische Boundary Invariants{C_RESET}")
+                print(f"{C_CYAN}{'='*70}{C_RESET}")
+                print(full_prompt)
+                print(f"{C_CYAN}{'='*70}{C_RESET}\n")
                 continue
 
             # 2. Execute ReAct turn (Streaming Loop)
@@ -537,6 +575,29 @@ async def run_remote(sse_url: str):
                                     print(f"\n{C_GREEN}[OK] Remote phase-space response:{C_RESET}\n  ↳ {raw_payload}\n")
                             except Exception as e:
                                 print(f"\n{C_RED}[!] Remote freeze RPC error: {e}{C_RESET}\n")
+                            continue
+                        elif user_input.startswith("/payload"):
+                            parts = user_input.strip().split(maxsplit=1)
+                            test_query = parts[1].strip() if len(parts) > 1 else ""
+
+                            try:
+                                res = await mcp_session.call_tool(
+                                    "exocortex_inspect_payload", 
+                                    arguments={"query": test_query}
+                                )
+                                content = res.content[0].text if res.content else "(empty payload)"
+
+                                print(f"\n{C_CYAN}{'='*70}{C_RESET}")
+                                print(f"{C_BOLD}[COMPILED REMOTE SYSTEM PROMPT PAYLOAD]{C_RESET}")
+                                if test_query:
+                                    print(f"{C_GRAY}Simulierte Resonanz-Query: '{test_query}'{C_RESET}")
+                                else:
+                                    print(f"{C_GRAY}Zustand: Base-Prompt + Statische Boundary Invariants{C_RESET}")
+                                print(f"{C_CYAN}{'='*70}{C_RESET}")
+                                print(content)
+                                print(f"{C_CYAN}{'='*70}{C_RESET}\n")
+                            except Exception as e:
+                                print(f"\n{C_RED}[!] Remote /payload error: {e}{C_RESET}\n")
                             continue
 
                         # 2. Execute remote turn (Streaming Loop)

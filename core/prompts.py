@@ -84,15 +84,22 @@ class PromptManager:
             return f"{self._system_base_cache}\n\n---\n\n{profile_text}"
         return profile_text
 
-    def build_system_prompt(self, field_xml: Optional[str] = "") -> str:
-        """Combines the active base prompt with the dynamic phase-space state."""
-        base = self.get_base_prompt()
-        if not field_xml:
-            return base
+    def build_system_prompt(
+        self, 
+        field_xml: Optional[str] = "", 
+        invariants_xml: Optional[str] = ""
+    ) -> str:
+        """
+        Combines the active base prompt with:
+        1. Immutable boundary invariants (always active, via negativa).
+        2. Dynamic resonant phase-space state (retrieved per turn).
+        """
+        sections = [self.get_base_prompt()]
 
-        clean_xml = field_xml.strip()
-        # Filter quiescent / empty states robustly
-        if "status='quiescent'" in clean_xml or 'status="quiescent"' in clean_xml or not clean_xml:
-            return base
+        if invariants_xml and invariants_xml.strip():
+            sections.append(f"### Active Boundary Invariants:\n{invariants_xml.strip()}")
 
-        return f"{base}\n\n### Active Phase Space Topology:\n{clean_xml}"
+        if field_xml and field_xml.strip():
+            sections.append(f"### Active Phase Space Topology:\n{field_xml.strip()}")
+
+        return "\n\n".join(sections)

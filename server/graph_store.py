@@ -12,7 +12,6 @@ import math
 import os
 import networkx as nx
 import re
-from typing import Optional, Dict
 
 import ollama
 
@@ -55,7 +54,7 @@ class GraphStore:
         (self.vault_io.vault_path / "Canvases" / "snapshots").mkdir(parents=True, exist_ok=True)
 
         self.load_graph("default")
-
+    
     def _get_embedding(self, text: str) -> List[float]:
         safe_text = slice_for_embedding(text, max_chars=1500)
         if not safe_text:
@@ -66,7 +65,34 @@ class GraphStore:
         except Exception as e:
             print(f"[!] GraphStore embedding error: {e}")
             return []
+    
+    def get_boundary_constraints(self) -> List[Tuple[str, Dict[str, Any]]]:
+        """Extracts all active BoundaryConstraints regardless of vector similarity."""
+        bcs = []
+        for node_id, attrs in self.graph.nodes(data=True):
+            if attrs.get("type") == "BoundaryConstraint":
+                bcs.append((str(node_id), attrs))
+        bcs.sort(key=lambda x: x[0])  # Deterministische Sortierung (BC_001, BC_002, ...)
+        return bcs
+    
+    def assemble_invariants_frame(self) -> str:
+        """Assembles the immutable Boundary Invariants frame for the base system prompt."""
+        bcs = self.get_boundary_constraints()
+        if not bcs:
+            return ""
 
+        xml_parts = [f"<boundary_invariants topology='{self.active_graph_name}'>"]
+        for node_id, attrs in bcs:
+            label = attrs.get("label", node_id)
+            payload = attrs.get("payload", "").strip()
+            xml_parts.append(
+                f"  <BoundaryConstraint id='{node_id}' label='{label}'>\n"
+                f"    {payload}\n"
+                f"  </BoundaryConstraint>"
+            )
+        xml_parts.append("</boundary_invariants>")
+        return "\n".join(xml_parts)
+    
     def export_canvas(self, canvas_filename: str = "Exocortex_Interactive.canvas") -> str:
         """Projects the NetworkX graph into a structured Obsidian .canvas file with weights and vector telemetry."""
         type_config = {
@@ -121,6 +147,8 @@ class GraphStore:
 
         for u, v, data in self.graph.edges(data=True):
             relation = data.get("relation", "")
+            edge_weight = data.get("weight")
+            
             edge_entry: Dict[str, Any] = {
                 "id": f"edge_{u}_{v}",
                 "fromNode": str(u),
@@ -128,8 +156,14 @@ class GraphStore:
                 "toNode": str(v),
                 "toSide": "left",
             }
+            
+            # Kantenlabel mit Kosinus-Gewicht anreichern
             if relation:
-                edge_entry["label"] = relation
+                if edge_weight is not None and isinstance(edge_weight, (int, float)) and edge_weight != 1.0:
+                    edge_entry["label"] = f"{relation} ({edge_weight:.2f})"
+                else:
+                    edge_entry["label"] = relation
+                    
             canvas_edges.append(edge_entry)
 
         canvas_data = {
@@ -260,94 +294,149 @@ class GraphStore:
     def switch_graph(self, graph_name: str) -> Dict[str, Any]:
         return self.load_graph(graph_name)
 
-    def get_resonant_nodes(self, query: str, top_k: int = 4, threshold: float = 0.50) -> List[Tuple[str, Dict[str, Any], float]]:
+    def get_resonant_nodes(
+        self, 
+        query: str, 
+        top_k: int = 4, 
+        threshold: float = 0.50,
+        exclude_types: Optional[List[str]] = None
+    ) -> List[Tuple[str, Dict[str, Any], float]]:
+        """Retrieves top-k resonant nodes via cosine similarity, filtering excluded node types."""
         query_vec = self._get_embedding(query)
         if not query_vec:
             return []
 
+        excluded = set(exclude_types or ["BoundaryConstraint"])
         scored = []
         for node_id, attrs in self.graph.nodes(data=True):
+            if attrs.get("type") in excluded:
+                continue
             node_vec = attrs.get("embedding", [])
             sim = cosine_similarity(query_vec, node_vec)
             if sim >= threshold:
-                scored.append((node_id, attrs, sim))
+                scored.append((str(node_id), attrs, sim))
 
         scored.sort(key=lambda x: x[2], reverse=True)
         return scored[:top_k]
+        
+    def get_resonant_subgraph(
+        self,
+        query: str,
+        seed_top_k: int = 2,
+        threshold: float = 0.50,
+        max_hops: int = 1,
+        max_total_nodes: int = 6,
+    ) -> Tuple[Dict[str, Dict[str, Any]], List[Dict[str, Any]]]:
+        """
+        Extracts an induced resonant subgraph via undirected 1-hop spreading activation.
+        - Seeds: Top-k vector matches (>= threshold, excluding BCs).
+        - Neighbors: Activated purely via structural links (sorted by edge weight).
+        - Links: Rendered preserving original edge direction and relation semantics.
+        """
+        seeds = self.get_resonant_nodes(
+            query=query, 
+            top_k=seed_top_k, 
+            threshold=threshold, 
+            exclude_types=["BoundaryConstraint"]
+        )
+        if not seeds:
+            return {}, []
+
+        selected_nodes: Dict[str, Dict[str, Any]] = {}
+        for node_id, attrs, sim in seeds:
+            node_data = dict(attrs)
+            node_data["is_seed"] = True
+            node_data["resonance"] = sim
+            selected_nodes[node_id] = node_data
+
+        # 1-Hop ungerichtete Nachbarschaft mit Kanten-Priorisierung
+        candidate_neighbors: List[Tuple[str, float, str]] = []  # (neighbor_id, edge_weight, edge_relation)
+        
+        for seed_id in list(selected_nodes.keys()):
+            # Ungerichtet: Alle ein- und ausgehenden Kanten sammeln
+            in_edges = self.graph.in_edges(seed_id, data=True)
+            out_edges = self.graph.out_edges(seed_id, data=True)
+            
+            for u, _, data in in_edges:
+                if u not in selected_nodes and self.graph.nodes[u].get("type") != "BoundaryConstraint":
+                    candidate_neighbors.append((u, float(data.get("weight", 1.0)), data.get("relation", "")))
+                    
+            for _, v, data in out_edges:
+                if v not in selected_nodes and self.graph.nodes[v].get("type") != "BoundaryConstraint":
+                    candidate_neighbors.append((v, float(data.get("weight", 1.0)), data.get("relation", "")))
+
+        # Nach Kantengewicht absteigend sortieren
+        candidate_neighbors.sort(key=lambda x: x[1], reverse=True)
+
+        for neighbor_id, weight, rel in candidate_neighbors:
+            if neighbor_id in selected_nodes:
+                continue
+            if len(selected_nodes) >= max_total_nodes:
+                break
+            
+            n_attrs = dict(self.graph.nodes[neighbor_id])
+            n_attrs["is_seed"] = False
+            n_attrs["resonance"] = None
+            selected_nodes[neighbor_id] = n_attrs
+
+        # Induzierte Kanten zwischen allen selektierten Knoten sammeln
+        subgraph_edges = []
+        for u, v, data in self.graph.edges(data=True):
+            if u in selected_nodes and v in selected_nodes:
+                subgraph_edges.append({
+                    "source": str(u),
+                    "target": str(v),
+                    "relation": data.get("relation", "connected_to"),
+                    "weight": data.get("weight", 1.0)
+                })
+
+        return selected_nodes, subgraph_edges
 
     def assemble_field_context(self, query: str) -> str:
-        resonant = self.get_resonant_nodes(query, top_k=4)
-        if not resonant:
-            return "<active_phase_space status='quiescent' />"
+        """Assembles the dynamic resonant phase-space context including topological links."""
+        nodes, edges = self.get_resonant_subgraph(
+            query=query, 
+            seed_top_k=2, 
+            threshold=0.50, 
+            max_hops=1, 
+            max_total_nodes=6
+        )
+        if not nodes:
+            return ""
 
         xml_parts = [f"<active_phase_space topology='{self.active_graph_name}'>"]
-        for node_id, attrs, sim in resonant:
+        
+        # 1. Knoten rendern
+        for node_id, attrs in nodes.items():
             n_type = attrs.get("type", "Node")
             label = attrs.get("label", node_id)
-            payload = attrs.get("payload", "")
+            payload = attrs.get("payload", "").strip()
+            
+            if attrs.get("is_seed"):
+                sim_str = f" resonance='{attrs['resonance']:.2f}'"
+            else:
+                sim_str = " context='topological_neighbor'"
+
             xml_parts.append(
-                f"  <{n_type} id='{node_id}' label='{label}' resonance='{sim:.2f}'>\n"
+                f"  <{n_type} id='{node_id}' label='{label}'{sim_str}>\n"
                 f"    {payload}\n"
                 f"  </{n_type}>"
             )
+
+        # 2. Topologische Kanten rendern
+        if edges:
+            xml_parts.append("  <topological_links>")
+            for edge in edges:
+                rel = edge["relation"]
+                w = edge["weight"]
+                w_attr = f" weight='{w:.2f}'" if isinstance(w, (int, float)) and w != 1.0 else ""
+                xml_parts.append(
+                    f"    <link from='{edge['source']}' to='{edge['target']}' relation='{rel}'{w_attr} />"
+                )
+            xml_parts.append("  </topological_links>")
+
         xml_parts.append("</active_phase_space>")
         return "\n".join(xml_parts)
-
-    def imprint_node(self, node_type: str, label: str, content_payload: str, tensor_links: Optional[List[str]] = None) -> Dict[str, Any]:
-        prefix_map = {
-            "BoundaryConstraint": "BC",
-            "TrajectoryOperator": "TO",
-            "PotentialWell": "PW",
-            "PhaseSpaceTrace": "PST",
-        }
-        prefix = prefix_map.get(node_type, "NODE")
-
-        existing_nums = []
-        for n in self.graph.nodes():
-            if str(n).startswith(f"{prefix}_"):
-                parts = str(n).split("_")
-                if len(parts) >= 2 and parts[1].isdigit():
-                    existing_nums.append(int(parts[1]))
-        next_idx = max(existing_nums, default=0) + 1
-        new_id = f"{prefix}_{next_idx:03d}"
-
-        new_embedding = self._get_embedding(f"{label}: {content_payload}")
-
-        self.graph.add_node(
-            new_id,
-            type=node_type,
-            label=label,
-            payload=content_payload,
-            embedding=new_embedding,
-            weight=1.0,
-            created_at=datetime.datetime.now().isoformat(),
-        )
-        self.mutations_count += 1
-
-        wired_connections = []
-
-        if tensor_links:
-            for target in tensor_links:
-                if self.graph.has_node(target):
-                    self.graph.add_edge(new_id, target, relation="tensor_link", weight=1.0)
-                    wired_connections.append(f"{target} (explicit)")
-
-        for existing_id, attrs in self.graph.nodes(data=True):
-            if existing_id == new_id:
-                continue
-            sim = cosine_similarity(new_embedding, attrs.get("embedding", []))
-            if sim >= 0.52:
-                self.graph.add_edge(new_id, existing_id, relation="semantic_resonance", weight=round(sim, 2))
-                wired_connections.append(f"{existing_id} (sim: {sim:.2f})")
-
-        self.save_graph(self.active_graph_name)
-
-        return {
-            "node_id": new_id,
-            "label": label,
-            "topology": self.active_graph_name,
-            "wired_connections": wired_connections,
-        }
 
     def mutate_node(
         self,
@@ -410,3 +499,67 @@ class GraphStore:
         self.mutations_count += 1
         self.save_graph() 
         return result_payload
+        
+    def imprint_node(
+        self,
+        node_type: str,
+        label: str,
+        content_payload: str,
+        tensor_links: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Deterministically imprints a new node into the active NetworkX topology,
+        calculates its bge-m3 embedding, establishes tensor links, and persists to vault.
+        """
+        tensor_links = tensor_links or []
+        
+        # 1. Deterministische ID generieren (z. B. TO_004 oder Hash/Prefix)
+        prefix_map = {
+            "BoundaryConstraint": "BC",
+            "PotentialWell": "PW",
+            "TrajectoryOperator": "TO",
+            "PhaseSpaceTrace": "PST",
+        }
+        prefix = prefix_map.get(node_type, "NODE")
+        existing_indices = [
+            int(nid.split("_")[1]) for nid in self.graph.nodes
+            if nid.startswith(f"{prefix}_") and nid.split("_")[1].isdigit()
+        ]
+        next_idx = max(existing_indices, default=0) + 1
+        node_id = f"{prefix}_{next_idx:03d}"
+
+        # 2. Embedding berechnen via internem Ollama-Client (bge-m3)
+        embedding_text = f"{label}: {content_payload}"
+        embedding = self._get_embedding(embedding_text)
+
+        # 3. Node in NetworkX einhängen
+        node_attrs = {
+            "type": node_type,
+            "label": label,
+            "payload": content_payload,
+            "weight": 1.0,
+            "created_at": datetime.datetime.now().isoformat(),
+        }
+        if embedding:
+            node_attrs["embedding"] = embedding
+
+        self.graph.add_node(node_id, **node_attrs)
+
+        # 4. Kanten (Tensor-Links) schlagen
+        wired = []
+        for target_id in tensor_links:
+            target_id = target_id.strip()
+            if self.graph.has_node(target_id):
+                self.graph.add_edge(node_id, target_id, relation="tensor_link", weight=0.85)
+                wired.append(target_id)
+
+        # 5. Persistieren (JSON + Canvas-Sync)
+        self.save_graph()
+
+        return {
+            "status": "success",
+            "node_id": node_id,
+            "label": label,
+            "topology": self.active_graph_name,
+            "wired_connections": wired,
+        }

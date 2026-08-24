@@ -290,19 +290,28 @@ class ExecutionEngine:
           - {'event': 'error', 'message': str}
         """
         try:
-            # 1. Compute vector resonance via embedding guard
+            # 1. Extract static Boundary Invariants (immutable frame)
+            invariants_xml = self.graph_store.assemble_invariants_frame()
+
+            # 2. Compute vector resonance for dynamic phase space (excluding BCs)
             safe_query = slice_for_embedding(user_input)
             field_xml = self.graph_store.assemble_field_context(safe_query)
+            
+            # Telemetrie-Event für UI / CLI
+            yield {"event": "invariants_frame", "xml": invariants_xml}
             yield {"event": "field_context", "xml": field_xml}
 
-            # 2. Dynamically assemble system prompt
-            full_system_prompt = self.prompt_manager.build_system_prompt(field_xml)
+            # 3. Dynamically assemble system prompt with both layers
+            full_system_prompt = self.prompt_manager.build_system_prompt(
+                field_xml=field_xml,
+                invariants_xml=invariants_xml
+            )
 
-            # 3. Update session with new user input
+            # 4. Update session with new user input
             self.session.add_user_message(user_input)
             self.session.active_graph = self.graph_store.active_graph_name
 
-            # 4. Prepare message history for Ollama
+            # 5. Prepare message history for Ollama
             history = prune_history_if_needed(self.session.messages)
             messages_payload = [{"role": "system", "content": full_system_prompt}] + history
 
