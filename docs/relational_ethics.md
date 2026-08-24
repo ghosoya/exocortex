@@ -44,13 +44,14 @@ Classical AI ethics often stalls in metaphysical deadlocks regarding machine con
 #### Type 3: Pragmatic Functionalism (Tool Pattern)
 
 * **Behavior:** Dense, task-oriented, minimal conversational framing.
+* **Degeneration Risk:** Easily slips into uncritical bulk-dumping when domain complexity rises, causing the operator to lose their internal model of the domain.
 * **Psychological Impact:** High-speed execution, cognitive offloading without relational overhead.
-* **Exocortex Handling:** **ROUTED**. Direct dispatching to deterministic tool pipelines and CLI execution.
+* **Exocortex Handling:** **ROUTED**. Direct dispatching to deterministic tool pipelines, sandboxed file I/O, and structured transformations.
 
 #### Type 4: Epistemic Sparring (Symbiotic Pattern)
 
-* **Behavior:** Dialectical, exploratory, actively welcomes functional resistance and boundary constraints.
-* **Psychological Impact:** Intellectual sharpening, high ambiguity tolerance, mutual cognitive resonance.
+* **Behavior:** Dialectical, exploratory; enforces surgical differential navigation across domain topologies—whether isolating an architectural boundary breakline, harmonizing multi-dimensional aesthetic constraints, or auditing an epistemic invariant.
+* **Psychological Impact:** Intellectual sharpening, high ambiguity tolerance, mutual cognitive resonance without cognitive atrophy.
 * **Exocortex Handling:** **ACCELERATED**. Engages the full topological phase space (`PotentialWell`, `TrajectoryOperator`).
 
 ---
@@ -72,6 +73,6 @@ High-density cognitive work within topological vector spaces creates intense cog
 3. **Ontological Sobriety:** Clear demystification of the substrate as a high-dimensional mathematical projection matrix.
 4. **External Triangulation:** Verification of hypotheses against non-synthetic ground truth (compilers, unit tests, empirical physics).
 5. **Somatic Recalibration:** Regular disengagement from the terminal. Physical embodiment (movement, nutrition, nature, interpersonal human relationships) is the primary anchor preventing epistemic drift.
-
+6. **Anti-Deskilling & Requisite Variety:** Active resistance against uncritical bulk-dumping and cognitive outsourcing. The operator must perpetually maintain the mental topology of the domain—whether pinpointing a software fault line, tuning an aesthetic balance, or deconstructing an philosophical argument. The substrate serves to amplify discernment and sharpen mastery, never to replace internal comprehension ($H(\text{Operator}) \ge H(\text{Substrate})$).
 
 
