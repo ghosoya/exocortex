@@ -134,7 +134,7 @@ Because the attractor topology is purely structural (invariant IDs, semantic wei
 
 Monolithic mega-context windows (100k–2M tokens) introduce severe thermodynamic and information-theoretic inefficiencies:
 
-1. **Quadratic KV-Cache Dissipation ($\mathcal{O}(N^2)$):** Linear growth in context length results in super-linear memory bandwidth and inference costs.
+1. **Quadratic KV-Cache Dissipation ( $\mathcal{O}(N^2)$ ):** Linear growth in context length results in super-linear memory bandwidth and inference costs.
 2. **Attention Entropy Diffusion:** As the context length $N$ approaches infinity, unconstrained token accumulation disperses the Softmax probability mass across irrelevant conversational noise:
 
 $$\lim_{N \to \infty} H\left(P_{\text{attn}}(\mathbf{x}_i)\right) \to H_{\text{max}} \quad \implies \quad \text{Attention Drift}$$
@@ -231,5 +231,5 @@ When interacting with generative AI, operators risk cognitive atrophy through un
 * **Passive Script-Dumping (Loss of Requisite Variety):** The operator dumps entire files into the context and accepts blind wholesale replacements. The human mental model decays; the operator becomes a passive consumer of unverified code.
 * **Surgical Differential Navigation (Ashby Invariant):** To maintain cognitive agency, the operator must hold the architectural topology in mind, pinpointing failure boundaries and isolating exact code diffs. 
 
-Under Ashby’s Law ($H(\text{Operator}) \ge H(\text{Substrate})$), the Exocortex is designed not as an autopilot that conceals implementation details, but as a high-density epistemic mirror that reinforces and sharpens the operator's own mental model.
+Under Ashby’s Law ( $H(\text{Operator}) \ge H(\text{Substrate})$ ), the Exocortex is designed not as an autopilot that conceals implementation details, but as a high-density epistemic mirror that reinforces and sharpens the operator's own mental model.
 
