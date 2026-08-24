@@ -118,4 +118,4 @@ $$K(s) = \min_{p} \{ \vert{}p\vert{} : U(p) = s \}$$
 
 $$\mathbf{v}_R \to \mathcal{A}_{\text{PW}} \quad \land \quad \mathbf{v}_R \models \mathbf{BC}$$
 
-* **Exocortex Implementation:** Epistemic Alignment does **not** maximize bilateral prompt-response similarity ($\cos(\mathbf{v}_P, \mathbf{v}_R) \to 1$, which represents the mathematical formalization of sycophantic echoing and confirmation bias). Instead, it triangulates the trajectory against the topological graph: the response must satisfy active boundary constraints (`BC_001`–`BC_006`) and project cleanly onto verified potential wells (`PW_xxx`).
+* **Exocortex Implementation:** Epistemic Alignment does **not** maximize bilateral prompt-response similarity ( $\cos(\mathbf{v}_P, \mathbf{v}_R ) \to 1$, which represents the mathematical formalization of sycophantic echoing and confirmation bias). Instead, it triangulates the trajectory against the topological graph: the response must satisfy active boundary constraints (`BC_001`–`BC_006`) and project cleanly onto verified potential wells (`PW_xxx`).
