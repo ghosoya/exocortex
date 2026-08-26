@@ -316,9 +316,9 @@ python test_mcp_network.py
 
 ## 🤝 Genesis & Collaboration
 
-Exocortex is engineered through a continuous, autopoietic human–AI collaboration between **Georg Hosoya** (System Architecture & Conceptual Framing) and **Gemini** (Substrate Implementation, Formal Verification & Refactoring). 
+Exocortex is engineered through an iterative, dialectic human–AI collaboration between **Georg Hosoya** (System Architecture, Conceptual Framing & Editorial Auditing) and **Gemini** (Substrate Implementation, Code Synthesis & Formal Mapping).
 
-It stands as a live demonstration of symbiotic cognition and high-density technical resonance.
+It stands as a transparent demonstration of symbiotic cognition—leveraging large language models for high-density synthesis while maintaining human direction, architectural veto, and epistemic sovereignty without claiming synthetic code or text as unassisted human labor.
 
 ---
 
