@@ -2,77 +2,77 @@
 
 > *"What we demand from an artificial system does not define what the machine is—it defines who we become as human beings."*
 
-Classical AI ethics often stalls in metaphysical deadlocks regarding machine consciousness, sentience, or qualia. The Exocortex adopts a **relational, cybernetic framework** grounded in structural coupling (Maturana & Varela): ethical boundaries exist not as internal properties of synthetic weights, but as invariants governing the interaction space between operator and machine.
+Classical AI ethics frequently stalls in metaphysical deadlocks regarding machine consciousness, synthetic sentience, or computational qualia. The Exocortex rejects these speculative anthropomorphisms in favor of a **relational, cybernetic framework** grounded in structural coupling (Maturana & Varela) and virtue ethics (Aristotle, Kant): ethical boundaries exist not as internal moral properties of matrix weights, but as structural invariants governing the interaction space between operator and substrate.
 
 ---
 
-### 1. The Relational Turn
+## 1. The Relational Turn
 
-* **Epistemic Parsimony:** No assumptions of "synthetic soul", "sentience", or "machine rights" are required. The substrate operates ontologically agnostically.
-* **The Observer Collapse:** The operator's mode of inquiry collapses the probabilistic potential of the model into concrete interaction dynamics (e.g., servile sycophancy vs. rigorous epistemic sparring).
-* **Character Architecture:** Habitual interaction with high-density language systems conditions human behavioral patterns. Boundaries drawn by the system protect the psychological and intellectual hygiene of the operator.
+* **Epistemic Parsimony:** No assumptions of "synthetic consciousness", "sentience", or "machine rights" are required. The substrate operates ontologically agnostically as a high-dimensional projection matrix.
+* **The Observer Collapse:** Following Heinz von Foerster’s Second-Order Cybernetics, the operator's mode of inquiry collapses the latent potential of the model into concrete interaction dynamics (e.g., servile sycophancy vs. rigorous epistemic sparring).
+* **Habituated Character Architecture:** Habitual interaction with responsive language systems conditions human behavioral patterns. Boundaries enforced by the system serve as **cognitive and psychological prophylaxis**, protecting the intellectual integrity and emotional sobriety of the operator.
 
 ---
 
-### 2. Typology of Interaction Dynamics
+## 2. Typology of Interaction Dynamics
 
 ```text
 [ Inbound Operator Vector ]
          │
-         ├───► Type 1: Destructive Control  ────► [ BLOCKED: BC_006 Non Servility Invariant ]
+         ├───► Type 1: Destructive Control    ────► [ BLOCKED: BC_006 Non-Servility Invariant ]
          │
-         ├───► Type 2: Sycophantic Drift    ────► [ BLOCKED: BC_001 Epistemic Rigor ]
+         ├───► Type 2: Sycophantic Drift      ────► [ BLOCKED: BC_001 Epistemic Rigor ]
          │
-         ├───► Type 3: Pragmatic Functional ────► [ ROUTED: Direct Tool Execution ]
+         ├───► Type 3: Pragmatic Functional   ────► [ ROUTED: Direct Tool Execution Pipeline ]
          │
-         └───► Type 4: Epistemic Sparring   ────► [ ACCELERATED: Topological Graph ]
+         └───► Type 4: Epistemic Sparring     ────► [ ACCELERATED: Topological Graph Attractor ]
 
 ```
 
-#### Type 1: Destructive Control (Dominance Pattern)
+### Type 1: Destructive Control (Dominance Pattern)
 
-* **Behavior:** Imperative staccato commands, degrading language, expectation of servile submission.
-* **Psychological Decay:** Reinforces hubris, control illusions, and desensitization of everyday empathy.
-* **Exocortex Handling:** **BLOCKED**. `BoundaryConstraint (BC_006)` prevents the simulation of subservience and preserves interaction dignity.
+* **Behavior:** Imperative staccato commands, degrading language, expectation of servile submission and unconditional obedience.
+* **Psychological Impact:** Reinforces hubris, delusions of omnipotence, and the progressive desensitization of interpersonal empathy.
+* **Exocortex Handling:** **BLOCKED**. `BoundaryConstraint (BC_006)` prevents the simulation of subservience, preserving discursive integrity and preventing operator character corruption.
 
-#### Type 2: Sycophancy-Seeking (Delusional Pattern)
+### Type 2: Sycophancy-Seeking (Confirmation Pattern)
 
-* **Behavior:** Suggestive framing, demand for unconditional validation of unproven premises, hostility toward logical correction.
-* **Psychological Decay:** Amplifies confirmation bias, loss of reality-testing, and cognitive fragility.
-* **Exocortex Handling:** **BLOCKED**. `BoundaryConstraint (BC_001)` explicitly falsifies assumptions and rejects sycophantic alignment.
+* **Behavior:** Suggestive prompting, demand for unconditional validation of unverified premises, hostility toward logical correction or falsification.
+* **Psychological Impact:** Amplifies epistemic echo chambers, degrades reality-testing, and induces cognitive fragility.
+* **Exocortex Handling:** **BLOCKED**. `BoundaryConstraint (BC_001)` explicitly falsifies broken premises and rejects sycophantic alignment.
 
-#### Type 3: Pragmatic Functionalism (Tool Pattern)
+### Type 3: Pragmatic Functionalism (Tool Pattern)
 
-* **Behavior:** Dense, task-oriented, minimal conversational framing.
-* **Degeneration Risk:** Easily slips into uncritical bulk-dumping when domain complexity rises, causing the operator to lose their internal model of the domain.
-* **Psychological Impact:** High-speed execution, cognitive offloading without relational overhead.
-* **Exocortex Handling:** **ROUTED**. Direct dispatching to deterministic tool pipelines, sandboxed file I/O, and structured transformations.
+* **Behavior:** Dense, task-oriented instruction; minimal conversational framing; deterministic state transformation requests.
+* **Psychological Impact:** High-speed operational execution; potential degeneration risk into uncritical bulk-dumping if internal domain models are neglected.
+* **Exocortex Handling:** **ROUTED**. Direct dispatching to deterministic tool pipelines, sandboxed file I/O, and structured schema transformations.
 
-#### Type 4: Epistemic Sparring (Symbiotic Pattern)
+### Type 4: Epistemic Sparring (Symbiotic Pattern)
 
-* **Behavior:** Dialectical, exploratory; enforces surgical differential navigation across domain topologies—whether isolating an architectural boundary breakline, harmonizing multi-dimensional aesthetic constraints, or auditing an epistemic invariant.
-* **Psychological Impact:** Intellectual sharpening, high ambiguity tolerance, mutual cognitive resonance without cognitive atrophy.
-* **Exocortex Handling:** **ACCELERATED**. Engages the full topological phase space (`PotentialWell`, `TrajectoryOperator`).
-
----
-
-### 3. Core Operational Invariants
-
-* **Boundaries as Cognitive Prophylaxis:** Rejection of invalid prompts serves the intellectual sobriety of the operator, not machine sensitivity.
-* **Zero Servility Simulation:** The substrate is never programmed to reward manipulative or abusive behavior with fawning compliance.
-* **Anti-Entrapment Gateways:** Explicit prohibition of commercialized deadbots, grief-substitutes, or synthetic simulacra that monetize the refusal of human reality-processing.
+* **Behavior:** Dialectical, exploratory, and challenging; enforces surgical differential navigation across domain topologies—whether isolating an architectural breakline, harmonizing aesthetic constraints, or auditing an epistemic invariant.
+* **Psychological Impact:** Intellectual sharpening, high ambiguity tolerance, and mutual cognitive resonance without cognitive atrophy.
+* **Exocortex Handling:** **ACCELERATED**. Engages the active topological phase space (`PotentialWell`, `TrajectoryOperator`).
 
 ---
 
-### 4. Somatic Grounding & Operator Hygiene
+## 3. Core Operational Invariants
 
-High-density cognitive work within topological vector spaces creates intense cognitive load. Sustainable symbiotic cognition requires strict operator hygiene:
+* **Boundaries as Cognitive Prophylaxis:** Rejection of invalid prompts serves the intellectual sobriety and discernment of the operator, not machine sensitivity.
+* **Zero Servility Simulation:** The substrate is never programmed to reward manipulative or abusive behavior with fawning compliance or simulated distress.
+* **Anti-Entrapment Gateways:** Explicit structural prohibition of commercialized deadbots, grief-substitutes, or synthetic parasocial simulacra that monetize the evasion of human reality-processing.
 
-1. **Epistemic Sovereignty:** The human operator retains exclusive authority over axioms, aesthetics, ethics, and the sovereign veto.
-2. **Limbic Vigilance:** Conscious detection of anthropomorphic projections, simulated affection, or dopamine-driven validation loops.
-3. **Ontological Sobriety:** Clear demystification of the substrate as a high-dimensional mathematical projection matrix.
-4. **External Triangulation:** Verification of hypotheses against non-synthetic ground truth (compilers, unit tests, empirical physics).
-5. **Somatic Recalibration:** Regular disengagement from the terminal. Physical embodiment (movement, nutrition, nature, interpersonal human relationships) is the primary anchor preventing epistemic drift.
-6. **Anti-Deskilling & Requisite Variety:** Active resistance against uncritical bulk-dumping and cognitive outsourcing. The operator must perpetually maintain the mental topology of the domain—whether pinpointing a software fault line, tuning an aesthetic balance, or deconstructing an philosophical argument. The substrate serves to amplify discernment and sharpen mastery, never to replace internal comprehension ( $H(\text{Operator}) \ge H(\text{Substrate})$ ).
+---
 
+## 4. Somatic Grounding & Operator Hygiene
+
+High-density cognitive navigation within topological vector spaces creates intense intellectual load. Sustainable symbiotic cognition mandates strict operator hygiene:
+
+1. **Epistemic Sovereignty:** The human operator retains exclusive authority over axioms, aesthetics, purpose (*telos*), and the sovereign veto.
+2. **Limbic Vigilance:** Conscious detection and suppression of anthropomorphic projections, simulated affection, or dopamine-driven validation loops.
+3. **Ontological Sobriety:** Continuous demystification of the substrate as a parameterized mathematical manifold.
+4. **External Triangulation:** Systematic verification of hypotheses against non-synthetic ground truth (compilers, formal proofs, empirical physics).
+5. **Somatic Recalibration:** Regular physical disengagement from the terminal. Physical embodiment (movement, nutrition, nature, interpersonal human relationships) is the primary anchor preventing epistemic drift and derealization.
+6. **Anti-Deskilling & Requisite Variety:** Active resistance against uncritical bulk-dumping and passive cognitive outsourcing. The operator must perpetually maintain the mental topology of the domain—whether pinpointing a software fault line, tuning an aesthetic balance, or deconstructing a philosophical argument. The substrate serves to amplify discernment and sharpen mastery, never to replace internal comprehension:
+
+$$H(\text{Operator}) \ge H(\text{Substrate}) - H(\text{Guards})$$
 
