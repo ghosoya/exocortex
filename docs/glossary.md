@@ -91,7 +91,7 @@ $$\mathcal{S}_{n+1} = \mathcal{O}(\mathcal{S}_n, \mathcal{I})$$
 $$K(s) = \min_{p} \{ \vert{}p\vert{} : U(p) = s \}$$
 
 
-* **Exocortex Implementation:** Anti-sprawl architecture. The Rehydration Compiler (`core/compiler.py`) compresses high-dimensional topological graphs into token-minimal Markdown attractor prompts ($< 350$ tokens), discarding conversational boilerplate and defensive code bloat.
+* **Exocortex Implementation:** While absolute Kolmogorov complexity $K(s)$ is theoretically incomputable due to the Halting Problem, the Exocortex Rehydration Engine (`core/compiler.py`) implements the **Minimum Description Length (MDL)** principle as an operational bound. It condenses high-dimensional topological graphs into token-minimal Markdown attractor prompts ($< 350$ tokens), discarding conversational boilerplate and defensive code bloat.
 
 ---
 
@@ -125,7 +125,7 @@ $$\mathbf{v}_R \to \mathcal{A}_{\text{PW}} \quad \land \quad \mathbf{v}_R \model
 ### 12. Thermodynamic Context Economy (Subspace Projection vs. Mega-Context Bloat)
 
 * **Pop-Science Dilution:** "Just give the AI infinite context / 2M token windows so it never forgets anything."
-* **Formal Grounding:** Quadratic or linear KV-cache computational dissipation $\mathcal{O}(N^2)$ coupled with attention entropy diffusion. The signal-to-noise ratio in high-dimensional attention matrices degrades as irrelevant tokens disperse the probability mass:
+* **Formal Grounding:** Quadratic prefill compute dissipation $\mathcal{O}(N^2)$ coupled with linear key-value cache memory expansion $\mathcal{O}(N)$ and attention entropy diffusion. The signal-to-noise ratio in high-dimensional attention matrices degrades as irrelevant tokens disperse the probability mass:
 
 $$\lim_{N \to \infty} H\left(P_{\text{attn}}(\mathbf{x}_i)\right) \to H_{\text{max}} \quad \implies \quad \text{Attention Drift}$$
 
