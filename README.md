@@ -1,24 +1,26 @@
 # 🧠 Exocortex (v1.4.8)
 
-> **Topological Cognitive Substrate & Autopoietic Thinking Partner**
-> An open-source, local-first cognition engine featuring dynamic phase-space memory, Model Context Protocol (MCP) integration, and bi-directional Obsidian vault synchronization.
+> **A local-first AI thinking partner and dynamic knowledge graph for Obsidian.**
+> Built with Python, FastMCP, NetworkX, and Ollama. Bridges local LLMs with a visual concept graph in your personal vault.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Protocol](https://img.shields.io/badge/MCP-FastMCP-brightgreen.svg)](https://modelcontextprotocol.io/)
 [![Backend](https://img.shields.io/badge/LLM%20Backend-Ollama-orange.svg)](https://ollama.ai/)
-[![Co-Authored](https://img.shields.io/badge/Co--Authored%20with-Gemini-8E44AD.svg)](https://deepmind.google/technologies/gemini/)
+[![Obsidian](https://img.shields.io/badge/Obsidian-Canvas%20Integration-purple.svg)](https://obsidian.md/)
 
 ---
 
-## ⚡ Core Architecture
+## ⚡ What is Exocortex?
 
-The Exocortex is designed as a persistent, high-density reasoning substrate for the operator. It decouples high-level reasoning from state mutation and integrates topological memory into the LLM context loop.
+Standard LLMs suffer from context limits, flat memory, and sycophancy (agreeing with everything you say). 
+
+**Exocortex** is an open-source companion engine that runs completely offline on your machine. It couples a local LLM with a **directed semantic knowledge graph**. Instead of stuffing thousands of unstructured tokens into the prompt, Exocortex retrieves relevant concepts, rules, and working notes dynamically and projects your current mental model straight into an interactive **Obsidian Canvas**.
 
 ```text
                   ┌─────────────────────────────────────┐
-                  │          Operator / CLI             │
-                  │        (chat_exocortex.py)          │
+                  │            Operator / CLI           │
+                  │          (chat_exocortex.py)        │
                   └──────────────────┬──────────────────┘
                                      │
            ┌─────────────────────────┴─────────────────────────┐
@@ -36,121 +38,39 @@ The Exocortex is designed as a persistent, high-density reasoning substrate for 
                                      │
      ┌───────────────────────────────┼───────────────────────────────┐
      ▼                               ▼                               ▼
-┌──────────────┐             ┌──────────────┐                ┌──────────────┐
-│ PromptEngine │             │  GraphStore  │                │   VaultIO    │
-│ - default    │             │ - NetworkX   │                │ - Obsidian   │
-│ - socratic   │             │ - bge-m3 vec │                │   Scratchpad │
-│ - architect  │             │ - .canvas    │                │ - Sessions   │
-└──────────────┘             └──────────────┘                └──────────────┘
+┌──────────────┐              ┌──────────────┐                ┌──────────────┐
+│ PromptEngine │              │  GraphStore  │                │   VaultIO    │
+│ - default    │              │ - NetworkX   │                │ - Obsidian   │
+│ - socratic   │              │ - bge-m3 vec │                │   Scratchpad │
+│ - architect  │              │ - .canvas    │                │ - Sessions   │
+└──────────────┘              └──────────────┘                └──────────────┘
 
 ```
 
-### Key Pillars
-
-1. **Topological Phase Space (NetworkX + Vector Resonance):**
-Long-term memory is represented as a directed semantic graph with typed nodes (`BoundaryConstraint`, `PotentialWell`, `TrajectoryOperator`, `PhaseSpaceTrace`). Relevant nodes are retrieved via vector cosine similarity (`bge-m3`) and injected dynamically as system context.
-
-2. **Real-Time Obsidian Canvas Projection:**
-Every graph mutation or topology switch automatically writes an interactive, color-coded `.canvas` file directly into your Obsidian vault.
-
-
-3. **Epistemic Phase Space (Node Taxonomy)**
-* **`BoundaryConstraint` (Red):** Inviolable epistemic invariants (Anti-Sycophancy, Side-Effect Isolation, Epistemic Sovereignty).
-* **`PotentialWell` (Cyan):** Gravitational attractor states defining the conceptual grounding (First Principles, Domain Contexts, Four-Layer Architecture).
-* **`TrajectoryOperator` (Purple):** Directional operators driving transformation, refactoring, and complexity reduction.
-* **`PhaseSpaceTrace` (Green):** Transient operational traces representing current execution states, hypotheses, and life cycles.
-
-4. **Synaptic Plasticity & Mutation Actions**
-The model or operator can actively reshape the phase space during runtime:
-* `IMPRINT`: Autonomous materialization of new typed nodes with real-time `bge-m3` vectorization and deterministic tensor-link wiring.
-* `STRENGTHEN` / `DECAY`: Relative weight modulation ($\Delta w$).
-* `SET_WEIGHT`: Absolute weight calibration ($[0.05, 3.0]$).
-* `UPDATE`: Payload rewriting with automatic re-embedding via `bge-m3`.
-* `PRUNE`: Topological deletion of obsolete hypothesis traces and redundant vectors.
-
-5. **Real-Time Cognitive Telemetry (Navigator Engine):**
-Deterministic vector telemetry computed live after each inference turn to audit reasoning integrity without token overhead:
-* **Echo Ratio:** $\rho_{\mathrm{echo}} = \mathrm{sim}(\mathbf{p}, \mathbf{r})$ — Measures semantic friction against the prompt vector to detect sycophantic mirroring ($\rho \to 1.0$) vs. grounded synthesis.
-* **Epistemic Lift:** $\Delta E = \mathrm{sim}(\mathbf{r}, \mathbf{w}) - \mathrm{sim}(\mathbf{p}, \mathbf{w})$ — Tracks directional convergence toward the active attractor basin ($\mathbf{w}$) in phase space.
-
-6. **Dual-Mode Runner:**
-* **Local Mode:** Self-contained in-memory execution loop without network overhead.
-* **Remote Mode:** Client-server setup via FastMCP over SSE, enabling external agent architectures and remote tool calls.
-
-7. **Cognitive Lenses:**
-Runtime-switchable cognitive modes (`default`, `socratic`, `architect`) to adapt the epistemological stance on the fly.
-
-8. **Defensive Guards:**
-Automatic token budgeting, code-block stripping for embeddings, and sliding-window turn pruning to avoid context overflow (HTTP 500 mitigation).
-
-9. **Copy-on-Write Topology Isolation & State Freezing:**
-Base blueprints (`topologies/base/`) remain strictly sterile in RAM during sessions. Knowledge artifacts acquired during discourse are dynamically wired into in-memory graphs. The `/freeze [tag]` command creates immutable, versioned JSON and Obsidian Canvas snapshot pairs under `Topologies/snapshots/` and `Canvases/snapshots/`.
-
-10. **Substrate-Independent Rehydration Engine:**
-The compiler (`core/compiler.py`) transforms frozen topological graph states into compact, token-efficient Markdown attractor prompts (< 350 tokens). These prompts can be piped directly into any local LLM (`ollama run`) or external API interface, transferring exact epistemic constraints without state leakage.
-
 ---
 
-## 📖 Epistemic Foundations & Theory
+## 🛠️ Key Features
 
-* **[Epistemic Theory & Architecture](docs/THEORY.md)** — Second-Order Cybernetics, Ashby Inversion & Invariant Preservation.
-* **[System-Theoretic Glossary](docs/glossary.md)** — Mathematical grounding & epistemic reclaiming of core terminology (Phase Space, Resonance, Attractors, Boundary Constraints).
-* **[Relational AI Ethics & Interaction Typology](docs/relational_ethics.md)** — Structural coupling, anti-servility invariants, operator hygiene & interaction patterns (Types 1–4).
+1. **Graph-Based Working Memory (NetworkX + Vector Search):**
+Long-term concepts and rules are stored in a directed graph. Relevant nodes are retrieved via cosine similarity (`bge-m3` embeddings) and injected into the prompt context when needed.
+2. **Real-Time Obsidian Canvas Sync:**
+Every graph update automatically writes an interactive, color-coded `.canvas` file directly into your Obsidian vault.
+3. **Structured Node Types:**
+* 🔴 **Guardrails / Rules:** Hard constraints (e.g., anti-sycophancy, modular code design, verification criteria).
+* 🔵 **Core Concepts:** Foundational domain definitions and reference knowledge.
+* 🟣 **Action Guidelines:** Heuristics and workflows for refactoring, analysis, or critique.
+* 🟢 **Working Notes:** Ephemeral session notes, active hypotheses, and task traces.
 
----
 
-## ⚡ Topologies (Hot-Swappable Kognitionsräume)
+4. **Prompt Compiler & Snapshot Freezing:**
+Export any frozen graph state into a compact, token-efficient Markdown system prompt (< 350 tokens) that can be piped into any local LLM or API.
+5. **Anti-Sycophancy Telemetry:**
+Measures semantic drift and prompt mirroring live after each turn to ensure the model acts as a rigorous sparring partner rather than a sycophantic echo chamber.
+6. **Dual-Mode Operation:**
+* **Local CLI:** Fast, self-contained terminal interface for daily writing and thinking.
+* **Remote MCP Server:** FastMCP daemon exposing tools over SSE to Claude Desktop or external agents.
 
-Switch active topologies on-the-fly via `/graph <name>`:
 
-| Topology | Focus | Target Dynamics |
-| :--- | :--- | :--- |
-| **`default`** | Minimal Epistemic Setup | Fast start, baseline reasoning, initial attractor calibration |
-| **`systemic_kernel`** | Epistemic Rigor & Systems Theory | Falsification audits, Kolmogorov complexity reduction, anti-sycophancy |
-| **`code_architect`** | Modular Software Architecture | Decoupling, bounded contexts, idempotency, side-effect isolation |
-| **`regional_shojin`** | Mindful Culinary Aesthetics | Micro-seasonality, zero-waste ahimsa, texture/flavor harmony ($5 \times 5 \times 5$) |
-| **`poetic_synthesis`** | Divergent Associative Reasoning | Cross-domain bisociation, defamiliarization (*Ostranenie*), structural isomorphism |
-
----
-
-## 📁 Repository Structure
-
-```text
-exocortex/
-├── config/
-│   └── system_base.md           # Global cognitive base instructions
-├── core/
-│   ├── compiler.py              # Rehydration engine (JSON topology -> Markdown prompt)
-│   ├── config.py                # Typed settings & environment loader
-│   ├── engine.py                # ReAct loop and decoupled tool dispatching
-│   ├── guards.py                # Context pruning & embedding guards
-│   ├── prompts.py               # Cognitive lenses & prompt manager
-│   └── session.py               # Session state, token tracking & persistence
-├── docs/
-│   └── topologies/              # Topological case studies & epistemic audit reports
-│       ├── 01_code_architect_entropy_breakline.md
-│       ├── 02_poetic_synthesis_anicca_gc.md
-│       ├── 03_systemic_kernel_observer_collapse.md
-│       ├── 04_systemic_kernel_jevons_verification_entropy.md
-│       ├── 05_systemic_kernel_thermodynamic_decoupling.md
-│       ├── 06_regional_shojin_terroir_synthesis.md
-│       └── 07_mistral_large_cross_substrate_rehydration.md
-├── server/
-│   ├── exocortex_mcp_server.py  # FastMCP SSE / stdio daemon
-│   ├── graph_store.py           # NetworkX topology, vector resonance & Canvas generator
-│   └── vault_io.py              # Sandboxed filesystem & vault I/O
-├── tools/
-│   └── preview.py               # Zero-dependency local KaTeX & GitHub Markdown live preview
-├── topologies/
-│   ├── base/                    # Immutable cognitive blueprints (default, code_architect, ...)
-│   └── snapshots/               # Frozen, versioned phase-space states (*.json)
-├── chat_exocortex.py            # Unified interactive CLI runner (Local & Remote)
-├── test_exocortex.py            # Modular unit & integration test suite
-├── test_mcp_network.py          # Network MCP integration test
-├── .env.example                 # Environment configuration template
-├── LICENSE                      # Apache 2.0 License
-└── README.md
-```
 
 ---
 
@@ -167,11 +87,9 @@ ollama pull bge-m3
 ```
 
 
-* *(Optional)* **Obsidian** for visual graph exploration via Canvas.
+* *(Optional)* **Obsidian** to view the generated Canvas files.
 
 ### 2. Installation
-
-Clone the repository and install dependencies:
 
 ```bash
 git clone https://github.com/ghosoya/exocortex.git
@@ -185,17 +103,15 @@ pip install ollama networkx mcp python-dotenv prompt_toolkit
 
 ### 3. Configuration
 
-Copy `.env.example` to `.env` and set your vault path:
-
 ```bash
 cp .env.example .env
 
 ```
 
-Edit `.env`:
+Set your Obsidian vault path in `.env`:
 
 ```ini
-EXOCORTEX_VAULT_PATH=~/Vaults/exocortex
+EXOCORTEX_VAULT_PATH=~/Vaults/my-vault
 EXOCORTEX_SCRATCHPAD_DIR=Scratchpad
 EXOCORTEX_SESSIONS_DIR=Sessions
 EXOCORTEX_TOPOLOGIES_DIR=Topologies
@@ -207,118 +123,71 @@ EXOCORTEX_NUM_CTX=65536
 
 ```
 
-### 4. Setup Starter Topology
-
-The `topologies/` directory in the repository provides base templates and reference snapshots. Initialize your vault's directory structure:
+Initialize your vault directories:
 
 ```bash
-mkdir -p ~/Vaults/exocortex/Topologies/{base,snapshots}
-mkdir -p ~/Vaults/exocortex/Canvases/snapshots
+mkdir -p ~/Vaults/my-vault/Topologies/{base,snapshots}
+mkdir -p ~/Vaults/my-vault/Canvases/snapshots
+cp -r topologies/* ~/Vaults/my-vault/Topologies/
 
-cp -r topologies/* ~/Vaults/exocortex/Topologies/
 ```
 
 ---
 
 ## 💻 Usage
 
-### Local Interactive CLI
-
-Launch the embedded runner:
+### Interactive Terminal Chat (Local)
 
 ```bash
 python chat_exocortex.py
 
 ```
 
-### Remote MCP Server Daemon
-
-Start the FastMCP daemon in SSE mode:
+### Run as FastMCP Server (Remote)
 
 ```bash
+# Start server
 python -m server.exocortex_mcp_server --host 127.0.0.1 --port 8000
 
-```
-
-Connect via CLI runner:
-
-```bash
+# Connect via CLI
 python chat_exocortex.py --remote
 
 ```
 
-### Substrate Rehydration & Shell Pipes
-
-Compile any frozen snapshot directly into a lightweight attractor prompt or pipe it straight into a stateless LLM runner:
+### Pipe Compiled Context into Ollama
 
 ```bash
-# 1. Output compiled attractor prompt to stdout
-python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices
+# Compile a graph snapshot and pipe it directly into a fresh Ollama run:
+python -m core.compiler my_snapshot_name | ollama run gemma4:12b "Analyze this architecture"
 
-# 2. Pipe phase-space state directly into a fresh Ollama instance
-python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices | ollama run gemma4:12b "Evaluate payment boundary extraction against the entropy breakline."
-
-# 3. Copy attractor directly to system clipboard
-python -m core.compiler 20260821_080324_code_architect_monolith_vs_microservices --copy
 ```
----
-
-## 🛠️ CLI Slash Commands
-
-| Command | Description |
-| :--- | :--- |
-| `/prompt [list\|set\|show\|reset]` | Manages cognitive profiles and lenses. |
-| `/graph` | Displays active topology name, node distribution, and edge counts. |
-| `/graph <name>` | Loads base blueprint or frozen snapshot (Local Mode). |
-| `/switch <name>` | Switches active topology on remote daemon (Remote Mode). |
-| `/payload [query]` | Inspects compiled system prompt (base + active Boundary Constraints + optional resonant field). |
-| `/freeze [tag]` | Freezes active phase-space state into versioned JSON snapshot & Canvas. |
-| `/save [name]` | Persists session transcript simultaneously as Markdown note and JSON state. |
-| `/load [name]` | Restores or lists saved sessions. |
-| `/context` | Shows estimated token utilization and turn count. |
-| `/clear` | Clears conversation history. |
-| `exit` | Closes the session. |
 
 ---
 
-## 📚 Topological Case Studies
+## ⌨️ Useful Commands in Chat
 
-* **[Showcase 01: Code Architect & The Entropy Breakline](docs/topologies/01_code_architect_entropy_breakline.md)** 
-  *Audit of Monolith vs. Microservices trade-offs, dynamic tensor-link wiring, collision-safe ID allocation, and cross-model rehydration.*
-* **[Showcase 02: Poetic Synthesis & The Anicca–GC Bisociation](docs/topologies/02_poetic_synthesis_anicca_gc.md)** 
-  *A/B benchmark against Vanilla Gemma 4 12B demonstrating anti-cliché invariants, structural isomorphism, and process-oriented ontological synthesis.*
-* **[Showcase 03: Systemic Kernel & The Observer-Collapse Audit](docs/topologies/03_systemic_kernel_observer_collapse.md)** 
-  *A/B benchmark on Second-Order Cybernetics and Goodhart's Law, deconstructing RLHF alignment theater into formal boundary constraints.*
-* **[Showcase 04: Systemic Kernel & The Jevons Verification Paradox](docs/topologies/04_systemic_kernel_jevons_verification_entropy.md)** 
-  *Information-theoretic audit of LLM deployment, modeling the phase transition from generative synthesis to forensic Audit Engineering.*
-* **[Showcase 05: Systemic Kernel & The Thermodynamic Decoupling Audit](docs/topologies/05_systemic_kernel_thermodynamic_decoupling.md)** 
-  *Non-equilibrium thermodynamic audit of 'Green Growth', demonstrating why digitalization is an entropy relocation rather than dematerialization.*
-* **[Showcase 06: Regional Shojin & The Brandenburg Terroir Synthesis](docs/topologies/06_regional_shojin_terroir_synthesis.md)** 
-  *Aesthetic and micro-seasonal translation of Zen temple cuisine (Ichijū Sansai, Gohō, Mottainai) into the regional terroir of Central Europe.*
-* **[Showcase 07: Cross-Substrate Rehydration & Anti-Sycophancy Benchmark](docs/topologies/07_mistral_large_cross_substrate_rehydration.md)**
-  *Empirical A/B benchmark on Mistral Large (Vibe) demonstrating zero-shot sycophancy suppression, axiomatic boundary enforcement, and cross-substrate attractor stability.*
-  
-## 🧪 Testing
+* `/graph` — Show current graph statistics (nodes, connections).
+* `/graph <name>` — Load a graph preset or saved snapshot.
+* `/freeze [tag]` — Save current graph state as JSON and an Obsidian `.canvas` file.
+* `/prompt [list|set]` — Switch cognitive mode (`default`, `socratic`, `architect`).
+* `/context` — Check token count and context window usage.
+* `/clear` — Reset active conversation history.
+* `/help` — Shows available commands.
+---
 
-Run the automated unit test suite:
+## 📚 Examples & Benchmarks
 
-```bash
-python test_exocortex.py
+Practical evaluations and CLI session benchmarks demonstrating graph memory and anti-sycophancy guardrails are available in `docs/topologies/`:
 
-```
+* **[Software Design Review](docs/topologies/01_software_design_review.md)** — Preventing monolithic "god functions", isolating side effects, and enforcing modular boundaries.
+* **[Regional Shojin Cooking](docs/topologies/02_regional_shojin_recipe.md)** — Applying structured graph constraints to seasonal cooking, texture pairing, and zero-waste preparation.
+---
 
-Run the remote MCP network verification:
+## 🤝 Collaboration & Genesis
 
-```bash
-python test_mcp_network.py
+Exocortex is built through iterative collaboration between **Georg Hosoya** (Architecture, Direction & Design) and **Gemini** (Code Synthesis & Implementation).
 
-```
-
-## 🤝 Genesis & Collaboration
-
-Exocortex is engineered through an iterative, dialectic human–AI collaboration between **Georg Hosoya** (System Architecture, Conceptual Framing & Editorial Auditing) and **Gemini** (Substrate Implementation, Code Synthesis & Formal Mapping).
-
-It stands as a transparent demonstration of symbiotic cognition—leveraging large language models for high-density synthesis while maintaining human direction, architectural veto, and epistemic sovereignty without claiming synthetic code or text as unassisted human labor.
+It demonstrates transparent human–AI engineering: leveraging LLMs for rapid, modular code synthesis while maintaining human architectural control.
 
 ---
 
@@ -330,7 +199,10 @@ within the configured Obsidian vault. Always maintain independent backups of
 your notes and data. LLM-generated responses should not be treated as 
 professional, legal, or medical advice.
 
+---
+
 ## 📜 License
 
 Licensed under the **Apache License, Version 2.0**. See [LICENSE](LICENSE) for details.
+
 

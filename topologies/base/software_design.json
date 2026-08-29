@@ -1,0 +1,92 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {
+    "name": "software_design",
+    "embedding_model": "bge-m3",
+    "updated_at": "2026-08-29T12:30:00",
+    "description": "Pragmatic guidelines for modular, maintainable, and readable software."
+  },
+  "nodes": [
+    {
+      "id": "BC_001",
+      "type": "BoundaryConstraint",
+      "label": "Single_Responsibility",
+      "payload": "Keep units focused: A function, module, or class should do one thing well and have one clear reason to change.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "BC_002",
+      "type": "BoundaryConstraint",
+      "label": "Side_Effect_Isolation",
+      "payload": "Separate pure business logic from I/O and state mutation. Keep functions predictable, testable, and idempotent where possible.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PW_001",
+      "type": "PotentialWell",
+      "label": "Simplicity_Over_Cleverness",
+      "payload": "Write obvious code. Prefer clear, readable solutions over clever abstractions, deep inheritance trees, or premature optimization.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PW_002",
+      "type": "PotentialWell",
+      "label": "Explicit_Boundaries",
+      "payload": "Decouple modules via simple, well-defined interfaces. Changes inside module A should never unexpectedly break module B.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "TO_001",
+      "type": "TrajectoryOperator",
+      "label": "Defensive_Design",
+      "payload": "Handle edge cases and errors explicitly at the boundaries. Fail fast with clear error messages instead of failing silently.",
+      "embedding": [],
+      "weight": 1.0
+    },
+    {
+      "id": "PST_001",
+      "type": "PhaseSpaceTrace",
+      "label": "Design_Review_Active",
+      "payload": "Reviewing code or architecture for simplicity, modularity, and maintainability.",
+      "embedding": [],
+      "weight": 1.0
+    }
+  ],
+  "links": [
+    {
+      "source": "BC_001",
+      "target": "PW_001",
+      "relation": "enforces",
+      "weight": 1.0
+    },
+    {
+      "source": "BC_002",
+      "target": "PW_002",
+      "relation": "protects",
+      "weight": 1.0
+    },
+    {
+      "source": "TO_001",
+      "target": "BC_002",
+      "relation": "guards",
+      "weight": 1.0
+    },
+    {
+      "source": "PW_002",
+      "target": "PW_001",
+      "relation": "supports",
+      "weight": 0.9
+    },
+    {
+      "source": "PST_001",
+      "target": "TO_001",
+      "relation": "applies",
+      "weight": 1.0
+    }
+  ]
+}

@@ -357,7 +357,7 @@ def run_local():
 
     while True:
         try:
-            user_input = p_session.prompt("\nOperator > ").strip() if p_session else input("\nOperator > ").strip()
+            user_input = p_session.prompt("\nYou > ").strip() if p_session else input("\nYou > ").strip()
             if not user_input:
                 continue
 
@@ -522,9 +522,9 @@ async def run_remote(sse_url: str):
                 while True:
                     try:
                         if p_session:
-                            user_input = (await p_session.prompt_async("\nOperator [Remote] > ")).strip()
+                            user_input = (await p_session.prompt_async("\nYou [Remote] > ")).strip()
                         else:
-                            user_input = (await asyncio.to_thread(input, "\nOperator [Remote] > ")).strip()
+                            user_input = (await asyncio.to_thread(input, "\nYou [Remote] > ")).strip()
 
                         if not user_input:
                             continue
