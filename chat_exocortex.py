@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-chat_exocortex.py (v1.4.8)
+chat_exocortex.py (v1.4.9)
 Universal terminal runner with dual-mode support:
   1. Embedded Mode (Local via direct class instances)
   2. Remote Mode   (Network via FastMCP / SSE client)

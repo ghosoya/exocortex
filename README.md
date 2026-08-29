@@ -1,4 +1,4 @@
-# 🧠 Exocortex (v1.4.8)
+# 🧠 Exocortex (v1.4.9)
 
 > **A local-first AI thinking partner and dynamic knowledge graph for Obsidian.**
 > Built with Python, FastMCP, NetworkX, and Ollama. Bridges local LLMs with a visual concept graph in your personal vault.
