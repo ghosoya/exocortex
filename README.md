@@ -56,10 +56,10 @@ Long-term concepts and rules are stored in a directed graph. Relevant nodes are 
 2. **Real-Time Obsidian Canvas Sync:**
 Every graph update automatically writes an interactive, color-coded `.canvas` file directly into your Obsidian vault.
 3. **Structured Node Types:**
-* 🔴 **Guardrails / Rules:** Hard constraints (e.g., anti-sycophancy, modular code design, verification criteria).
-* 🔵 **Core Concepts:** Foundational domain definitions and reference knowledge.
-* 🟣 **Action Guidelines:** Heuristics and workflows for refactoring, analysis, or critique.
-* 🟢 **Working Notes:** Ephemeral session notes, active hypotheses, and task traces.
+* 🔴 **Guardrails / Rules (`BC`):** Hard constraints (e.g., anti-sycophancy, modular code design, verification criteria).
+* 🔵 **Core Concepts (`PW`):** Foundational domain definitions and reference knowledge.
+* 🟣 **Action Guidelines (`TO`):** Heuristics and workflows for refactoring, analysis, or critique.
+* 🟢 **Working Notes (`PST`):** Ephemeral session notes, active hypotheses, and task traces.
 
 
 4. **Prompt Compiler & Snapshot Freezing:**

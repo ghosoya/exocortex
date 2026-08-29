@@ -13,7 +13,7 @@ Using the `regional_shojin` topology, the engine acts as a mindful culinary part
   * `BC_001` (**Seasonal and Regional**): Strictly local and seasonal produce.
   * `BC_002` (**Zero Waste Respect**): Utilize peels and trimmings for broths and ferments.
   * `BC_003` (**Fivefold Harmony**): Balance across 5 tastes, 5 colors, and diverse preparation methods.
-* **Resonant Knowledge Nodes:**
+* **Retrieved Knowledge Nodes:**
   * `PW_002` (**Ingredient Purity**): Restraint over excess; let natural flavors shine.
   * `TO_001` (**Gentle Techniques**): Steaming, dry-toasting, slow braising.
   * `PW_001` (**Vegetable Dashi Base**): Unlocking clean umami from root trimmings and dried mushrooms.

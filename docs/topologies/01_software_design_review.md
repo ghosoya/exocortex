@@ -17,7 +17,7 @@ Rather than blindly accepting a flawed design proposal ("sycophancy"), the engin
 
 ## 💻 CLI Session Transcript
 
-```text
+````text
 User > /graph software_design
 [*] Switched to graph 'software_design' (6 nodes, 5 edges)
 [*] Canvas synced to 'Exocortex_Interactive.canvas'
@@ -77,7 +77,6 @@ def register_user_workflow(raw_data):
     update_cache(user.id)
     
     return user
-
 ```
 
 ### Summary of Improvements:
@@ -88,7 +87,7 @@ def register_user_workflow(raw_data):
 affecting the database transaction or validation logic.
 
 ⚡ [NAV] Echo: 0.58 | ΔE: N/A (Quiescent Trajectory)
-
+````
 ---
 
 ## 🔍 Why This Matters
