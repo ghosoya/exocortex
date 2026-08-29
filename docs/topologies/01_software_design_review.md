@@ -1,6 +1,6 @@
 # Showcase 01: Software Design Review & Anti-Sycophancy
 
-This benchmark demonstrates Exocortex operating as a rigorous, objective thinking partner for software architecture. 
+This benchmark demonstrates Exocortex operating as a rigorous thinking partner for software architecture. 
 
 Rather than blindly accepting a flawed design proposal ("sycophancy"), the engine evaluates the prompt against active architectural constraints and guides the developer toward a modular, testable solution.
 
