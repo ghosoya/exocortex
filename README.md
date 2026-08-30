@@ -1,4 +1,4 @@
-# 🧠 Exocortex (v1.4.9)
+# 🧠 Exocortex (v1.5.0)
 
 > **A local-first AI thinking partner and dynamic knowledge graph for Obsidian.**
 > Built with Python, FastMCP, NetworkX, and Ollama. Bridges local LLMs with a visual concept graph in your personal vault.
@@ -52,25 +52,34 @@ Standard LLMs suffer from context limits, flat memory, and sycophancy (agreeing 
 ## 🛠️ Key Features
 
 1. **Graph-Based Working Memory (NetworkX + Vector Search):**
-Long-term concepts and rules are stored in a directed graph. Relevant nodes are retrieved via cosine similarity (`bge-m3` embeddings) and injected into the prompt context when needed.
+Long-term concepts and rules are stored in a directed graph. Relevant nodes and their 1-hop semantic links are retrieved via cosine similarity (`bge-m3` embeddings) and injected into the system prompt context per turn.
 2. **Real-Time Obsidian Canvas Sync:**
-Every graph update automatically writes an interactive, color-coded `.canvas` file directly into your Obsidian vault.
-3. **Structured Node Types:**
-* 🔴 **Guardrails / Rules (`BC`):** Hard constraints (e.g., anti-sycophancy, modular code design, verification criteria).
-* 🔵 **Core Concepts (`PW`):** Foundational domain definitions and reference knowledge.
-* 🟣 **Action Guidelines (`TO`):** Heuristics and workflows for refactoring, analysis, or critique.
-* 🟢 **Working Notes (`PST`):** Ephemeral session notes, active hypotheses, and task traces.
+Every graph mutation automatically updates an interactive, color-coded `.canvas` file directly inside your Obsidian vault.
 
+3. **Standardized Node Types & Canonical Prefixes:**
+
+* 🔴 **Constraints (`CST_`):** Inviolable guardrails and invariants (e.g. pure functional boundaries, anti-sycophancy, side-effect isolation).
+* 🔵 **Concepts (`CNC_`):** Foundational domain definitions, architectural models, and ground-truth axioms.
+* 🟣 **Rules (`RUL_`):** Concrete action guidelines, refactoring heuristics, and operational procedures.
+* 🟢 **States (`STA_`):** Ephemeral hypotheses, task traces, and active session checkpoints.
 
 4. **Prompt Compiler & Snapshot Freezing:**
-Export any frozen graph state into a compact, token-efficient Markdown system prompt (< 350 tokens) that can be piped into any local LLM or API.
-5. **Anti-Sycophancy Telemetry:**
-Measures semantic drift and prompt mirroring live after each turn to ensure the model acts as a rigorous sparring partner rather than a sycophantic echo chamber.
+Export any active graph topology into a compact, token-efficient Markdown system prompt (< 350 tokens) that can be piped into any local LLM, script, or CI pipeline.
+5. **Anti-Sycophancy Telemetry (Echo & Epistemic Lift):**
+Evaluates model behavior live after each turn to prevent uncritical agreement and ungrounded hallucination:
+
+* **Prompt Mirroring (`Echo`):** Measures the cosine similarity between the user prompt and the assistant response. High echo (> 0.85) flags that the model is merely rephrasing your input rather than offering independent critique or insight.
+* **Semantic Drift & Epistemic Lift (`ΔE`):** Measures whether the response actively moved closer to the ground truth of your knowledge graph:
+
+$$\Delta E = \text{sim}(\text{response}, \text{concept}) - \text{sim}(\text{prompt}, \text{concept})$$
+
+
+A positive $\Delta E$ indicates that the model grounded its reasoning in your established principles rather than drifting into ungrounded tangents.
+
 6. **Dual-Mode Operation:**
-* **Local CLI:** Fast, self-contained terminal interface for daily writing and thinking.
-* **Remote MCP Server:** FastMCP daemon exposing tools over SSE to Claude Desktop or external agents.
 
-
+* **Local CLI:** Fast, zero-overhead terminal runner for daily sparring and note-taking.
+* **Remote FastMCP Server:** Exposes 11 canonical MCP tools over SSE to Claude Desktop, IDE extensions, or custom agents.
 
 ---
 
@@ -111,7 +120,7 @@ cp .env.example .env
 Set your Obsidian vault path in `.env`:
 
 ```ini
-EXOCORTEX_VAULT_PATH=~/Vaults/my-vault
+EXOCORTEX_VAULT_PATH=~/Vaults/exocortex
 EXOCORTEX_SCRATCHPAD_DIR=Scratchpad
 EXOCORTEX_SESSIONS_DIR=Sessions
 EXOCORTEX_TOPOLOGIES_DIR=Topologies
@@ -126,9 +135,8 @@ EXOCORTEX_NUM_CTX=65536
 Initialize your vault directories:
 
 ```bash
-mkdir -p ~/Vaults/my-vault/Topologies/{base,snapshots}
-mkdir -p ~/Vaults/my-vault/Canvases/snapshots
-cp -r topologies/* ~/Vaults/my-vault/Topologies/
+mkdir -p ~/Vaults/exocortex/{Topologies/{base,snapshots},Canvases/snapshots,Scratchpad,Sessions}
+cp -r topologies/base/* ~/Vaults/exocortex/Topologies/base/
 
 ```
 
@@ -157,8 +165,8 @@ python chat_exocortex.py --remote
 ### Pipe Compiled Context into Ollama
 
 ```bash
-# Compile a graph snapshot and pipe it directly into a fresh Ollama run:
-python -m core.compiler my_snapshot_name | ollama run gemma4:12b "Analyze this architecture"
+# Compile a graph and pipe it directly into a fresh Ollama run:
+python -m core.compiler software_design | ollama run gemma4:12b "Analyze this service interface"
 
 ```
 
@@ -166,13 +174,15 @@ python -m core.compiler my_snapshot_name | ollama run gemma4:12b "Analyze this a
 
 ## ⌨️ Useful Commands in Chat
 
-* `/graph` — Show current graph statistics (nodes, connections).
-* `/graph <name>` — Load a graph preset or saved snapshot.
-* `/freeze [tag]` — Save current graph state as JSON and an Obsidian `.canvas` file.
-* `/prompt [list|set]` — Switch cognitive mode (`default`, `socratic`, `architect`).
-* `/context` — Check token count and context window usage.
-* `/clear` — Reset active conversation history.
-* `/help` — Shows available commands.
+* `/graph` — Display active topology name, node count, and edge count.
+* `/graph <name>` — Switch active topology (e.g. `/graph software_design`).
+* `/freeze [tag]` — Freeze current topology into a timestamped JSON snapshot and `.canvas`.
+* `/prompt [list|set <profile>]` — Switch cognitive stance (`default`, `socratic`, `architect`).
+* `/payload [query]` — Inspect the fully compiled system prompt (base + constraints + context).
+* `/context` — Display token usage and message count.
+* `/clear` — Clear current conversation history.
+* `/help` — Overview of available commands.
+
 ---
 
 ## 📚 Examples & Benchmarks

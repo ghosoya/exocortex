@@ -1,6 +1,6 @@
 """
 core/engine.py
-ExecutionEngine: ReAct loop, tool dispatching, and dynamic context assembly.
+ExecutionEngine: ReAct loop, decoupled tool dispatching, and dynamic context assembly.
 """
 
 from typing import Any, Callable, Dict, Generator, List, Optional
@@ -38,18 +38,18 @@ class ExecutionEngine:
         self.tool_handlers: Dict[str, Callable[..., Any]] = {
             "read_vault_note": self._tool_read_vault_note,
             "append_scratchpad": self._tool_append_scratchpad,
-            "exocortex_gauge_field": self._tool_gauge_field,
-            "exocortex_imprint_field": self._tool_imprint_field,
+            "exocortex_query_graph": self._tool_query_graph,
+            "exocortex_create_node": self._tool_create_node,
+            "exocortex_mutate_node": self._handle_mutate_node,
             "exocortex_temporal_anchor": self._tool_temporal_anchor,
-            "exocortex_mutate_phase_space": self._handle_mutate_phase_space,
         }
-
+        
     def freeze_snapshot(self, tag: Optional[str] = None) -> Dict[str, str]:
         """Exposes snapshot freezing from GraphStore."""
         return self.graph_store.freeze_snapshot(tag)
 
     def switch_graph(self, graph_name: str) -> Dict[str, Any]:
-        """Switches the active phase space topology."""
+        """Switches the active knowledge graph topology."""
         return self.graph_store.switch_graph(graph_name)
 
     def get_graph_stats(self) -> Dict[str, Any]:
@@ -68,7 +68,7 @@ class ExecutionEngine:
                         "properties": {
                             "note_name": {
                                 "type": "string",
-                                "description": "Relative path or filename (e.g., 'Sessions/systemic.md')",
+                                "description": "Relative path or filename (e.g., 'Sessions/notes.md')",
                             }
                         },
                         "required": ["note_name"],
@@ -96,36 +96,37 @@ class ExecutionEngine:
             {
                 "type": "function",
                 "function": {
-                    "name": "exocortex_gauge_field",
-                    "description": "Gauges resonant nodes within the active phase space for a given query.",
+                    "name": "exocortex_query_graph",
+                    "description": "Queries relevant context nodes and graph connections within the active topology.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "query_vector": {"type": "string", "description": "Semantic query string."},
+                            "query": {"type": "string", "description": "Semantic query string."},
                             "top_k": {"type": "integer", "description": "Maximum number of nodes (default: 3)"},
                         },
-                        "required": ["query_vector"],
+                        "required": ["query"],
                     },
                 },
             },
             {
                 "type": "function",
                 "function": {
-                    "name": "exocortex_imprint_field",
-                    "description": "Creates and wires a new node into the active phase space topology.",
+                    "name": "exocortex_create_node",
+                    "description": "Creates and links a new node in the active knowledge graph.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "node_type": {
                                 "type": "string",
-                                "enum": ["BoundaryConstraint", "TrajectoryOperator", "PotentialWell", "PhaseSpaceTrace"],
+                                "enum": ["Constraint", "Concept", "Rule", "State"],
+                                "description": "Constraint (guardrail), Concept (foundation), Rule (action), State (working context)",
                             },
-                            "label": {"type": "string", "description": "Compact identifier or label."},
-                            "content_payload": {"type": "string", "description": "Axiom, constraint, or synthesis."},
-                            "tensor_links": {
+                            "label": {"type": "string", "description": "Compact identifier or title."},
+                            "content_payload": {"type": "string", "description": "Content, principle, or operational rule."},
+                            "links": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "List of target node IDs (e.g., ['BC_001', 'PW_002'])",
+                                "description": "List of target node IDs to link to (e.g., ['CNC_001', 'RUL_002'])",
                             },
                         },
                         "required": ["node_type", "label", "content_payload"],
@@ -148,19 +149,19 @@ class ExecutionEngine:
             {
                 "type": "function",
                 "function": {
-                    "name": "exocortex_mutate_phase_space",
-                    "description": "Modulates, updates, decays, or prunes an existing node in the active phase-space topology.",
+                    "name": "exocortex_mutate_node",
+                    "description": "Modulates weight, updates payload, or prunes an existing node in the active graph.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "target_node_id": {
                                 "type": "string",
-                                "description": "Unique identifier of the target node (e.g. 'PW_001', 'BC_001')"
+                                "description": "Unique identifier of the target node (e.g. 'CNC_001', 'CST_001')"
                             },
                             "action": {
                                 "type": "string",
                                 "enum": ["STRENGTHEN", "DECAY", "SET_WEIGHT", "PRUNE", "UPDATE"],
-                                "description": "Structural operation: STRENGTHEN (+delta), DECAY (-delta), SET_WEIGHT (set absolute weight via delta), PRUNE (remove node), UPDATE (modify payload)"
+                                "description": "STRENGTHEN (+delta), DECAY (-delta), SET_WEIGHT (set weight via delta), PRUNE (remove node), UPDATE (modify payload)"
                             },
                             "payload_update": {
                                 "type": "string",
@@ -192,37 +193,48 @@ class ExecutionEngine:
         except Exception as e:
             return f"<error>Error writing to scratchpad: {e}</error>"
 
-    def _tool_gauge_field(self, query_vector: str, top_k: int = 3) -> str:
+    def _tool_query_graph(self, query: str, top_k: int = 3) -> str:
         try:
-            res = self.graph_store.get_resonant_nodes(query_vector, top_k=top_k)
+            res = self.graph_store.get_resonant_nodes(query, top_k=top_k)
             if not res:
-                return "<field_gauge status='quiescent' />"
-            lines = [f"<field_gauge query='{query_vector}'>"]
+                return "<graph_query status='empty' />"
+            lines = [f"<graph_query query='{query}'>"]
             for nid, attrs, sim in res:
-                lines.append(f"  <resonance id='{nid}' label='{attrs.get('label')}' type='{attrs.get('type')}' score='{sim:.2f}' />")
-            lines.append("</field_gauge>")
+                lines.append(f"  <node id='{nid}' label='{attrs.get('label')}' type='{attrs.get('type')}' similarity='{sim:.2f}' />")
+            lines.append("</graph_query>")
             return "\n".join(lines)
         except Exception as e:
-            return f"<error>Gauge field evaluation failed: {e}</error>"
+            return f"<error>Graph query failed: {e}</error>"
 
-    def _tool_imprint_field(self, node_type: str, label: str, content_payload: str, tensor_links: Optional[Any] = None) -> str:
+    def _tool_create_node(
+        self, 
+        node_type: str, 
+        label: str, 
+        content_payload: str, 
+        links: Optional[Any] = None,
+    ) -> str:
         try:
-            # Defensive Type-Coercion falls LLM einen String statt Liste liefert
-            if isinstance(tensor_links, str):
-                tensor_links = [t.strip() for t in tensor_links.split(",") if t.strip()]
+            target_links = links if isinstance(links, list) else []
+            if isinstance(links, str):
+                target_links = [t.strip() for t in links.split(",") if t.strip()]
 
-            res = self.graph_store.imprint_node(node_type, label, content_payload, tensor_links)
+            res = self.graph_store.imprint_node(
+                node_type=node_type,
+                label=label,
+                content_payload=content_payload,
+                links=target_links
+            )
             stats = self.graph_store.get_graph_stats()
             conns = ", ".join(res["wired_connections"]) if res["wired_connections"] else "None"
 
             return (
-                f"<imprint_result status='materialized' node_id='{res['node_id']}' label='{label}'>\n"
+                f"<create_result status='materialized' node_id='{res['node_id']}' label='{label}'>\n"
                 f"  <topology name='{stats['name']}' total_nodes='{stats['node_count']}' total_edges='{stats['edge_count']}' />\n"
-                f"  <wired_to>{conns}</wired_to>\n"
-                f"</imprint_result>"
+                f"  <connected_to>{conns}</connected_to>\n"
+                f"</create_result>"
             )
         except Exception as e:
-            return f"<error>Imprinting failed: {e}</error>"
+            return f"<error>Node creation failed: {e}</error>"
 
     def _tool_temporal_anchor(self, scope: str = "full") -> str:
         now = datetime.datetime.now()
@@ -237,7 +249,7 @@ class ExecutionEngine:
             f"</temporal_anchor>"
         )
 
-    def _handle_mutate_phase_space(
+    def _handle_mutate_node(
         self,
         target_node_id: str,
         action: str,
@@ -248,7 +260,6 @@ class ExecutionEngine:
             return "<error>GraphStore is not initialized in engine.</error>"
 
         try:
-            # Coerce delta falls als String übergeben
             if isinstance(delta, str):
                 try:
                     delta = float(delta)
@@ -263,48 +274,41 @@ class ExecutionEngine:
             )
 
             if res.get("status") == "error":
-                return f"<phase_space_mutation status='error' message='{res.get('message')}' />"
+                return f"<graph_mutation status='error' message='{res.get('message')}' />"
 
             stats = self.graph_store.get_graph_stats()
             delta_info = f" new_weight='{res.get('new_weight')}'" if "new_weight" in res else ""
             pruned_info = " pruned='true'" if action.upper() == "PRUNE" else ""
 
             return (
-                f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}'{delta_info}{pruned_info}>\n"
+                f"<graph_mutation status='success' node_id='{target_node_id}' action='{action.upper()}'{delta_info}{pruned_info}>\n"
                 f"  <topology name='{stats['name']}' total_nodes='{stats['node_count']}' total_edges='{stats['edge_count']}' />\n"
-                f"</phase_space_mutation>"
+                f"</graph_mutation>"
             )
         except Exception as e:
-            return f"<error>Phase space mutation failed: {e}</error>"
+            return f"<error>Graph mutation failed: {e}</error>"
 
     # --- ReAct Execution Loop (Streaming Enabled) ---
     def execute_turn(self, user_input: str, max_turns: int = 5) -> Generator[Dict[str, Any], None, None]:
         """
         Executes a full cognitive turn including the ReAct tool loop with live streaming.
-        Yielded Events:
-          - {'event': 'field_context', 'xml': str}
-          - {'event': 'token', 'delta': str}
-          - {'event': 'tool_call', 'name': str, 'args': dict}
-          - {'event': 'tool_result', 'result': str}
-          - {'event': 'completed', 'final_text': str}
-          - {'event': 'error', 'message': str}
         """
         try:
-            # 1. Extract static Boundary Invariants (immutable frame)
-            invariants_xml = self.graph_store.assemble_invariants_frame()
+            # 1. Extract static Constraints (inviolable frame)
+            constraints_xml = self.graph_store.assemble_constraints_frame()
 
-            # 2. Compute vector resonance for dynamic phase space (excluding BCs)
+            # 2. Extract dynamic context subgraph
             safe_query = slice_for_embedding(user_input)
-            field_xml = self.graph_store.assemble_field_context(safe_query)
+            context_xml = self.graph_store.assemble_context_frame(safe_query)
             
-            # Telemetrie-Event für UI / CLI
-            yield {"event": "invariants_frame", "xml": invariants_xml}
-            yield {"event": "field_context", "xml": field_xml}
+            # Events für UI / CLI (neue und legacy Namen bereitstellen)
+            yield {"event": "constraints_frame", "xml": constraints_xml}
+            yield {"event": "context_frame", "xml": context_xml}
 
-            # 3. Dynamically assemble system prompt with both layers
+            # 3. Dynamically assemble system prompt
             full_system_prompt = self.prompt_manager.build_system_prompt(
-                field_xml=field_xml,
-                invariants_xml=invariants_xml
+                context_xml=context_xml,
+                constraints_xml=constraints_xml
             )
 
             # 4. Update session with new user input
@@ -333,7 +337,6 @@ class ExecutionEngine:
                     )
 
                     for chunk in stream:
-                        # Robust extraction across ollama-python versions (dict or object)
                         msg = chunk.get("message", {}) if isinstance(chunk, dict) else getattr(chunk, "message", {})
                         content_delta = (msg.get("content") if isinstance(msg, dict) else getattr(msg, "content", "")) or ""
                         chunk_tool_calls = (msg.get("tool_calls") if isinstance(msg, dict) else getattr(msg, "tool_calls", [])) or []
@@ -343,7 +346,6 @@ class ExecutionEngine:
 
                         if content_delta:
                             accumulated_content += content_delta
-                            # Only stream visible tokens if not part of a tool call
                             if not chunk_tool_calls:
                                 yield {"event": "token", "delta": content_delta}
 
@@ -392,9 +394,7 @@ class ExecutionEngine:
                 else:
                     final_response_text = accumulated_content
                     
-                    # -------------------------------------------------------------
-                    # ⚡ [NAVIGATOR TELEMETRIE]
-                    # -------------------------------------------------------------
+                    # Telemetrie
                     telemetry = {"echo": 0.0, "delta_e": None, "attractor": None}
                     try:
                         if final_response_text.strip():
@@ -402,7 +402,6 @@ class ExecutionEngine:
                             r_vec = self.graph_store._get_embedding(slice_for_embedding(final_response_text))
                             telemetry["echo"] = round(cosine_similarity(p_vec, r_vec), 2)
                             
-                            # Resonante Knoten des aktuellen Feldes abfragen
                             resonant = self.graph_store.get_resonant_nodes(safe_query, top_k=3)
                             if resonant:
                                 best_nid, best_attrs, _ = resonant[0]
@@ -412,8 +411,7 @@ class ExecutionEngine:
                                     sim_r_w = cosine_similarity(r_vec, w_vec)
                                     telemetry["delta_e"] = round(sim_r_w - sim_p_w, 2)
                                     telemetry["attractor"] = best_attrs.get("label", best_nid)
-                    except Exception as nav_err:
-                        # Navigator-Fehler dürfen niemals den Haupt-Chat blockieren
+                    except Exception:
                         pass
 
                     yield {
@@ -424,9 +422,8 @@ class ExecutionEngine:
                     self.session.add_assistant_message(final_response_text)
                     break
 
-            # Catch exhausted turns without clean answer
             if not final_response_text and turn_count >= max_turns:
-                fallback_msg = "Cognitive ReAct budget exhausted: Maximum tool execution turns reached."
+                fallback_msg = "Budget exhausted: Maximum tool execution turns reached."
                 yield {"event": "completed", "final_text": fallback_msg}
                 self.session.add_assistant_message(fallback_msg)
 

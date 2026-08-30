@@ -2,21 +2,21 @@
 """
 server/exocortex_mcp_server.py
 MCP server interface (FastMCP).
-Exposes vault I/O and the phase space as standardized MCP tools with fail-safe boundaries.
+Exposes vault I/O and the knowledge graph as standardized MCP tools with fail-safe boundaries.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Union
 import argparse
 import datetime
 import json
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field
 
 from core.config import settings
 from server.vault_io import VaultIO
-from server.graph_store import GraphStore, cosine_similarity
+from server.graph_store import GraphStore, NodeType, cosine_similarity
 from core.prompts import PromptManager
 from core.guards import slice_for_embedding
-from pydantic import Field
 
 # FastMCP server instance
 mcp = FastMCP("Exocortex-Daemon")
@@ -46,15 +46,15 @@ def append_scratchpad(content: str, filename: str = "Active_Scratchpad.md") -> s
     except Exception as e:
         return f"<error>Error writing to scratchpad: {e}</error>"
 
-@mcp.tool()
-def exocortex_gauge_field(query_vector: str, top_k: int = 3) -> str:
-    """Gauges resonant nodes and topological 1-hop links within the active phase space."""
-    try:
-        # Nutzt die vollwertige GraphStore-Traversierung inkl. 1-Hop-Links
-        return graph_store.assemble_field_context(query_vector)
-    except Exception as e:
-        return f"<error>Field Gauge error: {e}</error>"
 
+@mcp.tool()
+def exocortex_query_graph(query: str, top_k: int = 3) -> str:
+    """Queries relevant context nodes and 1-hop graph links within the active topology."""
+    try:
+        return graph_store.assemble_context_frame(query)
+    except Exception as e:
+        return f"<error>Graph query error: {e}</error>"
+        
 
 @mcp.tool()
 def exocortex_get_topology_stats() -> str:
@@ -65,11 +65,12 @@ def exocortex_get_topology_stats() -> str:
     except Exception as e:
         return json.dumps({"error": str(e)})
 
+
 @mcp.tool()
-def exocortex_imprint_field(
+def exocortex_create_node(
     node_type: str = Field(
         ...,
-        description="Allowed values: 'BoundaryConstraint', 'PotentialWell', 'TrajectoryOperator', 'PhaseSpaceTrace'",
+        description="Allowed values: 'Constraint', 'Concept', 'Rule', 'State' (legacy formats are normalized automatically)",
     ),
     label: str = Field(
         ...,
@@ -77,23 +78,29 @@ def exocortex_imprint_field(
     ),
     content_payload: str = Field(
         ...,
-        description="Axiomatic content, synthesis mechanism, or invariant payload",
+        description="Axiomatic principle, operational rule, constraint, or state payload",
     ),
-    tensor_links: List[str] = Field(
-        default_factory=list,
-        description="Optional: List of existing target node IDs to link to (e.g. ['PW_004', 'TO_003']). Leave empty or omit if no links exist. Do NOT use dicts or integers.",
+    links: Optional[List[str]] = Field(
+        default=None,
+        description="Optional: List of existing target node IDs to link to (e.g. ['CNC_001', 'RUL_002']). Omit if no links exist.",
     ),
 ) -> str:
-    """Deterministically imprints a new insight node into the active topology."""
+    """Deterministically creates a new node in the active knowledge graph."""
     try:
-        res = graph_store.imprint_node(node_type, label, content_payload, tensor_links)
+        target_links = links if isinstance(links, list) else []
+        res = graph_store.imprint_node(
+            node_type=node_type,
+            label=label,
+            content_payload=content_payload,
+            links=target_links,
+        )
         conns = ", ".join(res["wired_connections"]) if res["wired_connections"] else "None"
         return (
-            f"Field state materialized: Node {res['node_id']} ('{label}') wired into '{res['topology']}'. "
-            f"| Wired to: {conns}"
+            f"Node materialized: {res['node_id']} ('{label}') [{node_type}] wired into '{res['topology']}'. "
+            f"| Connected to: {conns}"
         )
     except Exception as e:
-        return f"<error>Imprinting error: {e}</error>"
+        return f"<error>Node creation error: {e}</error>"
 
 
 @mcp.tool()
@@ -123,13 +130,13 @@ def exocortex_switch_topology(topology_name: str) -> str:
 
 
 @mcp.tool()
-def exocortex_mutate_phase_space(
+def exocortex_mutate_node(
     target_node_id: str,
     action: str,
     payload_update: Optional[str] = None,
     delta: float = 0.2
 ) -> str:
-    """Modulates, updates, decays, sets weight, or prunes an existing node in the active phase space."""
+    """Modulates weight, updates payload, or prunes an existing node in the active graph."""
     try:
         res = graph_store.mutate_node(
             target_node_id=target_node_id,
@@ -138,16 +145,16 @@ def exocortex_mutate_phase_space(
             delta=delta
         )
         if res.get("status") == "error":
-            return f"<phase_space_mutation status='error' message='{res.get('message')}' />"
-        return f"<phase_space_mutation status='success' node_id='{target_node_id}' action='{action.upper()}' />"
+            return f"<graph_mutation status='error' message='{res.get('message')}' />"
+        return f"<graph_mutation status='success' node_id='{target_node_id}' action='{action.upper()}' />"
     except Exception as e:
-        return f"<error>Phase space mutation failed: {e}</error>"
+        return f"<error>Graph mutation failed: {e}</error>"
 
 
 @mcp.tool()
 def exocortex_freeze_snapshot(tag: Optional[str] = None) -> str:
     """
-    Freezes the active phase space topology into an immutable snapshot (JSON + Canvas).
+    Freezes the active graph topology into an immutable snapshot (JSON + Canvas).
     Returns snapshot metadata and created file paths.
     """
     try:
@@ -164,25 +171,28 @@ def exocortex_freeze_snapshot(tag: Optional[str] = None) -> str:
             "message": str(e)
         })
 
+
 @mcp.tool()
-def exocortex_inspect_payload(query: str = "") -> str:
+def exocortex_inspect_payload(query: str = "", profile: Optional[str] = None) -> str:
     """
     Assembles and returns the full compiled system prompt payload 
-    (base stance + immutable boundary invariants + optional dynamic resonant field).
+    (base stance + immutable constraints + optional dynamic context frame).
     """
     try:
-        invariants_xml = graph_store.assemble_invariants_frame()
-        field_xml = graph_store.assemble_field_context(query) if query else ""
+        if profile and profile in prompt_manager.list_profiles():
+            prompt_manager.set_profile(profile)
+        constraints_xml = graph_store.assemble_constraints_frame()
+        context_xml = graph_store.assemble_context_frame(query) if query else ""
         return prompt_manager.build_system_prompt(
-            field_xml=field_xml, 
-            invariants_xml=invariants_xml
+            context_xml=context_xml, 
+            constraints_xml=constraints_xml
         )
     except Exception as e:
         return f"<error>Failed to compile payload: {e}</error>"
-        
+
 @mcp.tool()
 def exocortex_compute_telemetry(prompt: str, response: str) -> str:
-    """Computes echo ratio and epistemic lift (delta_e) in phase space."""
+    """Computes echo ratio and semantic alignment against the active graph."""
     try:
         if not prompt.strip() or not response.strip():
             return json.dumps({"echo": 0.0, "delta_e": None, "attractor": None})
@@ -193,7 +203,7 @@ def exocortex_compute_telemetry(prompt: str, response: str) -> str:
 
         telemetry = {"echo": echo, "delta_e": None, "attractor": None}
 
-        # Resonante Knoten prüfen
+        # Ähnlichste Knoten prüfen
         resonant = graph_store.get_resonant_nodes(slice_for_embedding(prompt), top_k=3)
         if resonant:
             best_nid, best_attrs, _ = resonant[0]
@@ -206,8 +216,9 @@ def exocortex_compute_telemetry(prompt: str, response: str) -> str:
 
         return json.dumps(telemetry)
     except Exception as e:
-        print(f"[!] Server telemetry error: {e}")  # Sichtbar in der Server-Konsole!
+        print(f"[!] Server telemetry error: {e}")
         return json.dumps({"echo": 0.0, "delta_e": None, "attractor": None, "error": str(e)})
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exocortex FastMCP Server Daemon")
@@ -224,5 +235,3 @@ if __name__ == "__main__":
         mcp.settings.host = args.host
         mcp.settings.port = args.port
         mcp.run(transport="sse")
-
-

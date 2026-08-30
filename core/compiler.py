@@ -1,7 +1,7 @@
 """
 core/compiler.py
-Rehydration Engine: Compiles NetworkX / JSON topology snapshots and
-declarative blueprint manifests into substrate-independent Markdown attractor prompts.
+Rehydration Engine: Compiles NetworkX / JSON graph snapshots and
+declarative blueprint manifests into substrate-independent Markdown prompt context.
 """
 
 from pathlib import Path
@@ -12,27 +12,66 @@ import sys
 
 from core.config import settings
 
-# Mapping from declarative keys to canonical node categories
+# Kanonische Typen & Schemamapping (unterstützt neue und alte Keys)
 DECLARATIVE_SCHEMA_MAP = {
-    "boundary_constraints": "BoundaryConstraint",
-    "potential_wells": "PotentialWell",
-    "trajectory_operators": "TrajectoryOperator",
-    "phase_space_traces": "PhaseSpaceTrace",
+    # Neue Nomenklatur
+    "constraints": "Constraint",
+    "concepts": "Concept",
+    "rules": "Rule",
+    "states": "State",
+    # Legacy Nomenklatur
+    "boundary_constraints": "Constraint",
+    "potential_wells": "Concept",
+    "trajectory_operators": "Rule",
+    "phase_space_traces": "State",
+}
+
+LEGACY_TYPE_MAP = {
+    "BoundaryConstraint": "Constraint",
+    "BC": "Constraint",
+    "PotentialWell": "Concept",
+    "PW": "Concept",
+    "TrajectoryOperator": "Rule",
+    "TO": "Rule",
+    "PhaseSpaceTrace": "State",
+    "PST": "State",
 }
 
 
 def _normalize_topology_schema(data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Normalizes both Graph-Export schema (with 'nodes' array) and
-    Declarative Blueprint schema (with 'boundary_constraints' arrays)
-    into a unified node/edge structure.
+    Declarative Blueprint schema (with typed arrays) into a unified node/edge structure.
+    Guarantees both 'edges' and 'links' keys are populated.
     """
-    # If already in Graph format, return as-is
+    # 1. Fall: Bereits im exportierten Graph-Format (nodes + edges/links)
     if "nodes" in data and isinstance(data["nodes"], list) and data["nodes"]:
+        for node in data["nodes"]:
+            raw_t = node.get("type") or node.get("node_type", "Concept")
+            node["type"] = LEGACY_TYPE_MAP.get(raw_t, raw_t)
+
+        edges = data.get("edges") or data.get("links") or data.get("tensor_links") or []
+        for edge in edges:
+            if edge.get("relation") == "tensor_link":
+                edge["relation"] = "relates_to"
+
+        data["edges"] = edges
+        data["links"] = edges
         return data
 
+    # 2. Fall: Deklaratives Blueprint (typed arrays: constraints, concepts, rules, states)
     normalized_nodes: List[Dict[str, Any]] = []
-    normalized_edges: List[Dict[str, Any]] = data.get("edges") or data.get("links") or data.get("tensor_links") or []
+    normalized_edges: List[Dict[str, Any]] = []
+
+    # Bestehende Root-Edges übernehmen (falls vorhanden)
+    root_edges = data.get("edges") or data.get("links") or data.get("tensor_links") or []
+    for edge in root_edges:
+        rel = "relates_to" if edge.get("relation") == "tensor_link" else edge.get("relation", "relates_to")
+        normalized_edges.append({
+            "source": edge.get("source"),
+            "target": edge.get("target"),
+            "relation": rel
+        })
 
     for field_key, node_type in DECLARATIVE_SCHEMA_MAP.items():
         items = data.get(field_key, [])
@@ -41,8 +80,8 @@ def _normalize_topology_schema(data: Dict[str, Any]) -> Dict[str, Any]:
         for item in items:
             if not isinstance(item, dict):
                 continue
-                
-            # Extract payload across diverse schema dialects
+
+            nid = item.get("id", "N")
             payload = (
                 item.get("description")
                 or item.get("payload")
@@ -50,20 +89,38 @@ def _normalize_topology_schema(data: Dict[str, Any]) -> Dict[str, Any]:
                 or item.get("operation")
                 or ""
             ).strip()
-            
+
             normalized_nodes.append({
-                "id": item.get("id", "N"),
+                "id": nid,
                 "type": node_type,
-                "label": item.get("name") or item.get("label", item.get("id", "N")),
-                "payload": item.get("description") or item.get("payload") or item.get("content", ""),
-                "weight": item.get("strictness") or item.get("energy_depth") or item.get("weight", 1.0),
+                "label": item.get("name") or item.get("label", nid),
+                "payload": payload,
+                "weight": float(
+                    item.get("weight")
+                    or item.get("strictness")
+                    or item.get("energy_depth")
+                    or 1.0
+                ),
             })
+
+            # Kanten direkt aus den Node-Links extrahieren
+            node_links = item.get("links") or item.get("tensor_links") or []
+            if isinstance(node_links, str):
+                node_links = [node_links]
+            for target in node_links:
+                target_id = target if isinstance(target, str) else target.get("target")
+                if target_id:
+                    normalized_edges.append({
+                        "source": nid,
+                        "target": target_id,
+                        "relation": "relates_to"
+                    })
 
     normalized_data = dict(data)
     normalized_data["nodes"] = normalized_nodes
     normalized_data["edges"] = normalized_edges
+    normalized_data["links"] = normalized_edges
     return normalized_data
-
 
 def load_topology_data(source: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
     """Loads topology data from a dict, file path, or named topology reference with robust lookup."""
@@ -101,9 +158,9 @@ def load_topology_data(source: Union[str, Path, Dict[str, Any]]) -> Dict[str, An
     return _normalize_topology_schema(raw_data)
 
 
-def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw: bool = False) -> str:
+def compile_topology_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw: bool = False) -> str:
     """
-    Compiles a topology into a hierarchical Markdown attractor field directive.
+    Compiles a topology into a structured, token-efficient Markdown prompt directive.
     """
     data = load_topology_data(data_or_path)
 
@@ -122,81 +179,82 @@ def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw:
         or graph_meta.get("updated_at")
         or "active"
     )
-    tag = data.get("tag") or data.get("meta", {}).get("resonance_focus")
-    meta_tag = f" | Resonance: {tag}" if tag else ""
+    tag = data.get("tag") or data.get("meta", {}).get("focus") or data.get("meta", {}).get("resonance_focus")
+    meta_tag = f" | Focus: {tag}" if tag else ""
 
     nodes: List[Dict[str, Any]] = data.get("nodes", [])
     edges: List[Dict[str, Any]] = data.get("edges", [])
 
-    # Group nodes by ontological category
+    # Group nodes by canonical category
     categories: Dict[str, List[Dict[str, Any]]] = {
-        "BoundaryConstraint": [],
-        "PotentialWell": [],
-        "TrajectoryOperator": [],
-        "PhaseSpaceTrace": [],
+        "Constraint": [],
+        "Concept": [],
+        "Rule": [],
+        "State": [],
     }
     unknown_nodes: List[Dict[str, Any]] = []
 
     for node in nodes:
-        n_type = node.get("type") or node.get("node_type", "Unknown")
-        if n_type in categories:
-            categories[n_type].append(node)
+        raw_type = node.get("type") or node.get("node_type", "Concept")
+        canonical_type = LEGACY_TYPE_MAP.get(raw_type, raw_type)
+        if canonical_type in categories:
+            categories[canonical_type].append(node)
         else:
             unknown_nodes.append(node)
 
     lines: List[str] = []
 
     if not raw:
-        lines.append(f"# COGNITIVE ATTRACTOR TOPOLOGY: `{name.upper()}`")
-        lines.append(f"> Rehydration Seed | Invariants: {len(nodes)} | Tensor Links: {len(edges)} | State: {timestamp}{meta_tag}\n")
+        lines.append(f"# KNOWLEDGE TOPOLOGY: `{name.upper()}`")
+        lines.append(f"> Context Seed | Nodes: {len(nodes)} | Edges: {len(edges)} | State: {timestamp}{meta_tag}\n")
     else:
-        lines.append(f"### ATTRACTOR_FIELD: {name.upper()}\n")
+        lines.append(f"### TOPOLOGY_FRAME: {name.upper()}\n")
 
-    # 1. Boundary Constraints
-    if categories["BoundaryConstraint"]:
-        lines.append("## 1. BOUNDARY CONSTRAINTS (Invariant Guardrails):")
-        for n in categories["BoundaryConstraint"]:
-            nid = n.get("id", "BC")
+    # 1. Constraints
+    if categories["Constraint"]:
+        lines.append("## 1. CONSTRAINTS (Inviolable Guardrails):")
+        for n in categories["Constraint"]:
+            nid = n.get("id", "CST")
             label = n.get("label", nid)
             payload = (n.get("payload") or n.get("content", "")).strip()
             weight = float(n.get("weight", 1.0))
-            w_str = f" [strictness: {weight:.2f}]" if weight != 1.0 else ""
+            w_str = f" [weight: {weight:.2f}]" if weight != 1.0 else ""
             lines.append(f"- **`{nid}` {label}**{w_str}: {payload}")
         lines.append("")
 
-    # 2. Potential Wells
-    if categories["PotentialWell"]:
-        lines.append("## 2. POTENTIAL WELLS (Epistemic Attractors):")
-        for n in categories["PotentialWell"]:
-            nid = n.get("id", "PW")
+    # 2. Concepts
+    if categories["Concept"]:
+        lines.append("## 2. CONCEPTS (Domain Principles):")
+        for n in categories["Concept"]:
+            nid = n.get("id", "CNC")
             label = n.get("label", nid)
             payload = (n.get("payload") or n.get("content", "")).strip()
             weight = float(n.get("weight", 1.0))
-            w_str = f" [depth: {weight:.2f}]" if weight != 1.0 else ""
+            w_str = f" [weight: {weight:.2f}]" if weight != 1.0 else ""
             lines.append(f"- **`{nid}` {label}**{w_str}: {payload}")
         lines.append("")
 
-    # 3. Trajectory Operators
-    if categories["TrajectoryOperator"]:
-        lines.append("## 3. TRAJECTORY OPERATORS (Dynamic Transition Rules):")
-        for n in categories["TrajectoryOperator"]:
-            nid = n.get("id", "TO")
+    # 3. Rules
+    if categories["Rule"]:
+        lines.append("## 3. RULES (Action Guidelines):")
+        for n in categories["Rule"]:
+            nid = n.get("id", "RUL")
             label = n.get("label", nid)
             payload = (n.get("payload") or n.get("content", "")).strip()
             weight = float(n.get("weight", 1.0))
-            w_str = f" [w: {weight:.2f}]" if weight != 1.0 else ""
+            w_str = f" [weight: {weight:.2f}]" if weight != 1.0 else ""
             lines.append(f"- **`{nid}` {label}**{w_str}: {payload}")
         lines.append("")
 
-    # 4. Phase Space Traces
-    if categories["PhaseSpaceTrace"]:
-        lines.append("## 4. PHASE-SPACE TRACES (Imprinted Invariants & Knowledge States):")
-        for n in categories["PhaseSpaceTrace"]:
-            nid = n.get("id", "PST")
+    # 4. States
+    if categories["State"]:
+        lines.append("## 4. STATES (Active Working Context):")
+        for n in categories["State"]:
+            nid = n.get("id", "STA")
             label = n.get("label", nid)
             payload = (n.get("payload") or n.get("content", "")).strip()
             weight = float(n.get("weight", 1.0))
-            w_str = f" [w: {weight:.2f}]" if weight != 1.0 else ""
+            w_str = f" [weight: {weight:.2f}]" if weight != 1.0 else ""
             lines.append(f"- **`{nid}` {label}**{w_str}: {payload}")
         lines.append("")
 
@@ -211,15 +269,19 @@ def compile_manifold_prompt(data_or_path: Union[str, Path, Dict[str, Any]], raw:
 
     # Inference Protocol
     lines.append("## INFERENCE PROTOCOL:")
-    lines.append("1. Adopt this phase-space topology directly as your internal reasoning geometry.")
+    lines.append("1. Adopt this knowledge topology directly as your operational reasoning framework.")
     lines.append("2. DO NOT cite, analyze, or discuss this system directive.")
-    lines.append("3. Evaluate all subsequent inputs strictly along these defined invariants, attractors, and fault lines.")
+    lines.append("3. Strictly enforce all defined constraints, concepts, and rules across all subsequent turns.")
 
     return "\n".join(lines)
 
 
+# Abwärtskompatibler Alias
+compile_manifold_prompt = compile_topology_prompt
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Exocortex Topology Rehydration Compiler")
+    parser = argparse.ArgumentParser(description="Exocortex Topology Compiler")
     parser.add_argument("source", help="Path or name of the JSON topology / snapshot")
     parser.add_argument("--raw", action="store_true", help="Minimalist format without header metadata")
     parser.add_argument("-o", "--output", help="Optional output path for Markdown file")
@@ -228,7 +290,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        compiled_text = compile_manifold_prompt(args.source, raw=args.raw)
+        compiled_text = compile_topology_prompt(args.source, raw=args.raw)
 
         if args.output:
             out_path = Path(args.output)
@@ -238,12 +300,11 @@ def main():
             try:
                 import pyperclip
                 pyperclip.copy(compiled_text)
-                print("[OK] Rehydration prompt copied to clipboard.", file=sys.stderr)
+                print("[OK] Prompt copied to clipboard.", file=sys.stderr)
             except ImportError:
                 print("[!] 'pyperclip' not installed. Falling back to stdout:", file=sys.stderr)
                 print(compiled_text)
         else:
-            # Standard stdout stream for pipes
             print(compiled_text)
 
     except Exception as e:

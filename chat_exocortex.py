@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-chat_exocortex.py (v1.4.9)
+chat_exocortex.py (v1.5.0)
 Universal terminal runner with dual-mode support:
   1. Embedded Mode (Local via direct class instances)
   2. Remote Mode   (Network via FastMCP / SSE client)
@@ -49,20 +49,18 @@ C_GRAY = "\033[90m"
 C_BOLD = "\033[1m"
 C_RESET = "\033[0m"
 
-def format_resonance_banner(xml_str: str) -> str:
-    """Formatiert das aktive Phasenraum-XML in eine präzise, ausfallsichere Resonanz-Badge."""
-    if not xml_str or "quiescent" in xml_str:
-        return f"{C_GRAY}⚡ [RESONANCE] Phase space quiescent (in-context trajectory active){C_RESET}"
-    
-    import re
-    # 1. Extrahiere alle Nodes via Regex (immun gegen XML-Parsing-Fehler im Header/Query)
-    # Matcht <NodeType id='...' label='...'> oder <resonance id='...' label='...'>
-    pattern = r"<(?!(?:topological_links|link|field_gauge|active_phase_space|\/))([A-Za-z_]+)\s+([^>]+)>"
+
+def format_context_banner(xml_str: str) -> str:
+    """Formats the active context XML into a clean terminal badge."""
+    if not xml_str or "quiescent" in xml_str or "status='empty'" in xml_str:
+        return f"{C_GRAY}⚡ [CONTEXT] Graph quiescent (direct in-context reasoning active){C_RESET}"
+
+    # Container- und Kanten-Tags bei der Knotenerkennung ausschließen
+    pattern = r"<(?!(?:graph_links|topological_links|link|graph_query|field_gauge|active_context|active_phase_space|\/))([A-Za-z_]+)\s+([^>]+)>"
     matches = re.findall(pattern, xml_str)
 
     nodes_repr = []
     for tag_name, attrs_raw in matches:
-        # Extrahiere id, label, score/resonance und context
         id_match = re.search(r"id=['\"]([^'\"]+)['\"]", attrs_raw)
         if not id_match:
             continue
@@ -71,10 +69,10 @@ def format_resonance_banner(xml_str: str) -> str:
         label_match = re.search(r"label=['\"]([^'\"]+)['\"]", attrs_raw)
         label = label_match.group(1) if label_match else tag_name
 
-        score_match = re.search(r"(?:resonance|score)=['\"]([\d\.]+)['\"]", attrs_raw)
+        score_match = re.search(r"(?:similarity|score|resonance)=['\"]([\d\.]+)['\"]", attrs_raw)
         if score_match:
             res_str = f": {float(score_match.group(1)):.2f}"
-        elif "context='topological_neighbor'" in attrs_raw:
+        elif "context='graph_neighbor'" in attrs_raw or "context='topological_neighbor'" in attrs_raw:
             res_str = " (1-hop link)"
         else:
             res_str = ""
@@ -82,9 +80,10 @@ def format_resonance_banner(xml_str: str) -> str:
         nodes_repr.append(f"{C_BOLD}{nid}{C_RESET} ({label}{res_str})")
 
     if nodes_repr:
-        return f"{C_CYAN}⚡ [RESONANCE]{C_RESET} Active Nodes: " + " | ".join(nodes_repr)
+        return f"{C_CYAN}⚡ [CONTEXT]{C_RESET} Active Nodes: " + " | ".join(nodes_repr)
 
     return ""
+
 
 def build_prompt_keybindings() -> Optional[Any]:
     """Configures Enter to submit and Alt+Enter / Esc+Enter for newlines."""
@@ -115,7 +114,7 @@ def handle_prompt_command(user_input: str, prompt_manager: PromptManager):
     if sub == "list":
         profiles = prompt_manager.list_profiles()
         active = prompt_manager.active_profile
-        print(f"\n{C_CYAN}[PROMPTS]{C_RESET} Cognitive Lenses / Profiles:")
+        print(f"\n{C_CYAN}[PROMPTS]{C_RESET} Cognitive Profiles:")
         for p in profiles:
             mark = f" {C_GREEN}(active){C_RESET}" if p == active else ""
             print(f"  • {p}{mark}")
@@ -183,27 +182,34 @@ class RemoteMCPEngine:
             })
 
     async def execute_turn(self, user_input: str, mcp_session: ClientSession, max_turns: int = 5):
-        # 1. Gauge resonance via remote daemon
         safe_query = slice_for_embedding(user_input)
+        
+        # 1. Vollständigen Payload vom Daemon abrufen (inkl. Constraints, Context & aktivem Profil)
         try:
-            gauge_res = await mcp_session.call_tool("exocortex_gauge_field", arguments={"query_vector": safe_query, "top_k": 4})
-            field_xml = gauge_res.content[0].text if gauge_res.content else "<active_phase_space status='quiescent' />"
+            payload_res = await mcp_session.call_tool(
+                "exocortex_inspect_payload",
+                arguments={
+                    "query": safe_query,
+                    "profile": self.prompt_manager.active_profile
+                }
+            )
+            full_system_prompt = payload_res.content[0].text if payload_res.content else self.prompt_manager.get_base_prompt()
         except Exception:
-            field_xml = "<active_phase_space status='quiescent' />"
+            full_system_prompt = self.prompt_manager.get_base_prompt()
 
-        yield {"event": "field_context", "xml": field_xml}
+        # 2. Kontext-XML für das UI-Banner extrahieren und anzeigen
+        context_match = re.search(r"(<active_context.*?</active_context>)", full_system_prompt, re.DOTALL)
+        context_xml = context_match.group(1) if context_match else ""
+        yield {"event": "context_frame", "xml": context_xml}
 
-        # 2. Dynamically retrieve system prompt from PromptManager
-        base_prompt = self.prompt_manager.get_base_prompt()
-        full_system_prompt = f"{base_prompt}\n\n### Active Phase Space (Remote):\n{field_xml}"
-
-        # 3. Update session
+        # 3. Session aktualisieren
         self.session.add_user_message(user_input)
         history = prune_history_if_needed(self.session.messages)
         messages_payload = [{"role": "system", "content": full_system_prompt}] + history
 
         turn_count = 0
         final_response_text = ""
+        # ... Rest von execute_turn bleibt unverändert ...
 
         while turn_count < max_turns:
             turn_count += 1
@@ -274,7 +280,7 @@ class RemoteMCPEngine:
             else:
                 final_response_text = accumulated_content
 
-                # ⚡ [REMOTE TELEMETRIE VIA MCP TOOL]
+                # Telemetrie über den Daemon ermitteln
                 telemetry_payload = {"echo": 0.0, "delta_e": None, "attractor": None}
                 try:
                     tel_call = await mcp_session.call_tool(
@@ -309,7 +315,7 @@ def print_banner(mode: str, target: str, model: str):
     divider = "-" * width
     
     print(f"{C_CYAN}{border}{C_RESET}")
-    print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.4.8 (Dual-Mode Runner){C_RESET}")
+    print(f"{C_BOLD}[*] EXOCORTEX ONLINE v1.5.0 (Dual-Mode Runner){C_RESET}")
     print(f"[*] Mode: {mode.upper()} | Target: {target} | Model: {model}")
     print(f"{C_GRAY}{divider}{C_RESET}")
     print(f"{C_GRAY}[*] Topology:  {C_RESET}/graph   /freeze   /payload   /prompt")
@@ -317,22 +323,23 @@ def print_banner(mode: str, target: str, model: str):
     print(f"{C_GRAY}[*] Controls:  [Enter] Send  |  [Alt+Enter] Linebreak  |  'exit' Quit{C_RESET}")
     print(f"{C_CYAN}{border}{C_RESET}\n")
 
+
 def print_help(mode: str = "local"):
     print(f"\n{C_BOLD}[INFO] Command Overview ({mode.upper()} Mode):{C_RESET}")
     print("  /prompt [list|set|show|reset] - Manage cognitive profiles")
     
     if mode.lower() == "local":
         print("  /graph                        - Display active topology status & node metrics")
-        print("  /graph <Name>                 - Switch active topology (e.g. /graph code_architect)")
+        print("  /graph <Name>                 - Switch active topology (e.g. /graph software_design)")
         print("  /freeze [Tag]                 - Freeze topology state (JSON snapshot + Canvas)")
     else:
-        print("  /switch <Name>                - Switch topology on remote daemon (e.g. /switch code_architect)")
+        print("  /switch <Name>                - Switch topology on remote daemon (e.g. /switch software_design)")
         print("  /freeze [Tag]                 - Freeze topology state on remote daemon")
         
     print("  /save [Name]                  - Save session transcript (Markdown + JSON)")
     print("  /load                         - List all saved sessions in vault")
     print("  /load <Name>                  - Load saved session transcript")
-    print("  /payload [query]              - Inspect compiled system prompt (base + BCs + optional resonant field)")
+    print("  /payload [query]              - Inspect compiled system prompt (base + constraints + context)")
     print("  /context                      - Display active token usage")
     print("  /clear                        - Clear message history")
     print("  exit / quit                   - Terminate session\n")
@@ -361,7 +368,7 @@ def run_local():
             if not user_input:
                 continue
 
-            # 1. Command interception
+            # 1. Befehle abfangen
             if user_input.lower() in ["exit", "quit"]:
                 print(f"\n{C_GRAY}[*] Exocortex session terminated.{C_RESET}")
                 break
@@ -419,7 +426,7 @@ def run_local():
                 tag = parts[1].strip() if len(parts) > 1 else None
                 try:
                     res = graph_store.freeze_snapshot(tag)
-                    print(f"\n{C_GREEN}[OK] Phase-space topology frozen:{C_RESET}")
+                    print(f"\n{C_GREEN}[OK] Topology snapshot frozen:{C_RESET}")
                     print(f"  ↳ Snapshot: {res['snapshot_name']}")
                     print(f"  ↳ JSON:     {res['json_path']}")
                     print(f"  ↳ Canvas:   {res['canvas_path']}\n")
@@ -430,31 +437,31 @@ def run_local():
                 parts = user_input.strip().split(maxsplit=1)
                 test_query = parts[1].strip() if len(parts) > 1 else ""
 
-                invariants_xml = graph_store.assemble_invariants_frame()
-                field_xml = graph_store.assemble_field_context(test_query) if test_query else ""
+                constraints_xml = graph_store.assemble_constraints_frame()
+                context_xml = graph_store.assemble_context_frame(test_query) if test_query else ""
                 
                 full_prompt = engine.prompt_manager.build_system_prompt(
-                    field_xml=field_xml,
-                    invariants_xml=invariants_xml
+                    context_xml=context_xml,
+                    constraints_xml=constraints_xml
                 )
 
                 print(f"\n{C_CYAN}{'='*70}{C_RESET}")
                 print(f"{C_BOLD}[COMPILED SYSTEM PROMPT PAYLOAD]{C_RESET}")
                 if test_query:
-                    print(f"{C_GRAY}Simulierte Resonanz-Query: '{test_query}'{C_RESET}")
+                    print(f"{C_GRAY}Simulierte Kontext-Query: '{test_query}'{C_RESET}")
                 else:
-                    print(f"{C_GRAY}Zustand: Base-Prompt + Statische Boundary Invariants{C_RESET}")
+                    print(f"{C_GRAY}Zustand: Base-Prompt + Statische Constraints{C_RESET}")
                 print(f"{C_CYAN}{'='*70}{C_RESET}")
                 print(full_prompt)
                 print(f"{C_CYAN}{'='*70}{C_RESET}\n")
                 continue
 
-            # 2. Execute ReAct turn (Streaming Loop)
+            # 2. ReAct Streaming Loop
             header_printed = False
             for event in engine.execute_turn(user_input):
                 ev = event.get("event")
-                if ev == "field_context":
-                    banner = format_resonance_banner(event.get("xml", ""))
+                if ev == "context_frame":
+                    banner = format_context_banner(event.get("xml", ""))
                     if banner:
                         print(f"\n{banner}")
                 elif ev == "token":
@@ -478,7 +485,7 @@ def run_local():
                     else:
                         print("\n")
 
-                    # ⚡ [NAVIGATOR TELEMETRIE]
+                    # Telemetrie
                     tel = event.get("telemetry")
                     if tel:
                         echo = tel.get("echo", 0.0)
@@ -489,7 +496,7 @@ def run_local():
                             attr_label = f" ({attr})" if attr else ""
                             print(f"{C_GRAY}⚡ [NAV] Echo: {echo:.2f} | ΔE: {sign}{delta:.2f}{attr_label}{C_RESET}\n")
                         else:
-                            print(f"{C_GRAY}⚡ [NAV] Echo: {echo:.2f} | ΔE: N/A (Quiescent Trajectory){C_RESET}\n")
+                            print(f"{C_GRAY}⚡ [NAV] Echo: {echo:.2f} | ΔE: N/A{C_RESET}\n")
                 elif ev == "error":
                     print(f"\n{C_RED}[!] Error:{C_RESET} {event['message']}\n")
 
@@ -529,7 +536,7 @@ async def run_remote(sse_url: str):
                         if not user_input:
                             continue
 
-                        # 1. Command interception
+                        # 1. Befehle abfangen
                         if user_input.lower() in ["exit", "quit"]:
                             print(f"\n{C_GRAY}[*] Remote connection closed. Exocortex terminated.{C_RESET}")
                             break
@@ -601,14 +608,14 @@ async def run_remote(sse_url: str):
                                 try:
                                     payload = json.loads(raw_payload)
                                     if payload.get("status") == "success":
-                                        print(f"\n{C_GREEN}[OK] Remote phase-space topology frozen:{C_RESET}")
+                                        print(f"\n{C_GREEN}[OK] Remote topology snapshot frozen:{C_RESET}")
                                         print(f"  ↳ Snapshot: {payload.get('snapshot_name')}")
                                         print(f"  ↳ JSON:     {payload.get('json_path')}")
                                         print(f"  ↳ Canvas:   {payload.get('canvas_path')}\n")
                                     else:
                                         print(f"\n{C_RED}[!] Remote freeze failed: {payload.get('message')}{C_RESET}\n")
                                 except (json.JSONDecodeError, TypeError):
-                                    print(f"\n{C_GREEN}[OK] Remote phase-space response:{C_RESET}\n  ↳ {raw_payload}\n")
+                                    print(f"\n{C_GREEN}[OK] Remote response:{C_RESET}\n  ↳ {raw_payload}\n")
                             except Exception as e:
                                 print(f"\n{C_RED}[!] Remote freeze RPC error: {e}{C_RESET}\n")
                             continue
@@ -619,16 +626,19 @@ async def run_remote(sse_url: str):
                             try:
                                 res = await mcp_session.call_tool(
                                     "exocortex_inspect_payload", 
-                                    arguments={"query": test_query}
+                                    arguments={
+                                        "query": test_query,
+                                        "profile": remote_engine.prompt_manager.active_profile
+                                    }
                                 )
                                 content = res.content[0].text if res.content else "(empty payload)"
 
                                 print(f"\n{C_CYAN}{'='*70}{C_RESET}")
-                                print(f"{C_BOLD}[COMPILED REMOTE SYSTEM PROMPT PAYLOAD]{C_RESET}")
+                                print(f"{C_BOLD}[COMPILED REMOTE SYSTEM PROMPT PAYLOAD ({remote_engine.prompt_manager.active_profile.upper()})]{C_RESET}")
                                 if test_query:
-                                    print(f"{C_GRAY}Simulierte Resonanz-Query: '{test_query}'{C_RESET}")
+                                    print(f"{C_GRAY}Simulierte Kontext-Query: '{test_query}'{C_RESET}")
                                 else:
-                                    print(f"{C_GRAY}Zustand: Base-Prompt + Statische Boundary Invariants{C_RESET}")
+                                    print(f"{C_GRAY}Zustand: Base-Prompt + Statische Constraints{C_RESET}")
                                 print(f"{C_CYAN}{'='*70}{C_RESET}")
                                 print(content)
                                 print(f"{C_CYAN}{'='*70}{C_RESET}\n")
@@ -636,12 +646,12 @@ async def run_remote(sse_url: str):
                                 print(f"\n{C_RED}[!] Remote /payload error: {e}{C_RESET}\n")
                             continue
 
-                        # 2. Execute remote turn (Streaming Loop)
+                        # 2. ReAct Streaming Loop (Remote)
                         header_printed = False
                         async for event in remote_engine.execute_turn(user_input, mcp_session):
                             ev = event.get("event")
-                            if ev == "field_context":
-                                banner = format_resonance_banner(event.get("xml", ""))
+                            if ev == "context_frame":
+                                banner = format_context_banner(event.get("xml", ""))
                                 if banner:
                                     print(f"\n{banner}")
                             elif ev == "token":
@@ -675,7 +685,7 @@ async def run_remote(sse_url: str):
                                         attr_label = f" ({attr})" if attr else ""
                                         print(f"{C_GRAY}⚡ [NAV] Echo: {echo:.2f} | ΔE: {sign}{delta:.2f}{attr_label}{C_RESET}\n")
                                     else:
-                                        print(f"{C_GRAY}⚡ [NAV] Echo: {echo:.2f} | ΔE: N/A (Quiescent Trajectory){C_RESET}\n")
+                                        print(f"{C_GRAY}⚡ [NAV] Echo: {echo:.2f} | ΔE: N/A{C_RESET}\n")
 
                             elif ev == "error":
                                 print(f"\n{C_RED}[!] Remote Error:{C_RESET} {event['message']}\n")
@@ -688,8 +698,9 @@ async def run_remote(sse_url: str):
         print(f"{C_RED}[!] Error in remote turn:{C_RESET}")
         traceback.print_exc()
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Exocortex Terminal Runner (v1.4.5)")
+    parser = argparse.ArgumentParser(description="Exocortex Terminal Runner (v1.5.0)")
     parser.add_argument(
         "--remote",
         nargs="?",
