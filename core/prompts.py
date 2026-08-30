@@ -33,7 +33,7 @@ Focus:
 
 
 class PromptManager:
-    """Manages active system prompts, cognitive profiles, and dynamic phase-space injections."""
+    """Manages active system prompts, cognitive profiles, and dynamic context injections."""
 
     def __init__(self, default_profile: str = "default", config_dir: Optional[Path] = None):
         self.active_profile: str = default_profile if default_profile in PROMPT_PROFILES else "default"
@@ -85,20 +85,25 @@ class PromptManager:
 
     def build_system_prompt(
         self, 
-        field_xml: Optional[str] = "", 
-        invariants_xml: Optional[str] = ""
+        context_xml: Optional[str] = "", 
+        constraints_xml: Optional[str] = "",
+        field_xml: Optional[str] = None,       # Legacy-Fallback
+        invariants_xml: Optional[str] = None   # Legacy-Fallback
     ) -> str:
         """
         Combines the active base prompt with:
-        1. Immutable boundary invariants (always active, via negativa).
-        2. Dynamic resonant phase-space state (retrieved per turn).
+        1. Inviolable constraints (always active, via negativa).
+        2. Dynamic context subgraph (retrieved per turn).
         """
+        active_context = context_xml if context_xml else (field_xml or "")
+        active_constraints = constraints_xml if constraints_xml else (invariants_xml or "")
+
         sections = [self.get_base_prompt()]
 
-        if invariants_xml and invariants_xml.strip():
-            sections.append(f"### Active Boundary Invariants:\n{invariants_xml.strip()}")
+        if active_constraints and active_constraints.strip():
+            sections.append(f"### Active Constraints:\n{active_constraints.strip()}")
 
-        if field_xml and field_xml.strip():
-            sections.append(f"### Active Phase Space Topology:\n{field_xml.strip()}")
+        if active_context and active_context.strip():
+            sections.append(f"### Active Context:\n{active_context.strip()}")
 
         return "\n\n".join(sections)

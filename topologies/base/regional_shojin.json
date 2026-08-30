@@ -9,56 +9,56 @@
   },
   "nodes": [
     {
-      "id": "BC_001",
-      "type": "BoundaryConstraint",
+      "id": "CST_001",
+      "type": "Constraint",
       "label": "Seasonal_and_Regional",
       "payload": "Cook strictly with what the local region and current season provide. No unseasonal long-distance produce.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "BC_002",
-      "type": "BoundaryConstraint",
+      "id": "CST_002",
+      "type": "Constraint",
       "label": "Zero_Waste_Respect",
       "payload": "Treat ingredients with care: Use peels, stems, and trimmings for broths, ferments, or seasoning powders. Discard nothing edible.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "BC_003",
-      "type": "BoundaryConstraint",
+      "id": "CST_003",
+      "type": "Constraint",
       "label": "Fivefold_Harmony",
       "payload": "Balance meals across 5 tastes (sweet, sour, salty, bitter, umami), 5 colors (green, red, yellow, white, black/dark), and varied preparations (raw, simmered, steamed, grilled, fried).",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "PW_001",
-      "type": "PotentialWell",
+      "id": "CNC_001",
+      "type": "Concept",
       "label": "Vegetable_Dashi_Base",
       "payload": "The aromatic foundation: Build deep, clean umami using dried mushrooms, roasted grains, kombu/seaweed (or regional herbs), and root vegetables.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "PW_002",
-      "type": "PotentialWell",
+      "id": "CNC_002",
+      "type": "Concept",
       "label": "Ingredient_Purity",
       "payload": "Restraint over excess. Let the natural, subtle flavor of pristine seasonal vegetables shine without heavy, masking sauces.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "PW_003",
-      "type": "PotentialWell",
+      "id": "CNC_003",
+      "type": "Concept",
       "label": "Texture_Balance",
       "payload": "Harmonize contrasting mouthfeels within a dish: combine crisp, silky, chewy, and tender elements.",
       "embedding": [],
       "weight": 0.9
     },
     {
-      "id": "TO_001",
-      "type": "TrajectoryOperator",
+      "id": "RUL_001",
+      "type": "Rule",
       "label": "Gentle_Techniques",
       "payload": "Rely on mindful techniques: natural fermentation (koji, miso, lacto), gentle steaming, slow braising, and quick pan-roasting.",
       "embedding": [],
@@ -67,32 +67,32 @@
   ],
   "links": [
     {
-      "source": "BC_001",
-      "target": "PW_001",
+      "source": "CST_001",
+      "target": "CNC_001",
       "relation": "grounds",
       "weight": 1.0
     },
     {
-      "source": "BC_002",
-      "target": "PW_001",
+      "source": "CST_002",
+      "target": "CNC_001",
       "relation": "enriches",
       "weight": 1.0
     },
     {
-      "source": "BC_003",
-      "target": "PW_003",
+      "source": "CST_003",
+      "target": "CNC_003",
       "relation": "balances",
       "weight": 1.0
     },
     {
-      "source": "TO_001",
-      "target": "PW_002",
+      "source": "RUL_001",
+      "target": "CNC_002",
       "relation": "preserves",
       "weight": 1.0
     },
     {
-      "source": "PW_002",
-      "target": "PW_001",
+      "source": "CNC_002",
+      "target": "CNC_001",
       "relation": "complements",
       "weight": 0.9
     }

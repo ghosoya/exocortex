@@ -9,48 +9,48 @@
   },
   "nodes": [
     {
-      "id": "BC_001",
-      "type": "BoundaryConstraint",
+      "id": "CST_001",
+      "type": "Constraint",
       "label": "Single_Responsibility",
       "payload": "Keep units focused: A function, module, or class should do one thing well and have one clear reason to change.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "BC_002",
-      "type": "BoundaryConstraint",
+      "id": "CST_002",
+      "type": "Constraint",
       "label": "Side_Effect_Isolation",
       "payload": "Separate pure business logic from I/O and state mutation. Keep functions predictable, testable, and idempotent where possible.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "PW_001",
-      "type": "PotentialWell",
+      "id": "CNC_001",
+      "type": "Concept",
       "label": "Simplicity_Over_Cleverness",
       "payload": "Write obvious code. Prefer clear, readable solutions over clever abstractions, deep inheritance trees, or premature optimization.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "PW_002",
-      "type": "PotentialWell",
+      "id": "CNC_002",
+      "type": "Concept",
       "label": "Explicit_Boundaries",
       "payload": "Decouple modules via simple, well-defined interfaces. Changes inside module A should never unexpectedly break module B.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "TO_001",
-      "type": "TrajectoryOperator",
+      "id": "RUL_001",
+      "type": "Rule",
       "label": "Defensive_Design",
       "payload": "Handle edge cases and errors explicitly at the boundaries. Fail fast with clear error messages instead of failing silently.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "PST_001",
-      "type": "PhaseSpaceTrace",
+      "id": "STA_001",
+      "type": "State",
       "label": "Design_Review_Active",
       "payload": "Reviewing code or architecture for simplicity, modularity, and maintainability.",
       "embedding": [],
@@ -59,32 +59,32 @@
   ],
   "links": [
     {
-      "source": "BC_001",
-      "target": "PW_001",
+      "source": "CST_001",
+      "target": "CNC_001",
       "relation": "enforces",
       "weight": 1.0
     },
     {
-      "source": "BC_002",
-      "target": "PW_002",
+      "source": "CST_002",
+      "target": "CNC_002",
       "relation": "protects",
       "weight": 1.0
     },
     {
-      "source": "TO_001",
-      "target": "BC_002",
+      "source": "RUL_001",
+      "target": "CST_002",
       "relation": "guards",
       "weight": 1.0
     },
     {
-      "source": "PW_002",
-      "target": "PW_001",
+      "source": "CNC_002",
+      "target": "CNC_001",
       "relation": "supports",
       "weight": 0.9
     },
     {
-      "source": "PST_001",
-      "target": "TO_001",
+      "source": "STA_001",
+      "target": "RUL_001",
       "relation": "applies",
       "weight": 1.0
     }

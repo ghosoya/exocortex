@@ -1,7 +1,7 @@
 """
-test_mcp_network.py (v1.4.1)
+test_mcp_network.py (v1.5.0)
 Automated network/SSE integration tests for Exocortex MCP Daemon.
-Tests tool discovery, temporal anchoring, phase space gauging, and field imprinting.
+Tests tool discovery, temporal anchoring, graph querying, and node creation.
 """
 
 import asyncio
@@ -14,55 +14,44 @@ async def main():
     async with sse_client("http://127.0.0.1:8000/sse") as (read_stream, write_stream):
         async with ClientSession(read_stream, write_stream) as session:
             await session.initialize()
-            
-            # 1. List available tools & verify registration
+
+            # 1. Tool-Discovery: Genau 11 saubere Tools registriert
             tools = await session.list_tools()
             tool_names = [t.name for t in tools.tools]
             print(f"\n[OK] Connected MCP Tools ({len(tool_names)}): {tool_names}")
-            assert "exocortex_imprint_field" in tool_names, "Tool 'exocortex_imprint_field' not exposed!"
-            
-            # 2. Retrieve temporal anchor
+            assert "exocortex_create_node" in tool_names
+            assert "exocortex_query_graph" in tool_names
+            assert "exocortex_mutate_node" in tool_names
+            assert "exocortex_imprint_field" not in tool_names, "Legacy alias should be gone!"
+
+            # 2. Zeit-Anker abrufen
             res_time = await session.call_tool("exocortex_temporal_anchor", arguments={"scope": "full"})
             print(f"\n[TOOL RESULT] exocortex_temporal_anchor:\n{res_time.content[0].text}")
-            
-            # 3. Gauge phase space over the network
-            res_gauge = await session.call_tool(
-                "exocortex_gauge_field", 
-                arguments={"query_vector": "Architecture Decoupling", "top_k": 2}
-            )
-            print(f"\n[TOOL RESULT] exocortex_gauge_field:\n{res_gauge.content[0].text}")
 
-            # 4. Imprint field state with tensor links (E2E Schema & Persistence Test)
-            print("\n[*] Testing exocortex_imprint_field (with tensor_links)...")
-            res_imprint = await session.call_tool(
-                "exocortex_imprint_field",
+            # 3. Kontext-Abfrage über das Netzwerk
+            print("\n[*] Testing exocortex_query_graph...")
+            res_query = await session.call_tool(
+                "exocortex_query_graph", 
+                arguments={"query": "Architecture Decoupling", "top_k": 2}
+            )
+            print(f"[TOOL RESULT] exocortex_query_graph:\n{res_query.content[0].text}")
+
+            # 4. Knoten mit Link auf CST_001 anlegen
+            print("\n[*] Testing exocortex_create_node...")
+            res_create = await session.call_tool(
+                "exocortex_create_node",
                 arguments={
-                    "node_type": "PhaseSpaceTrace",
+                    "node_type": "State",
                     "label": "Network_SSE_Validation_Trace",
                     "content_payload": "Automated verification of remote MCP tool dispatch and canvas sync.",
-                    "tensor_links": ["BC_001"]
+                    "links": ["CST_001"]
                 }
             )
-            imprint_text = res_imprint.content[0].text
-            print(f"[TOOL RESULT] exocortex_imprint_field:\n{imprint_text}")
-            assert "Field state materialized" in imprint_text
-            assert "Network_SSE_Validation_Trace" in imprint_text
-            assert "Wired to: BC_001" in imprint_text
-
-            # 5. Imprint field state without tensor links (Optional Parameter Test)
-            print("\n[*] Testing exocortex_imprint_field (optional tensor_links omitted)...")
-            res_imprint_opt = await session.call_tool(
-                "exocortex_imprint_field",
-                arguments={
-                    "node_type": "BoundaryConstraint",
-                    "label": "Isolated_Constraint_Trace",
-                    "content_payload": "Testing schema default handling for empty tensor link lists."
-                }
-            )
-            opt_text = res_imprint_opt.content[0].text
-            print(f"[TOOL RESULT] exocortex_imprint_field (omitted links):\n{opt_text}")
-            assert "Field state materialized" in opt_text
-            assert "Wired to: None" in opt_text
+            create_text = res_create.content[0].text
+            print(f"[TOOL RESULT] exocortex_create_node:\n{create_text}")
+            assert "Node materialized" in create_text
+            assert "Network_SSE_Validation_Trace" in create_text
+            assert "CST_001" in create_text
 
             print("\n[SUCCESS] All remote MCP network integration checks passed.")
 

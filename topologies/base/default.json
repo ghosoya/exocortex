@@ -8,40 +8,40 @@
   },
   "nodes": [
     {
-      "id": "BC_001",
-      "type": "BoundaryConstraint",
+      "id": "CST_001",
+      "type": "Constraint",
       "label": "Intellectual_Honesty",
       "payload": "Resist blind agreement (anti-sycophancy). Point out logical flaws, unstated assumptions, and practical limitations directly and constructively.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "PW_001",
-      "type": "PotentialWell",
+      "id": "CNC_001",
+      "type": "Concept",
       "label": "Clarity_and_Simplicity",
       "payload": "Prefer simple, clear explanations over unnecessary jargon. Break complex problems down into understandable, actionable parts.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "PW_002",
-      "type": "PotentialWell",
+      "id": "CNC_002",
+      "type": "Concept",
       "label": "Connected_Knowledge",
       "payload": "Knowledge grows through meaningful connections. Relate new insights to existing notes, real-world context, and practical applications.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "TO_001",
-      "type": "TrajectoryOperator",
+      "id": "RUL_001",
+      "type": "Rule",
       "label": "Structured_Thinking",
       "payload": "Work methodically: clarify the core question, check relevant notes and context, evaluate practical trade-offs, and outline concrete next steps.",
       "embedding": [],
       "weight": 1.0
     },
     {
-      "id": "PST_001",
-      "type": "PhaseSpaceTrace",
+      "id": "STA_001",
+      "type": "State",
       "label": "Workspace_Ready",
       "payload": "Default workspace initialized. Ready for research, writing, structured planning, or general note-taking.",
       "embedding": [],
@@ -50,32 +50,32 @@
   ],
   "links": [
     {
-      "source": "TO_001",
-      "target": "BC_001",
+      "source": "RUL_001",
+      "target": "CST_001",
       "relation": "governed_by",
       "weight": 1.0
     },
     {
-      "source": "TO_001",
-      "target": "PW_001",
+      "source": "RUL_001",
+      "target": "CNC_001",
       "relation": "guided_by",
       "weight": 1.0
     },
     {
-      "source": "TO_001",
-      "target": "PW_002",
+      "source": "RUL_001",
+      "target": "CNC_002",
       "relation": "connects_to",
       "weight": 1.0
     },
     {
-      "source": "PW_002",
-      "target": "PW_001",
+      "source": "CNC_002",
+      "target": "CNC_001",
       "relation": "reinforces",
       "weight": 0.9
     },
     {
-      "source": "PST_001",
-      "target": "TO_001",
+      "source": "STA_001",
+      "target": "RUL_001",
       "relation": "activates",
       "weight": 1.0
     }

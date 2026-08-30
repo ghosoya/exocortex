@@ -12,10 +12,10 @@ import json
 
 from core.guards import slice_for_embedding, estimate_tokens, prune_history_if_needed
 from core.session import SessionManager
-from core.compiler import compile_manifold_prompt, _normalize_topology_schema
+from core.compiler import compile_topology_prompt, _normalize_topology_schema
 from core.prompts import PromptManager
 from server.vault_io import VaultIO
-from server.graph_store import GraphStore, cosine_similarity
+from server.graph_store import GraphStore, NodeType, cosine_similarity
 
 
 class TestGuards(unittest.TestCase):
@@ -69,7 +69,7 @@ class TestSessionManager(unittest.TestCase):
 
     def test_save_and_load_session(self):
         self.session.add_user_message("State Mutation")
-        self.session.add_assistant_message("Axiom Imprinted")
+        self.session.add_assistant_message("Concept Created")
         paths = self.session.save_session("persisted_session")
 
         self.assertTrue(Path(paths["markdown"]).exists())
@@ -101,12 +101,12 @@ class TestVaultIO(unittest.TestCase):
         self.assertIn("Test insight", content)
 
     def test_graph_json_io(self):
-        dummy_graph = {"nodes": [{"id": "BC_001", "type": "BoundaryConstraint"}], "edges": []}
+        dummy_graph = {"nodes": [{"id": "CST_001", "type": "Constraint"}], "edges": []}
         saved_path = self.vault_io.write_graph_json("test_graph", dummy_graph)
         self.assertTrue(Path(saved_path).exists())
 
         loaded = self.vault_io.read_graph_json("test_graph")
-        self.assertEqual(loaded["nodes"][0]["id"], "BC_001")
+        self.assertEqual(loaded["nodes"][0]["id"], "CST_001")
 
     def test_path_traversal_prevention(self):
         with self.assertRaises(PermissionError):
@@ -118,11 +118,11 @@ class TestGraphStore(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.vault_io = VaultIO(vault_path=Path(self.temp_dir))
         
-        # Seed default graph
+        # Seed default graph with canonical v1.5 types
         seed_data = {
             "nodes": [
-                {"id": "BC_001", "type": "BoundaryConstraint", "label": "Test Guard", "payload": "Strict typing"},
-                {"id": "PW_001", "type": "PotentialWell", "label": "Test Well", "payload": "Modular architecture"}
+                {"id": "CST_001", "type": "Constraint", "label": "Test Guard", "payload": "Strict typing"},
+                {"id": "CNC_001", "type": "Concept", "label": "Test Well", "payload": "Modular architecture"}
             ],
             "edges": []
         }
@@ -142,14 +142,14 @@ class TestGraphStore(unittest.TestCase):
 
     def test_imprint_node_and_canvas_sync(self):
         res = self.store.imprint_node(
-            node_type="BoundaryConstraint",
+            node_type="Constraint",
             label="Zero_Leak",
             content_payload="Prevent side effects",
-            tensor_links=["PW_001"]
+            links=["CNC_001"]
         )
-        self.assertEqual(res["node_id"], "BC_002")
-        self.assertTrue(self.store.graph.has_node("BC_002"))
-        self.assertTrue(self.store.graph.has_edge("BC_002", "PW_001"))
+        self.assertEqual(res["node_id"], "CST_002")
+        self.assertTrue(self.store.graph.has_node("CST_002"))
+        self.assertTrue(self.store.graph.has_edge("CST_002", "CNC_001"))
 
         # Verify Canvas synchronization
         canvas_path = self.vault_io.vault_path / "Exocortex_Interactive.canvas"
@@ -157,25 +157,25 @@ class TestGraphStore(unittest.TestCase):
 
     def test_mutate_node_actions(self):
         # 1. STRENGTHEN
-        res = self.store.mutate_node("BC_001", action="STRENGTHEN", delta=0.5)
+        res = self.store.mutate_node("CST_001", action="STRENGTHEN", delta=0.5)
         self.assertEqual(res["new_weight"], 1.5)
 
         # 2. DECAY
-        res = self.store.mutate_node("BC_001", action="DECAY", delta=0.3)
+        res = self.store.mutate_node("CST_001", action="DECAY", delta=0.3)
         self.assertEqual(res["new_weight"], 1.2)
 
         # 3. SET_WEIGHT
-        res = self.store.mutate_node("BC_001", action="SET_WEIGHT", delta=2.5)
+        res = self.store.mutate_node("CST_001", action="SET_WEIGHT", delta=2.5)
         self.assertEqual(res["new_weight"], 2.5)
 
         # 4. UPDATE
-        res = self.store.mutate_node("BC_001", action="UPDATE", payload_update="Updated Guardrail Axiom")
+        res = self.store.mutate_node("CST_001", action="UPDATE", payload_update="Updated Guardrail Axiom")
         self.assertEqual(res["updated_payload"], "Updated Guardrail Axiom")
-        self.assertEqual(self.store.graph.nodes["BC_001"]["payload"], "Updated Guardrail Axiom")
+        self.assertEqual(self.store.graph.nodes["CST_001"]["payload"], "Updated Guardrail Axiom")
 
         # 5. PRUNE
-        res = self.store.mutate_node("BC_001", action="PRUNE")
-        self.assertFalse(self.store.graph.has_node("BC_001"))
+        res = self.store.mutate_node("CST_001", action="PRUNE")
+        self.assertFalse(self.store.graph.has_node("CST_001"))
 
     def test_freeze_snapshot(self):
         res = self.store.freeze_snapshot(tag="test_freeze")
@@ -186,13 +186,13 @@ class TestGraphStore(unittest.TestCase):
         """Verifiziert deterministische ID, Embedding, Kanten und Persistence."""
         # 1. Erster Imprint
         res1 = self.store.imprint_node(
-            node_type="TrajectoryOperator",
+            node_type="Rule",
             label="Test_Operator_A",
             content_payload="Erster Test-Payload",
-            tensor_links=["BC_001"]
+            links=["CST_001"]
         )
         node_id_1 = res1["node_id"]
-        self.assertTrue(node_id_1.startswith("TO_"))
+        self.assertTrue(node_id_1.startswith("RUL_"))
     
         node_data_1 = self.store.graph.nodes[node_id_1]
         self.assertEqual(node_data_1["label"], "Test_Operator_A")
@@ -201,13 +201,12 @@ class TestGraphStore(unittest.TestCase):
     
         # 2. Zweiter Imprint (Prüfung der ID-Inkrementierung & Kanten)
         res2 = self.store.imprint_node(
-            node_type="TrajectoryOperator",
+            node_type="Rule",
             label="Test_Operator_B",
             content_payload="Zweiter Test-Payload",
-            tensor_links=[node_id_1]
+            links=[node_id_1]
         )
         node_id_2 = res2["node_id"]
-        # Sicherstellen, dass Index echt inkrementiert wurde
         idx1 = int(node_id_1.split("_")[1])
         idx2 = int(node_id_2.split("_")[1])
         self.assertEqual(idx2, idx1 + 1)
@@ -215,7 +214,7 @@ class TestGraphStore(unittest.TestCase):
         # Kantenprüfung
         self.assertTrue(self.store.graph.has_edge(node_id_2, node_id_1))
         edge = self.store.graph.edges[node_id_2, node_id_1]
-        self.assertEqual(edge.get("relation"), "tensor_link")
+        self.assertEqual(edge.get("relation"), "relates_to")
         self.assertEqual(edge.get("weight"), 0.85)
         
     def test_get_graph_stats(self):
@@ -227,39 +226,36 @@ class TestGraphStore(unittest.TestCase):
     def test_assemble_field_context_with_1hop_links(self):
         # 1. Zweiten Knoten und gerichtete Kante anlegen
         self.store.graph.add_node(
-            "TO_001",
-            type="TrajectoryOperator",
+            "RUL_001",
+            type="Rule",
             label="Decoupling_Operator",
             payload="Isolate dependencies",
             weight=1.0
         )
-        self.store.graph.add_edge("PW_001", "TO_001", relation="grounds_in", weight=0.85)
+        self.store.graph.add_edge("CNC_001", "RUL_001", relation="grounds_in", weight=0.85)
         
-        # 2. Query zielt semantisch direkt auf PW_001 ('Modular architecture')
-        xml_context = self.store.assemble_field_context("Modular software architecture and components")
+        # 2. Query zielt semantisch auf CNC_001 ('Modular architecture')
+        xml_context = self.store.assemble_context_frame("Modular software architecture and components")
         
-        # 3. Assertions: XML-Struktur, Resonanz und 1-Hop-Nachbar
-        self.assertIn("<active_phase_space", xml_context)
-        self.assertIn("PW_001", xml_context)
-        self.assertIn("TO_001", xml_context)
-        self.assertIn("topological_neighbor", xml_context)
-        self.assertIn("<topological_links>", xml_context)
+        # 3. Assertions: XML-Struktur, Ähnlichkeit und 1-Hop-Nachbar
+        self.assertIn("<active_context", xml_context)
+        self.assertIn("CNC_001", xml_context)
+        self.assertIn("RUL_001", xml_context)
+        self.assertIn("graph_neighbor", xml_context)
+        self.assertIn("<graph_links>", xml_context)
         self.assertIn("relation='grounds_in'", xml_context)
 
     def test_compute_telemetry_mechanics(self):
-        # Prüft die mathematische Integrität des Navigators
         prompt_vec = [1.0, 0.0, 0.0]
-        resp_echo = [1.0, 0.0, 0.0]     # Volles Echo (sim = 1.0)
-        resp_diff = [0.0, 1.0, 0.0]     # Orthogonal (sim = 0.0)
-        well_vec = [0.0, 1.0, 0.0]      # Attraktor liegt auf Achse 2
+        resp_echo = [1.0, 0.0, 0.0]
+        resp_diff = [0.0, 1.0, 0.0]
+        well_vec = [0.0, 1.0, 0.0]
         
-        # Echo-Test
         self.assertAlmostEqual(cosine_similarity(prompt_vec, resp_echo), 1.0)
         self.assertAlmostEqual(cosine_similarity(prompt_vec, resp_diff), 0.0)
         
-        # Lift-Test: Lift = sim(resp, well) - sim(prompt, well)
         lift_positive = cosine_similarity(resp_diff, well_vec) - cosine_similarity(prompt_vec, well_vec)
-        self.assertAlmostEqual(lift_positive, 1.0)  # 1.0 - 0.0 = +1.0
+        self.assertAlmostEqual(lift_positive, 1.0)
         
         lift_neutral = cosine_similarity(prompt_vec, well_vec) - cosine_similarity(prompt_vec, well_vec)
         self.assertAlmostEqual(lift_neutral, 0.0)
@@ -279,20 +275,21 @@ class TestCompilerAndPrompts(unittest.TestCase):
         normalized = _normalize_topology_schema(declarative_data)
         self.assertIn("nodes", normalized)
         self.assertEqual(len(normalized["nodes"]), 2)
-        self.assertEqual(normalized["nodes"][0]["type"], "BoundaryConstraint")
-        self.assertEqual(normalized["nodes"][1]["type"], "PotentialWell")
+        # Überprüft automatische Normalisierung auf neue Typen
+        self.assertEqual(normalized["nodes"][0]["type"], "Constraint")
+        self.assertEqual(normalized["nodes"][1]["type"], "Concept")
 
     def test_compile_manifold_prompt(self):
         sample = {
             "topology_name": "TEST_TOPO",
             "nodes": [
-                {"id": "BC_001", "type": "BoundaryConstraint", "label": "Immutability", "payload": "Pure functions only", "weight": 1.0}
+                {"id": "CST_001", "type": "Constraint", "label": "Immutability", "payload": "Pure functions only", "weight": 1.0}
             ],
             "edges": []
         }
-        prompt = compile_manifold_prompt(sample)
-        self.assertIn("COGNITIVE ATTRACTOR TOPOLOGY: `TEST_TOPO`", prompt)
-        self.assertIn("BC_001", prompt)
+        prompt = compile_topology_prompt(sample)
+        self.assertIn("KNOWLEDGE TOPOLOGY: `TEST_TOPO`", prompt)
+        self.assertIn("CST_001", prompt)
         self.assertIn("Pure functions only", prompt)
 
     def test_prompt_manager_profiles(self):
@@ -301,7 +298,7 @@ class TestCompilerAndPrompts(unittest.TestCase):
         
         self.assertTrue(pm.set_profile("architect"))
         self.assertEqual(pm.active_profile, "architect")
-        self.assertIn("System Architecture mode", pm.get_base_prompt())
+        self.assertIn("Architect Mode", pm.get_base_prompt())
 
         pm.set_custom("Custom Operator Override")
         self.assertEqual(pm.get_base_prompt(), "Custom Operator Override")
