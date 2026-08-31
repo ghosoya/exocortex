@@ -65,16 +65,12 @@ Every graph mutation automatically updates an interactive, color-coded `.canvas`
 
 4. **Prompt Compiler & Snapshot Freezing:**
 Export any active graph topology into a compact, token-efficient Markdown system prompt (< 350 tokens) that can be piped into any local LLM, script, or CI pipeline.
-5. **Anti-Sycophancy Telemetry (Echo & Epistemic Lift):**
-Evaluates model behavior live after each turn to prevent uncritical agreement and ungrounded hallucination:
 
-* **Prompt Mirroring (`Echo`):** Measures the cosine similarity between the user prompt and the assistant response. High echo (> 0.85) flags that the model is merely rephrasing your input rather than offering independent critique or insight.
-* **Semantic Drift & Epistemic Lift (`ΔE`):** Measures whether the response actively moved closer to the ground truth of your knowledge graph:
+5. **Experimental Anti-Sycophancy Telemetry (Echo & Epistemic Lift):**
+Diagnostic runtime heuristics computed after each turn to detect conversational mirroring and verify factual grounding against graph principles:
 
-$$\Delta E = \text{sim}(\text{response}, \text{concept}) - \text{sim}(\text{prompt}, \text{concept})$$
-
-
-A positive $\Delta E$ indicates that the model grounded its reasoning in your established principles rather than drifting into ungrounded tangents.
+- **Echo Score ($\rho_{\text{echo}}$):** Tracks prompt-to-response cosine similarity. Flags passive parroting (> 0.85) versus healthy critical distance (0.50–0.70).
+- **Epistemic Lift ($\Delta E$):** Measures whether the model's response actively converges toward retrieved ground-truth nodes rather than floating off into unconstrained generation.
 
 6. **Dual-Mode Operation:**
 
@@ -187,10 +183,13 @@ python -m core.compiler software_design | ollama run gemma4:12b "Analyze this se
 
 ## 📚 Examples & Benchmarks
 
-Practical evaluations and CLI session benchmarks demonstrating graph memory and anti-sycophancy guardrails are available in `docs/topologies/`:
+To demonstrate that Exocortex is a general-purpose reasoning architecture rather than a software-specific prompt wrapper, the benchmarks in `docs/topologies/` test two fundamentally different domains using the exact same underlying graph schema (`Constraint`, `Concept`, `Rule`, `State`):
 
-* **[Software Design Review](docs/topologies/01_software_design_review.md)** — Preventing monolithic "god functions", isolating side effects, and enforcing modular boundaries.
-* **[Regional Shojin Cooking](docs/topologies/02_regional_shojin_recipe.md)** — Applying structured graph constraints to seasonal cooking, texture pairing, and zero-waste preparation.
+* **[Software Design Review](docs/topologies/01_software_design_review.md) (Abstract Engineering):** 
+  Enforcing modular boundaries, isolating side effects, and demonstrating autonomous graph mutation when challenging a monolithic "god function" anti-pattern.
+* **[Regional Shojin Cooking](docs/topologies/02_regional_shojin_recipe.md) (Sensory & Physical Craft):** 
+  Stress-testing domain transfer by mapping traditional Zen culinary philosophy (*Gomi, Goshiki, Goho*) and regional harvest constraints into the graph. Demonstrates automated 1-hop knowledge retrieval (e.g. root-scrap dashi) without direct prompting.
+  
 ---
 
 ## 🤝 Collaboration & Genesis
