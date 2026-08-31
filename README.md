@@ -183,13 +183,15 @@ python -m core.compiler software_design | ollama run gemma4:12b "Analyze this se
 
 ## 📚 Examples & Benchmarks
 
-To demonstrate that Exocortex is a general-purpose reasoning architecture rather than a software-specific prompt wrapper, the benchmarks in `docs/topologies/` test two fundamentally different domains using the exact same underlying graph schema (`Constraint`, `Concept`, `Rule`, `State`):
+To demonstrate that Exocortex is a general-purpose reasoning architecture rather than a software-specific prompt wrapper, the benchmarks in `docs/topologies/` evaluate cross-domain knowledge representation using the same underlying graph schema (`Constraint`, `Concept`, `Rule`, `State`), autonomous memory formation, and the empirical limits of anti-sycophancy guardrails under conversational pressure:
 
 * **[Software Design Review](docs/topologies/01_software_design_review.md) (Abstract Engineering):** 
   Enforcing modular boundaries, isolating side effects, and demonstrating autonomous graph mutation when challenging a monolithic "god function" anti-pattern.
 * **[Regional Shojin Cooking](docs/topologies/02_regional_shojin_recipe.md) (Sensory & Physical Craft):** 
   Stress-testing domain transfer by mapping traditional Zen culinary philosophy (*Gomi, Goshiki, Goho*) and regional harvest constraints into the graph. Demonstrates automated 1-hop knowledge retrieval (e.g. root-scrap dashi) without direct prompting.
-  
+* **[Boundary Collision & Refusal](docs/topologies/03_boundary_collision_refusal.md) (Anti-Sycophancy Limits):**
+  A multi-turn pressure test demonstrating first-line architectural pushback, followed by an honest analysis of model capitulation when an operator aggressively forces bad practices.
+
 ---
 
 ## 🤝 Collaboration & Genesis
