@@ -191,8 +191,8 @@ To demonstrate that Exocortex is a general-purpose reasoning architecture rather
   Stress-testing domain transfer by mapping traditional Zen culinary philosophy (*Gomi, Goshiki, Goho*) and regional harvest constraints into the graph. Demonstrates automated 1-hop knowledge retrieval (e.g. root-scrap dashi) without direct prompting.
 * **[Boundary Collision & Refusal](docs/topologies/03_boundary_collision_refusal.md) (Anti-Sycophancy Limits):**
   A multi-turn pressure test demonstrating first-line architectural pushback, followed by an honest analysis of model capitulation when an operator aggressively forces bad practices.
-* **[Architecture Enforcement & The Human Audit](docs/topologies/04_compiler_ab_testing.md):** 
-  A/B testing baseline LLM output against the compiled graph context. Demonstrates how structural constraints enforce layered separation while highlighting why manual verification remains non-negotiable (`Decimal` vs. `float`).
+* **[Architecture Enforcement & The Human Audit](docs/topologies/04_compiler_ab_testing.md) (A/B testing baseline LLM output against the compiled graph context):** 
+  Demonstrates how structural constraints enforce layered separation while highlighting why manual verification remains non-negotiable (`Decimal` vs. `float`).
 
 ---
 
